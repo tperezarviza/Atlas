@@ -2,11 +2,10 @@ import 'dotenv/config';
 
 export const PORT = Number(process.env.PORT) || 3001;
 
-export const ACLED_API_KEY = process.env.ACLED_API_KEY ?? '';
 export const ACLED_EMAIL = process.env.ACLED_EMAIL ?? '';
+export const ACLED_PASSWORD = process.env.ACLED_PASSWORD ?? '';
 export const TWELVE_DATA_API_KEY = process.env.TWELVE_DATA_API_KEY ?? '';
-export const OIL_PRICE_API_KEY = process.env.OIL_PRICE_API_KEY ?? '';
-export const METALS_API_KEY = process.env.METALS_API_KEY ?? '';
+export const EIA_API_KEY = process.env.EIA_API_KEY ?? '';
 export const FRED_API_KEY = process.env.FRED_API_KEY ?? '';
 export const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY ?? '';
 
@@ -22,6 +21,8 @@ export const TTL = {
   CONNECTIONS: 4 * 60 * 60 * 1000, // 4 h
   CALENDAR:  12 * 60 * 60 * 1000,  // 12 h
   BORDER:    24 * 60 * 60 * 1000,  // 24 h
+  CDS:        6 * 60 * 60 * 1000,  // 6 h
+  FOREX:      5 * 60 * 1000,       // 5 min
 } as const;
 
 export const FETCH_TIMEOUT_API = 15_000;

@@ -8,6 +8,7 @@ import { fetchCalendar } from './calendar.js';
 import { fetchBorderStats } from './border.js';
 import { fetchBrief } from './ai-brief.js';
 import { fetchConnections } from './connections.js';
+import { fetchCDS } from './cds.js';
 
 async function safeRun(name: string, fn: () => Promise<void> | void) {
   try {
@@ -27,6 +28,7 @@ export async function warmUpCache(): Promise<void> {
     safeRun('Feeds', fetchFeeds),
     safeRun('Markets', fetchMarkets),
     safeRun('Calendar', fetchCalendar),
+    safeRun('CDS', fetchCDS),
   ]);
 
   // Phase 2: APIs with auth

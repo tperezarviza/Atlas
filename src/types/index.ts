@@ -4,6 +4,9 @@ export type ConnectionType = 'proxy_war' | 'arms_flow' | 'alliance' | 'spillover
 export type FeedCategory = 'trump' | 'leader' | 'musk' | 'military';
 export type NewsBullet = 'critical' | 'high' | 'medium' | 'accent';
 export type CalendarUrgency = 'today' | 'soon' | 'future';
+export type SessionRegion = 'americas' | 'europe' | 'asia_pacific' | 'middle_east_africa';
+export type SessionStatus = 'open' | 'closed' | 'pre_market' | 'after_hours';
+export type SupplyRisk = 'critical' | 'high' | 'medium' | 'low';
 
 export interface Conflict {
   id: string;
@@ -99,4 +102,32 @@ export interface TickerItem {
   bulletColor: string;
   source: string;
   text: string;
+}
+
+export interface MarketSession {
+  region: SessionRegion;
+  label: string;
+  status: SessionStatus;
+  opensAt: string;
+  closesAt: string;
+  nextEvent: string;
+}
+
+export interface CDSSpread {
+  country: string;
+  code: string;
+  spread5Y: number;
+  change: number;
+  direction: 'up' | 'down' | 'flat';
+  rating: string;
+}
+
+export interface StrategicDependency {
+  resource: string;
+  icon: string;
+  topProducer: string;
+  topProducerShare: string;
+  usImportDep: string;
+  supplyRisk: SupplyRisk;
+  notes: string;
 }

@@ -2,8 +2,8 @@ import type { FastifyInstance } from 'fastify';
 import { cache } from '../cache.js';
 
 const CACHE_KEYS = [
-  'conflicts', 'news', 'feed', 'markets', 'macro', 'border',
-  'calendar', 'brief', 'connections', 'ticker', 'topbar',
+  'conflicts', 'news', 'feed', 'markets', 'forex', 'cds',
+  'macro', 'border', 'calendar', 'brief', 'connections', 'ticker', 'topbar',
 ];
 
 const startTime = Date.now();

@@ -13,6 +13,7 @@ import { registerBorderRoutes } from './routes/border.js';
 import { registerConnectionsRoutes } from './routes/connections.js';
 import { registerTickerRoutes } from './routes/ticker.js';
 import { registerTopbarRoutes } from './routes/topbar.js';
+import { registerDependenciesRoutes } from './routes/dependencies.js';
 import { startCronJobs } from './cron.js';
 import { warmUpCache } from './services/warmup.js';
 
@@ -37,6 +38,7 @@ registerBorderRoutes(app);
 registerConnectionsRoutes(app);
 registerTickerRoutes(app);
 registerTopbarRoutes(app);
+registerDependenciesRoutes(app);
 
 // Start server
 try {

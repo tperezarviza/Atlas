@@ -10,6 +10,7 @@ import { fetchBrief } from './services/ai-brief.js';
 import { fetchConnections } from './services/connections.js';
 import { fetchCalendar } from './services/calendar.js';
 import { fetchBorderStats } from './services/border.js';
+import { fetchCDS } from './services/cds.js';
 
 function safeRun(name: string, fn: () => Promise<void> | void) {
   return async () => {
@@ -24,8 +25,8 @@ function safeRun(name: string, fn: () => Promise<void> | void) {
 export function startCronJobs() {
   console.log('[CRON] Starting scheduled jobs...');
 
-  // */2 * * * * -> Markets (crypto, indices)
-  cron.schedule('*/2 * * * *', safeRun('markets', fetchMarkets));
+  // */5 * * * * -> Markets (crypto, indices, forex — smart refresh)
+  cron.schedule('*/5 * * * *', safeRun('markets', fetchMarkets));
 
   // */3 * * * * -> RSS Leader Feed
   cron.schedule('*/3 * * * *', safeRun('feeds', fetchFeeds));
@@ -53,6 +54,9 @@ export function startCronJobs() {
 
   // 0 6 * * * -> Border stats (1x/day)
   cron.schedule('0 6 * * *', safeRun('border', fetchBorderStats));
+
+  // 0 */6 * * * -> CDS spreads
+  cron.schedule('0 */6 * * *', safeRun('cds', fetchCDS));
 
   console.log('[CRON] All jobs scheduled');
 }

@@ -32,6 +32,9 @@ import type {
   CalendarEvent,
   Connection,
   TickerItem,
+  MarketSession,
+  CDSSpread,
+  StrategicDependency,
 } from '../types';
 
 export interface TopBarData {
@@ -52,6 +55,9 @@ export interface BriefResponse {
 
 export interface MarketsResponse {
   sections: MarketSection[];
+  forex: MarketSection[];
+  sessions: MarketSession[];
+  cds: CDSSpread[];
   macro: MacroItem[];
   border: BorderStat[];
 }
@@ -70,4 +76,5 @@ export const api = {
   regenBrief:  () => postJSON<BriefResponse>('/api/brief/regenerate'),
   connections: () => fetchJSON<Connection[]>('/api/connections'),
   ticker:      () => fetchJSON<TickerItem[]>('/api/ticker'),
+  dependencies:() => fetchJSON<StrategicDependency[]>('/api/dependencies'),
 };

@@ -1,24 +1,45 @@
-import { TWELVE_DATA_API_KEY, OIL_PRICE_API_KEY, METALS_API_KEY, FETCH_TIMEOUT_API, TTL } from '../config.js';
+import { TWELVE_DATA_API_KEY, EIA_API_KEY, FETCH_TIMEOUT_API, TTL } from '../config.js';
 import { cache } from '../cache.js';
 import { mockMarketSections } from '../mock/markets.js';
+import { mockRegionalIndices, mockForexSections } from '../mock/globalMarkets.js';
+import { INDEX_SYMBOLS, FOREX_SYMBOLS, ALWAYS_FETCH, type SymbolDef } from '../data/symbols.js';
+import { getActiveRegions } from './sessions.js';
+import { fetchYahooBatch } from './yahoo.js';
 import type { MarketSection, MarketItem } from '../types.js';
 
-// Generate simple spark data from current price (simulated 20-point series)
+// ── Helpers ────────────────────────────────────────────────────
+
+/** Normalize raw price array to 10-95 range for sparkline rendering */
+function normalizeSparkData(values: number[]): number[] {
+  if (values.length === 0) return [];
+  const valid = values.filter((v) => v != null && !isNaN(v));
+  if (valid.length === 0) return values.map(() => 50);
+  const min = Math.min(...valid);
+  const max = Math.max(...valid);
+  const range = max - min || 1;
+  return values.map((v) => {
+    if (v == null || isNaN(v)) return 50;
+    return Math.round(10 + ((v - min) / range) * 80);
+  });
+}
+
 function generateSparkData(price: number, changePercent: number): number[] {
   const points: number[] = [];
   const base = price / (1 + changePercent / 100);
   for (let i = 0; i < 20; i++) {
     const progress = i / 19;
     const noise = (Math.random() - 0.5) * price * 0.02;
-    points.push(Math.round(base + (price - base) * progress + noise));
+    points.push(base + (price - base) * progress + noise);
   }
-  return points;
+  return normalizeSparkData(points);
 }
 
 function formatPrice(price: number, prefix = '$'): string {
+  if (price >= 1_000_000) return `${prefix}${(price / 1000).toLocaleString('en-US', { maximumFractionDigits: 0 })}k`;
   if (price >= 10000) return `${prefix}${price.toLocaleString('en-US', { maximumFractionDigits: 0 })}`;
   if (price >= 100) return `${prefix}${price.toLocaleString('en-US', { maximumFractionDigits: 0 })}`;
-  return `${prefix}${price.toFixed(2)}`;
+  if (price >= 10) return `${prefix}${price.toFixed(2)}`;
+  return `${prefix}${price.toFixed(4)}`;
 }
 
 function formatDelta(change: number): { delta: string; direction: 'up' | 'down' | 'flat' } {
@@ -26,6 +47,16 @@ function formatDelta(change: number): { delta: string; direction: 'up' | 'down' 
   if (change > 0) return { delta: `▲ +${change.toFixed(1)}%`, direction: 'up' };
   return { delta: `▼ ${change.toFixed(1)}%`, direction: 'down' };
 }
+
+function chunk<T>(arr: T[], size: number): T[][] {
+  const chunks: T[][] = [];
+  for (let i = 0; i < arr.length; i += size) {
+    chunks.push(arr.slice(i, i + size));
+  }
+  return chunks;
+}
+
+// ── Data Source Fetchers ───────────────────────────────────────
 
 async function fetchCoinGecko(): Promise<MarketItem[]> {
   const url = 'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum&vs_currencies=usd&include_24hr_change=true';
@@ -58,141 +89,254 @@ async function fetchCoinGecko(): Promise<MarketItem[]> {
   return items;
 }
 
-async function fetchTwelveData(): Promise<Record<string, MarketItem>> {
-  if (!TWELVE_DATA_API_KEY) {
-    console.warn('[MARKETS] No TWELVE_DATA_API_KEY, skipping indices');
-    return {};
-  }
+// ── TwelveData Batch Fetcher ───────────────────────────────────
 
-  const symbols = ['SPX', 'DJI', 'VIX', 'DXY'];
-  const nameMap: Record<string, { name: string; color?: string }> = {
-    SPX: { name: 'S&P 500', color: '#28b35a' },
-    DJI: { name: 'DOW', color: '#28b35a' },
-    VIX: { name: 'VIX', color: '#e83b3b' },
-    DXY: { name: 'DXY' },
-  };
+const BATCH_SIZE = 8;
 
-  const items: Record<string, MarketItem> = {};
+async function fetchTwelveDataBatch(symbolDefs: SymbolDef[]): Promise<Record<string, MarketItem>> {
+  if (!TWELVE_DATA_API_KEY || symbolDefs.length === 0) return {};
 
-  for (const symbol of symbols) {
+  const results: Record<string, MarketItem> = {};
+  const batches = chunk(symbolDefs.map((s) => s.symbol), BATCH_SIZE);
+
+  for (const batch of batches) {
     try {
-      // Use time_series for real sparkline data (20 data points)
-      const url = `https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(symbol)}&interval=1day&outputsize=20&apikey=${encodeURIComponent(TWELVE_DATA_API_KEY)}`;
+      const symbolStr = batch.map((s) => encodeURIComponent(s)).join(',');
+      const url = `https://api.twelvedata.com/time_series?symbol=${symbolStr}&interval=1day&outputsize=20&apikey=${encodeURIComponent(TWELVE_DATA_API_KEY)}`;
       const res = await fetch(url, { signal: AbortSignal.timeout(FETCH_TIMEOUT_API) });
       if (!res.ok) continue;
       const data = await res.json();
-      if (data.code) continue; // API error
 
-      const values: Array<{ close: string }> = data.values ?? [];
-      if (values.length === 0) continue;
+      // Single symbol → { meta, values }, multi → { "SYM": { meta, values }, ... }
+      const entries: Record<string, { values?: Array<{ close: string }>; code?: number }> =
+        batch.length === 1 ? { [batch[0]]: data } : data;
 
-      const price = parseFloat(values[0].close);
-      const prevPrice = values.length > 1 ? parseFloat(values[1].close) : price;
-      const change = prevPrice > 0 ? ((price - prevPrice) / prevPrice) * 100 : 0;
-      const { delta, direction } = formatDelta(change);
-      const info = nameMap[symbol] ?? { name: symbol };
+      for (const symbol of batch) {
+        const series = entries[symbol];
+        if (!series || series.code || !series.values?.length) continue;
 
-      // Real sparkline: reverse so oldest is first
-      const sparkData = values
-        .map((v) => Math.round(parseFloat(v.close)))
-        .reverse();
+        const values = series.values;
+        const price = parseFloat(values[0].close);
+        const prevPrice = values.length > 1 ? parseFloat(values[1].close) : price;
+        const change = prevPrice > 0 ? ((price - prevPrice) / prevPrice) * 100 : 0;
+        const { delta, direction } = formatDelta(change);
 
-      items[symbol] = {
-        name: info.name, price: formatPrice(price, symbol === 'DXY' ? '' : ''),
-        delta, direction,
-        sparkData,
-        color: info.color,
-      };
+        const symDef = symbolDefs.find((s) => s.symbol === symbol);
+        const rawSpark = values.map((v) => parseFloat(v.close)).reverse();
+
+        const item: MarketItem = {
+          name: symDef?.name ?? symbol,
+          price: formatPrice(price, symDef?.pricePrefix ?? ''),
+          delta,
+          direction,
+          sparkData: normalizeSparkData(rawSpark),
+          color: symDef?.color,
+        };
+
+        results[symbol] = item;
+        // Cache individual symbol
+        cache.set(`mkt:${symbol}`, item, 30 * 60 * 1000);
+      }
     } catch (err) {
-      console.warn(`[MARKETS] TwelveData ${symbol} failed:`, err instanceof Error ? err.message : err);
+      console.warn('[MARKETS] TwelveData batch failed:', err instanceof Error ? err.message : err);
     }
   }
 
-  return items;
+  return results;
 }
 
+// ── Smart Refresh: Determine which symbols need updating ──────
+
+const ACTIVE_REFRESH_MS = 5 * 60 * 1000;   // 5 min for open sessions
+const STALE_REFRESH_MS = 30 * 60 * 1000;   // 30 min for closed sessions
+
+function getSymbolsToFetch(): { twelvedata: SymbolDef[]; yahoo: SymbolDef[] } {
+  const activeRegions = getActiveRegions();
+  const allSymbols = [...INDEX_SYMBOLS, ...FOREX_SYMBOLS];
+
+  const toFetch: SymbolDef[] = [];
+
+  for (const sym of allSymbols) {
+    const cacheKey = `mkt:${sym.symbol}`;
+    const age = cache.age(cacheKey);
+
+    const isActive =
+      activeRegions.includes(sym.region) ||
+      ALWAYS_FETCH.includes(sym.symbol) ||
+      sym.section.startsWith('Forex'); // Forex is 24h
+
+    const refreshInterval = isActive ? ACTIVE_REFRESH_MS : STALE_REFRESH_MS;
+
+    if (age === null || age > refreshInterval) {
+      toFetch.push(sym);
+    }
+  }
+
+  return {
+    twelvedata: toFetch.filter((s) => s.source === 'twelvedata'),
+    yahoo: toFetch.filter((s) => s.source === 'yahoo'),
+  };
+}
+
+// ── Oil & Metals (unchanged logic, normalized spark) ──────────
+
 async function fetchOilPrices(): Promise<MarketItem[]> {
-  if (!OIL_PRICE_API_KEY) {
-    console.warn('[MARKETS] No OIL_PRICE_API_KEY, skipping oil prices');
+  if (!EIA_API_KEY) {
+    console.warn('[MARKETS] No EIA_API_KEY, skipping oil prices');
     return [];
   }
 
   const items: MarketItem[] = [];
   try {
-    const url = `https://api.oilpriceapi.com/v1/prices/latest?by_code=WTI_USD`;
-    const res = await fetch(url, {
-      signal: AbortSignal.timeout(FETCH_TIMEOUT_API),
-      headers: { Authorization: `Token ${OIL_PRICE_API_KEY}` },
-    });
+    const url = `https://api.eia.gov/v2/petroleum/pri/spt/data/?api_key=${encodeURIComponent(EIA_API_KEY)}&data[]=value&facets[series][]=RWTC&frequency=daily&sort[0][column]=period&sort[0][direction]=desc&length=2`;
+    const res = await fetch(url, { signal: AbortSignal.timeout(FETCH_TIMEOUT_API) });
     if (res.ok) {
       const data = await res.json();
-      const price = data.data?.price ?? 0;
-      if (price > 0) {
-        const { delta, direction } = formatDelta(0); // No change data from basic endpoint
-        items.push({
-          name: 'WTI OIL', price: formatPrice(price), delta, direction,
-          sparkData: generateSparkData(price, 0),
-        });
+      const rows = data.response?.data;
+      if (rows && rows.length > 0) {
+        const price = parseFloat(rows[0].value);
+        const prevPrice = rows.length > 1 ? parseFloat(rows[1].value) : price;
+        const change = prevPrice > 0 ? ((price - prevPrice) / prevPrice) * 100 : 0;
+        if (price > 0) {
+          const { delta, direction } = formatDelta(change);
+          items.push({
+            name: 'WTI OIL', price: formatPrice(price), delta, direction,
+            sparkData: generateSparkData(price, change),
+          });
+        }
       }
     }
   } catch (err) {
-    console.warn('[MARKETS] OilPrice failed:', err instanceof Error ? err.message : err);
+    console.warn('[MARKETS] EIA oil failed:', err instanceof Error ? err.message : err);
   }
 
   return items;
 }
 
 async function fetchMetals(): Promise<MarketItem[]> {
-  if (!METALS_API_KEY) {
-    console.warn('[MARKETS] No METALS_API_KEY, skipping metals');
-    return [];
-  }
-
   const items: MarketItem[] = [];
-  try {
-    const url = `https://metals-api.com/api/latest?access_key=${encodeURIComponent(METALS_API_KEY)}&base=USD&symbols=XAU,XAG`;
-    const res = await fetch(url, { signal: AbortSignal.timeout(FETCH_TIMEOUT_API) });
-    if (res.ok) {
-      const data = await res.json();
-      if (data.rates?.XAU) {
-        const goldPrice = 1 / data.rates.XAU; // API gives USD per ounce inverted
-        items.push({
-          name: 'GOLD', price: formatPrice(goldPrice), delta: '▬ 0.0%', direction: 'flat',
-          sparkData: generateSparkData(goldPrice, 0), color: '#d4a72c',
-        });
+
+  const metals: Array<{ symbol: string; name: string; color: string }> = [
+    { symbol: 'XAU', name: 'GOLD', color: '#d4a72c' },
+    { symbol: 'XAG', name: 'SILVER', color: '#94a3b8' },
+  ];
+
+  for (const metal of metals) {
+    try {
+      const url = `https://api.gold-api.com/price/${metal.symbol}`;
+      const res = await fetch(url, { signal: AbortSignal.timeout(FETCH_TIMEOUT_API) });
+      if (res.ok) {
+        const data = await res.json();
+        const price = data.price ?? 0;
+        const change = data.chp ?? 0;
+        if (price > 0) {
+          const { delta, direction } = formatDelta(change);
+          items.push({
+            name: metal.name, price: formatPrice(price), delta, direction,
+            sparkData: generateSparkData(price, change), color: metal.color,
+          });
+        }
       }
-      if (data.rates?.XAG) {
-        const silverPrice = 1 / data.rates.XAG;
-        items.push({
-          name: 'SILVER', price: formatPrice(silverPrice), delta: '▬ 0.0%', direction: 'flat',
-          sparkData: generateSparkData(silverPrice, 0), color: '#94a3b8',
-        });
-      }
+    } catch (err) {
+      console.warn(`[MARKETS] Gold-API ${metal.symbol} failed:`, err instanceof Error ? err.message : err);
     }
-  } catch (err) {
-    console.warn('[MARKETS] Metals failed:', err instanceof Error ? err.message : err);
   }
 
   return items;
 }
 
+// ── Section Builders ───────────────────────────────────────────
+
+function buildRegionalSections(allItems: Record<string, MarketItem>): MarketSection[] {
+  const regions: Array<{ title: string; icon: string; section: string }> = [
+    { title: 'Americas', icon: '🌎', section: 'Americas' },
+    { title: 'Europe', icon: '🌍', section: 'Europe' },
+    { title: 'Asia-Pacific', icon: '🌏', section: 'Asia-Pacific' },
+    { title: 'Middle East/Africa', icon: '🕌', section: 'Middle East/Africa' },
+  ];
+
+  return regions.map((r) => {
+    const syms = INDEX_SYMBOLS.filter((s) => s.section === r.section);
+    const items = syms
+      .map((s) => allItems[s.symbol] ?? cache.get<MarketItem>(`mkt:${s.symbol}`))
+      .filter((item): item is MarketItem => item != null);
+    return { title: r.title, icon: r.icon, items };
+  }).filter((s) => s.items.length > 0);
+}
+
+function buildForexSections(allItems: Record<string, MarketItem>): MarketSection[] {
+  const groups: Array<{ title: string; icon: string; section: string }> = [
+    { title: 'Forex Major', icon: '💱', section: 'Forex Major' },
+    { title: 'Forex Geopolitical', icon: '🏛️', section: 'Forex Geopolitical' },
+  ];
+
+  return groups.map((g) => {
+    const syms = FOREX_SYMBOLS.filter((s) => s.section === g.section);
+    const items = syms
+      .map((s) => allItems[s.symbol] ?? cache.get<MarketItem>(`mkt:${s.symbol}`))
+      .filter((item): item is MarketItem => item != null);
+    return { title: g.title, icon: g.icon, items };
+  }).filter((s) => s.items.length > 0);
+}
+
+// ── Main Orchestrator ──────────────────────────────────────────
+
 export async function fetchMarkets(): Promise<void> {
   console.log('[MARKETS] Fetching market data...');
 
   try {
-    const [crypto, indices, oil, metals] = await Promise.allSettled([
+    // 1. Determine which symbols need refresh (session-aware)
+    const { twelvedata: tdSymbols, yahoo: yahooSymbols } = getSymbolsToFetch();
+    console.log(`[MARKETS] Refreshing ${tdSymbols.length} TwelveData + ${yahooSymbols.length} Yahoo symbols`);
+
+    // 2. Fetch all sources in parallel
+    const [crypto, tdResults, yahooResults, oil, metals] = await Promise.allSettled([
       fetchCoinGecko(),
-      fetchTwelveData(),
+      fetchTwelveDataBatch(tdSymbols),
+      fetchYahooBatch(yahooSymbols.map((s) => s.symbol)),
       fetchOilPrices(),
       fetchMetals(),
     ]);
 
-    // Start from mock structure, override with real data where available
-    const sections: MarketSection[] = JSON.parse(JSON.stringify(mockMarketSections));
+    // 3. Merge fresh data into a unified map
+    const allItems: Record<string, MarketItem> = {};
+
+    // Load from individual symbol caches first (stale but available)
+    for (const sym of [...INDEX_SYMBOLS, ...FOREX_SYMBOLS]) {
+      const cached = cache.get<MarketItem>(`mkt:${sym.symbol}`);
+      if (cached) allItems[sym.symbol] = cached;
+    }
+
+    // Override with fresh TwelveData
+    if (tdResults.status === 'fulfilled') {
+      Object.assign(allItems, tdResults.value);
+      console.log(`[MARKETS] TwelveData: ${Object.keys(tdResults.value).length} items`);
+    }
+
+    // Override with fresh Yahoo
+    if (yahooResults.status === 'fulfilled') {
+      // Apply symbol metadata from registry
+      for (const [symbol, item] of Object.entries(yahooResults.value)) {
+        const symDef = [...INDEX_SYMBOLS, ...FOREX_SYMBOLS].find((s) => s.symbol === symbol);
+        if (symDef) {
+          item.name = symDef.name;
+          item.color = symDef.color;
+        }
+        allItems[symbol] = item;
+        cache.set(`mkt:${symbol}`, item, 30 * 60 * 1000);
+      }
+      console.log(`[MARKETS] Yahoo: ${Object.keys(yahooResults.value).length} items`);
+    }
+
+    // 4. Build base sections (Energy, Metals, Crypto, Commodities) from mock + real overlays
+    const baseSections: MarketSection[] = JSON.parse(JSON.stringify(mockMarketSections));
+
+    // Remove the old "Indices" section — replaced by regional sections
+    const baseFiltered = baseSections.filter((s) => s.title !== 'Indices');
 
     // Update crypto
     if (crypto.status === 'fulfilled' && crypto.value.length > 0) {
-      const cryptoSection = sections.find((s) => s.title === 'Crypto');
+      const cryptoSection = baseFiltered.find((s) => s.title === 'Crypto');
       if (cryptoSection) {
         for (const item of crypto.value) {
           const idx = cryptoSection.items.findIndex((i) => i.name === item.name);
@@ -202,22 +346,9 @@ export async function fetchMarkets(): Promise<void> {
       console.log(`[MARKETS] CoinGecko: ${crypto.value.length} items`);
     }
 
-    // Update indices
-    if (indices.status === 'fulfilled') {
-      const indexSection = sections.find((s) => s.title === 'Indices');
-      if (indexSection) {
-        const indMap = indices.value;
-        for (const [, item] of Object.entries(indMap)) {
-          const idx = indexSection.items.findIndex((i) => i.name === item.name);
-          if (idx >= 0) indexSection.items[idx] = item;
-        }
-      }
-      console.log(`[MARKETS] TwelveData: ${Object.keys(indices.value).length} items`);
-    }
-
     // Update oil
     if (oil.status === 'fulfilled' && oil.value.length > 0) {
-      const energySection = sections.find((s) => s.title === 'Energy');
+      const energySection = baseFiltered.find((s) => s.title === 'Energy');
       if (energySection) {
         for (const item of oil.value) {
           const idx = energySection.items.findIndex((i) => i.name === item.name);
@@ -228,7 +359,7 @@ export async function fetchMarkets(): Promise<void> {
 
     // Update metals
     if (metals.status === 'fulfilled' && metals.value.length > 0) {
-      const metalsSection = sections.find((s) => s.title === 'Precious Metals');
+      const metalsSection = baseFiltered.find((s) => s.title === 'Precious Metals');
       if (metalsSection) {
         for (const item of metals.value) {
           const idx = metalsSection.items.findIndex((i) => i.name === item.name);
@@ -237,8 +368,26 @@ export async function fetchMarkets(): Promise<void> {
       }
     }
 
-    cache.set('markets', sections, TTL.MARKETS);
-    console.log('[MARKETS] Market data cached');
+    // 5. Build regional index sections
+    const regionalSections = buildRegionalSections(allItems);
+    const finalSections = [...regionalSections, ...baseFiltered];
+
+    // 6. Build forex sections
+    const forexSections = buildForexSections(allItems);
+
+    // 7. Fill in mock sections for any regions with no real data
+    const requiredRegions = ['Americas', 'Europe', 'Asia-Pacific', 'Middle East/Africa'];
+    const existingTitles = new Set(finalSections.map((s) => s.title));
+    for (const mock of mockRegionalIndices) {
+      if (requiredRegions.includes(mock.title) && !existingTitles.has(mock.title)) {
+        finalSections.unshift(mock);
+      }
+    }
+
+    // 8. Cache everything
+    cache.set('markets', finalSections, TTL.MARKETS);
+    cache.set('forex', forexSections.length >= 2 ? forexSections : mockForexSections, TTL.FOREX);
+    console.log(`[MARKETS] Cached: ${finalSections.length} sections, ${forexSections.length > 0 ? forexSections.length : 'mock'} forex sections`);
   } catch (err) {
     console.error('[MARKETS] Fetch failed:', err);
   }

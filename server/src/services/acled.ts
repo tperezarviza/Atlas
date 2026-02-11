@@ -1,4 +1,4 @@
-import { ACLED_API_KEY, ACLED_EMAIL, FETCH_TIMEOUT_API, TTL } from '../config.js';
+import { ACLED_EMAIL, ACLED_PASSWORD, FETCH_TIMEOUT_API, TTL } from '../config.js';
 import { cache } from '../cache.js';
 import type { Conflict, Severity, Trend } from '../types.js';
 
@@ -27,6 +27,89 @@ interface CountryAgg {
   eventsLast7d: number;
   eventsPrev7d: number;
 }
+
+// ── OAuth Token Management ──────────────────────────────────────
+
+interface AcledToken {
+  accessToken: string;
+  refreshToken: string;
+  expiresAt: number;
+}
+
+let tokenCache: AcledToken | null = null;
+
+async function getAccessToken(): Promise<string> {
+  // Return cached token if still valid (with 5 min buffer)
+  if (tokenCache && tokenCache.expiresAt > Date.now() + 5 * 60 * 1000) {
+    return tokenCache.accessToken;
+  }
+
+  // Try refresh if we have a refresh token
+  if (tokenCache?.refreshToken) {
+    try {
+      const token = await refreshAccessToken(tokenCache.refreshToken);
+      if (token) return token;
+    } catch {
+      // Refresh failed, fall through to full auth
+    }
+  }
+
+  // Full authentication
+  const params = new URLSearchParams({
+    username: ACLED_EMAIL,
+    password: ACLED_PASSWORD,
+    grant_type: 'password',
+    client_id: 'acled',
+  });
+
+  const res = await fetch('https://acleddata.com/oauth/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: params.toString(),
+    signal: AbortSignal.timeout(FETCH_TIMEOUT_API),
+  });
+
+  if (!res.ok) throw new Error(`ACLED OAuth failed: ${res.status}`);
+
+  const data = await res.json();
+  tokenCache = {
+    accessToken: data.access_token,
+    refreshToken: data.refresh_token,
+    expiresAt: Date.now() + (data.expires_in ?? 86400) * 1000,
+  };
+
+  console.log('[ACLED] OAuth token acquired');
+  return tokenCache.accessToken;
+}
+
+async function refreshAccessToken(refreshToken: string): Promise<string | null> {
+  const params = new URLSearchParams({
+    grant_type: 'refresh_token',
+    refresh_token: refreshToken,
+    client_id: 'acled',
+  });
+
+  const res = await fetch('https://acleddata.com/oauth/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: params.toString(),
+    signal: AbortSignal.timeout(FETCH_TIMEOUT_API),
+  });
+
+  if (!res.ok) return null;
+
+  const data = await res.json();
+  tokenCache = {
+    accessToken: data.access_token,
+    refreshToken: data.refresh_token ?? refreshToken,
+    expiresAt: Date.now() + (data.expires_in ?? 86400) * 1000,
+  };
+
+  console.log('[ACLED] OAuth token refreshed');
+  return tokenCache.accessToken;
+}
+
+// ── Helpers ─────────────────────────────────────────────────────
 
 function determineSeverity(events: number, fatalities: number): Severity {
   if (fatalities > 1000 || events > 500) return 'critical';
@@ -63,21 +146,29 @@ function countryToRegion(country: string): string {
   return regionMap[country] ?? 'Other';
 }
 
+// ── Main Fetcher ────────────────────────────────────────────────
+
 export async function fetchConflicts(): Promise<void> {
-  if (!ACLED_API_KEY || !ACLED_EMAIL) {
-    console.warn('[ACLED] No API key/email configured, skipping');
+  if (!ACLED_EMAIL || !ACLED_PASSWORD) {
+    console.warn('[ACLED] No email/password configured, skipping');
     return;
   }
 
   console.log('[ACLED] Fetching conflict data...');
 
   try {
+    const accessToken = await getAccessToken();
+
     const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
       .toISOString().split('T')[0];
+    const today = new Date().toISOString().split('T')[0];
 
-    const url = `https://api.acleddata.com/acled/read?key=${encodeURIComponent(ACLED_API_KEY)}&email=${encodeURIComponent(ACLED_EMAIL)}&event_date=${thirtyDaysAgo}|${new Date().toISOString().split('T')[0]}&event_date_where=BETWEEN&limit=5000&fields=event_id_cnty|event_date|event_type|sub_event_type|actor1|actor2|country|latitude|longitude|fatalities|notes`;
+    const url = `https://acleddata.com/api/acled/read?event_date=${thirtyDaysAgo}|${today}&event_date_where=BETWEEN&limit=5000&fields=event_id_cnty|event_date|event_type|sub_event_type|actor1|actor2|country|latitude|longitude|fatalities|notes`;
 
-    const res = await fetch(url, { signal: AbortSignal.timeout(FETCH_TIMEOUT_API) });
+    const res = await fetch(url, {
+      signal: AbortSignal.timeout(FETCH_TIMEOUT_API),
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
     if (!res.ok) throw new Error(`ACLED API ${res.status}`);
 
     const json = await res.json();
