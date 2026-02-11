@@ -9,6 +9,13 @@ import { fetchBorderStats } from './border.js';
 import { fetchBrief } from './ai-brief.js';
 import { fetchConnections } from './connections.js';
 import { fetchCDS } from './cds.js';
+import { fetchOoniIncidents } from './ooni.js';
+import { fetchSanctions } from './sanctions.js';
+import { fetchShippingData } from './shipping.js';
+import { fetchCountries } from './countries.js';
+import { fetchArmedGroups } from './terrorism.js';
+import { fetchHostilityIndex } from './hostility.js';
+import { fetchPropaganda } from './propaganda.js';
 
 async function safeRun(name: string, fn: () => Promise<void> | void) {
   try {
@@ -29,13 +36,16 @@ export async function warmUpCache(): Promise<void> {
     safeRun('Markets', fetchMarkets),
     safeRun('Calendar', fetchCalendar),
     safeRun('CDS', fetchCDS),
+    safeRun('OONI', fetchOoniIncidents),
   ]);
 
-  // Phase 2: APIs with auth
+  // Phase 2: APIs with auth + heavier fetches
   await Promise.allSettled([
     safeRun('ACLED', fetchConflicts),
     safeRun('Macro', fetchMacro),
     safeRun('Border', fetchBorderStats),
+    safeRun('Sanctions', fetchSanctions),
+    safeRun('Shipping', fetchShippingData),
   ]);
 
   // Phase 3: Composite and AI (depends on previous data)
@@ -44,6 +54,14 @@ export async function warmUpCache(): Promise<void> {
   await Promise.allSettled([
     safeRun('AI Brief', async () => { await fetchBrief(); }),
     safeRun('Connections', fetchConnections),
+    safeRun('Countries', fetchCountries),
+    safeRun('Armed Groups', fetchArmedGroups),
+    safeRun('Hostility', fetchHostilityIndex),
+  ]);
+
+  // Phase 4: Slow AI analysis (depends on GDELT data)
+  await Promise.allSettled([
+    safeRun('Propaganda', fetchPropaganda),
   ]);
 
   const elapsed = ((Date.now() - start) / 1000).toFixed(1);

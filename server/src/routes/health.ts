@@ -4,6 +4,7 @@ import { cache } from '../cache.js';
 const CACHE_KEYS = [
   'conflicts', 'news', 'feed', 'markets', 'forex', 'cds',
   'macro', 'border', 'calendar', 'brief', 'connections', 'ticker', 'topbar',
+  'countries', 'sanctions', 'armed_groups', 'shipping', 'ooni', 'hostility', 'propaganda', 'acled_actors',
 ];
 
 const startTime = Date.now();

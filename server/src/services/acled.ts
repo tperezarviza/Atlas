@@ -232,7 +232,16 @@ export async function fetchConflicts(): Promise<void> {
       }));
 
     cache.set('conflicts', conflicts, TTL.CONFLICTS);
-    console.log(`[ACLED] ${conflicts.length} conflicts cached from ${events.length} events`);
+
+    // Build actor frequency map for armed group enrichment
+    const actorCounts: Record<string, number> = {};
+    for (const event of events) {
+      if (event.actor1) actorCounts[event.actor1] = (actorCounts[event.actor1] ?? 0) + 1;
+      if (event.actor2) actorCounts[event.actor2] = (actorCounts[event.actor2] ?? 0) + 1;
+    }
+    cache.set('acled_actors', actorCounts, TTL.CONFLICTS);
+
+    console.log(`[ACLED] ${conflicts.length} conflicts cached from ${events.length} events (${Object.keys(actorCounts).length} actors tracked)`);
   } catch (err) {
     console.error('[ACLED] Fetch failed:', err);
   }

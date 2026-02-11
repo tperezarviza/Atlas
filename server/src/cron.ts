@@ -1,5 +1,4 @@
 import cron from 'node-cron';
-import { cache } from './cache.js';
 import { fetchMarkets } from './services/markets.js';
 import { fetchFeeds } from './services/feeds.js';
 import { fetchGdeltNews } from './services/gdelt.js';
@@ -11,6 +10,13 @@ import { fetchConnections } from './services/connections.js';
 import { fetchCalendar } from './services/calendar.js';
 import { fetchBorderStats } from './services/border.js';
 import { fetchCDS } from './services/cds.js';
+import { fetchOoniIncidents } from './services/ooni.js';
+import { fetchCountries } from './services/countries.js';
+import { fetchArmedGroups } from './services/terrorism.js';
+import { fetchShippingData } from './services/shipping.js';
+import { fetchHostilityIndex } from './services/hostility.js';
+import { fetchPropaganda } from './services/propaganda.js';
+import { fetchSanctions } from './services/sanctions.js';
 
 function safeRun(name: string, fn: () => Promise<void> | void) {
   return async () => {
@@ -55,8 +61,27 @@ export function startCronJobs() {
   // 0 6 * * * -> Border stats (1x/day)
   cron.schedule('0 6 * * *', safeRun('border', fetchBorderStats));
 
-  // 0 */6 * * * -> CDS spreads
-  cron.schedule('0 */6 * * *', safeRun('cds', fetchCDS));
+  // 0 */6 * * * -> CDS spreads + Hostility Index
+  cron.schedule('0 */6 * * *', safeRun('cds+hostility', async () => {
+    await fetchCDS();
+    await fetchHostilityIndex();
+  }));
+
+  // 0 * * * * (offset 30) -> OONI + Countries + Armed Groups
+  cron.schedule('30 * * * *', safeRun('intel', async () => {
+    await fetchOoniIncidents();
+    await fetchCountries();
+    await fetchArmedGroups();
+  }));
+
+  // 15,45 * * * * -> Shipping (every 30 min offset)
+  cron.schedule('15,45 * * * *', safeRun('shipping', fetchShippingData));
+
+  // 0 */12 * * * -> Propaganda (every 12h)
+  cron.schedule('30 */12 * * *', safeRun('propaganda', fetchPropaganda));
+
+  // 0 3 * * * -> Sanctions (daily 3am)
+  cron.schedule('0 3 * * *', safeRun('sanctions', fetchSanctions));
 
   console.log('[CRON] All jobs scheduled');
 }

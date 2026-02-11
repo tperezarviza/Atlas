@@ -14,6 +14,15 @@ import { registerConnectionsRoutes } from './routes/connections.js';
 import { registerTickerRoutes } from './routes/ticker.js';
 import { registerTopbarRoutes } from './routes/topbar.js';
 import { registerDependenciesRoutes } from './routes/dependencies.js';
+import { registerCountriesRoutes } from './routes/countries.js';
+import { registerSanctionsRoutes } from './routes/sanctions.js';
+import { registerArmedGroupsRoutes } from './routes/armed-groups.js';
+import { registerShippingRoutes } from './routes/shipping.js';
+import { registerOoniRoutes } from './routes/ooni.js';
+import { registerHostilityRoutes } from './routes/hostility.js';
+import { registerPropagandaRoutes } from './routes/propaganda.js';
+import { registerSipriRoutes } from './routes/sipri.js';
+import { registerGtdRoutes } from './routes/gtd.js';
 import { startCronJobs } from './cron.js';
 import { warmUpCache } from './services/warmup.js';
 
@@ -39,6 +48,15 @@ registerConnectionsRoutes(app);
 registerTickerRoutes(app);
 registerTopbarRoutes(app);
 registerDependenciesRoutes(app);
+registerCountriesRoutes(app);
+registerSanctionsRoutes(app);
+registerArmedGroupsRoutes(app);
+registerShippingRoutes(app);
+registerOoniRoutes(app);
+registerHostilityRoutes(app);
+registerPropagandaRoutes(app);
+registerSipriRoutes(app);
+registerGtdRoutes(app);
 
 // Start server
 try {

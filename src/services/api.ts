@@ -35,6 +35,16 @@ import type {
   MarketSession,
   CDSSpread,
   StrategicDependency,
+  CountryProfile,
+  SanctionsResponse,
+  ArmedGroup,
+  Chokepoint,
+  InternetIncident,
+  HostilityPair,
+  PropagandaEntry,
+  ArmsTransfer,
+  MilitarySpending,
+  GTDSummary,
 } from '../types';
 
 export interface TopBarData {
@@ -77,4 +87,20 @@ export const api = {
   connections: () => fetchJSON<Connection[]>('/api/connections'),
   ticker:      () => fetchJSON<TickerItem[]>('/api/ticker'),
   dependencies:() => fetchJSON<StrategicDependency[]>('/api/dependencies'),
+  // Phase 2.5-B: Intelligence Services
+  countries:          () => fetchJSON<CountryProfile[]>('/api/countries'),
+  country:      (code: string) => fetchJSON<CountryProfile>(`/api/countries/${code}`),
+  sanctions:          () => fetchJSON<SanctionsResponse>('/api/sanctions'),
+  armedGroups:        () => fetchJSON<ArmedGroup[]>('/api/armed-groups'),
+  armedGroup:    (id: string) => fetchJSON<ArmedGroup>(`/api/armed-groups/${id}`),
+  shipping:           () => fetchJSON<Chokepoint[]>('/api/shipping'),
+  internetIncidents:  () => fetchJSON<InternetIncident[]>('/api/internet-incidents'),
+  hostility:          () => fetchJSON<HostilityPair[]>('/api/hostility'),
+  hostilityPair:(pair: string) => fetchJSON<HostilityPair>(`/api/hostility/${pair}`),
+  propaganda:         () => fetchJSON<PropagandaEntry[]>('/api/propaganda'),
+  propagandaCountry: (code: string) => fetchJSON<PropagandaEntry>(`/api/propaganda/${code}`),
+  armsTransfers:      () => fetchJSON<ArmsTransfer[]>('/api/arms-transfers'),
+  militarySpending:   () => fetchJSON<MilitarySpending[]>('/api/military-spending'),
+  terrorismHistory:   () => fetchJSON<GTDSummary[]>('/api/terrorism/history'),
+  terrorismGroup:(group: string) => fetchJSON<GTDSummary>(`/api/terrorism/history/${group}`),
 };

@@ -23,6 +23,14 @@ export const TTL = {
   BORDER:    24 * 60 * 60 * 1000,  // 24 h
   CDS:        6 * 60 * 60 * 1000,  // 6 h
   FOREX:      5 * 60 * 1000,       // 5 min
+  COUNTRIES:  60 * 60 * 1000,      // 1 h
+  SANCTIONS:  24 * 60 * 60 * 1000, // 24 h
+  ARMED_GROUPS: 60 * 60 * 1000,    // 1 h
+  SHIPPING:   30 * 60 * 1000,      // 30 min
+  OONI:       60 * 60 * 1000,      // 1 h
+  HOSTILITY:  6 * 60 * 60 * 1000,  // 6 h
+  PROPAGANDA: 12 * 60 * 60 * 1000, // 12 h
+  STATIC:     7 * 24 * 60 * 60 * 1000, // 7 d
 } as const;
 
 export const FETCH_TIMEOUT_API = 15_000;
