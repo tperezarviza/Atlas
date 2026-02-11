@@ -17,6 +17,11 @@ import { fetchShippingData } from './services/shipping.js';
 import { fetchHostilityIndex } from './services/hostility.js';
 import { fetchPropaganda } from './services/propaganda.js';
 import { fetchSanctions } from './services/sanctions.js';
+import { fetchCongress } from './services/congress.js';
+import { fetchExecutiveOrders } from './services/executive-orders.js';
+import { fetchPolling } from './services/polling.js';
+import { fetchFlights } from './services/flights.js';
+import { fetchUkraineFront } from './services/ukraine-front.js';
 
 function safeRun(name: string, fn: () => Promise<void> | void) {
   return async () => {
@@ -82,6 +87,21 @@ export function startCronJobs() {
 
   // 0 3 * * * -> Sanctions (daily 3am)
   cron.schedule('0 3 * * *', safeRun('sanctions', fetchSanctions));
+
+  // */2 * * * * -> Military flights (every 2 min)
+  cron.schedule('*/2 * * * *', safeRun('flights', fetchFlights));
+
+  // 10 * * * * -> Ukraine front (every hour, offset 10)
+  cron.schedule('10 * * * *', safeRun('ukraine-front', fetchUkraineFront));
+
+  // 20 */2 * * * -> Congress bills + nominations (every 2h)
+  cron.schedule('20 */2 * * *', safeRun('congress', fetchCongress));
+
+  // 40 */6 * * * -> Polling data (every 6h)
+  cron.schedule('40 */6 * * *', safeRun('polling', fetchPolling));
+
+  // 50 */12 * * * -> Executive orders (every 12h)
+  cron.schedule('50 */12 * * *', safeRun('executive-orders', fetchExecutiveOrders));
 
   console.log('[CRON] All jobs scheduled');
 }

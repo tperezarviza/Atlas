@@ -23,6 +23,11 @@ import { registerHostilityRoutes } from './routes/hostility.js';
 import { registerPropagandaRoutes } from './routes/propaganda.js';
 import { registerSipriRoutes } from './routes/sipri.js';
 import { registerGtdRoutes } from './routes/gtd.js';
+import { registerCongressRoutes } from './routes/congress.js';
+import { registerExecutiveOrdersRoutes } from './routes/executive-orders.js';
+import { registerPollingRoutes } from './routes/polling.js';
+import { registerFlightsRoutes } from './routes/flights.js';
+import { registerUkraineFrontRoutes } from './routes/ukraine-front.js';
 import { startCronJobs } from './cron.js';
 import { warmUpCache } from './services/warmup.js';
 
@@ -57,6 +62,11 @@ registerHostilityRoutes(app);
 registerPropagandaRoutes(app);
 registerSipriRoutes(app);
 registerGtdRoutes(app);
+registerCongressRoutes(app);
+registerExecutiveOrdersRoutes(app);
+registerPollingRoutes(app);
+registerFlightsRoutes(app);
+registerUkraineFrontRoutes(app);
 
 // Start server
 try {

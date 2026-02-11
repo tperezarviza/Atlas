@@ -8,6 +8,9 @@ export const TWELVE_DATA_API_KEY = process.env.TWELVE_DATA_API_KEY ?? '';
 export const EIA_API_KEY = process.env.EIA_API_KEY ?? '';
 export const FRED_API_KEY = process.env.FRED_API_KEY ?? '';
 export const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY ?? '';
+export const CONGRESS_API_KEY = process.env.CONGRESS_API_KEY ?? '';
+export const OPENSKY_CLIENT_ID = process.env.OPENSKY_CLIENT_ID ?? '';
+export const OPENSKY_CLIENT_SECRET = process.env.OPENSKY_CLIENT_SECRET ?? '';
 
 /** TTL values in milliseconds */
 export const TTL = {
@@ -30,6 +33,11 @@ export const TTL = {
   OONI:       60 * 60 * 1000,      // 1 h
   HOSTILITY:  6 * 60 * 60 * 1000,  // 6 h
   PROPAGANDA: 12 * 60 * 60 * 1000, // 12 h
+  CONGRESS:        2 * 60 * 60 * 1000,  // 2 h
+  EXECUTIVE_ORDERS:12 * 60 * 60 * 1000, // 12 h
+  POLLING:         6 * 60 * 60 * 1000,  // 6 h
+  FLIGHTS:         2 * 60 * 1000,       // 2 min
+  UKRAINE_FRONT:   60 * 60 * 1000,      // 1 h
   STATIC:     7 * 24 * 60 * 60 * 1000, // 7 d
 } as const;
 

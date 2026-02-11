@@ -16,6 +16,11 @@ import { fetchCountries } from './countries.js';
 import { fetchArmedGroups } from './terrorism.js';
 import { fetchHostilityIndex } from './hostility.js';
 import { fetchPropaganda } from './propaganda.js';
+import { fetchCongress } from './congress.js';
+import { fetchExecutiveOrders } from './executive-orders.js';
+import { fetchPolling } from './polling.js';
+import { fetchFlights } from './flights.js';
+import { fetchUkraineFront } from './ukraine-front.js';
 
 async function safeRun(name: string, fn: () => Promise<void> | void) {
   try {
@@ -59,9 +64,14 @@ export async function warmUpCache(): Promise<void> {
     safeRun('Hostility', fetchHostilityIndex),
   ]);
 
-  // Phase 4: Slow AI analysis (depends on GDELT data)
+  // Phase 4: Slow AI analysis + new services
   await Promise.allSettled([
     safeRun('Propaganda', fetchPropaganda),
+    safeRun('Congress', fetchCongress),
+    safeRun('Executive Orders', fetchExecutiveOrders),
+    safeRun('Polling', fetchPolling),
+    safeRun('Flights', fetchFlights),
+    safeRun('Ukraine Front', fetchUkraineFront),
   ]);
 
   const elapsed = ((Date.now() - start) / 1000).toFixed(1);

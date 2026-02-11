@@ -4,6 +4,13 @@ export type ConnectionType = 'proxy_war' | 'arms_flow' | 'alliance' | 'spillover
 export type FeedCategory = 'trump' | 'leader' | 'musk' | 'military' | 'think_tank' | 'conservative' | 'state_media';
 export type NuclearStatus = 'declared' | 'undeclared' | 'pursuing' | 'threshold' | 'none' | 'nato_sharing';
 export type ArmedGroupType = 'jihadist' | 'separatist' | 'militia' | 'cartel' | 'insurgent' | 'state_proxy';
+export type BillStatus = 'introduced' | 'committee' | 'passed_house' | 'passed_senate' | 'signed' | 'vetoed';
+export type BillRelevance = 'defense' | 'immigration' | 'foreign_affairs' | 'intelligence' | 'trade' | 'other';
+export type NominationStatus = 'pending' | 'confirmed' | 'rejected' | 'withdrawn';
+export type EOStatus = 'active' | 'revoked' | 'challenged';
+export type PollingTrend = 'improving' | 'stable' | 'declining';
+export type FlightCategory = 'fighter' | 'bomber' | 'transport' | 'tanker' | 'surveillance' | 'command' | 'helicopter' | 'unknown';
+export type UkraineFrontSource = 'deepstatemap' | 'isw' | 'acled_static';
 export type ChokepointStatus = 'normal' | 'elevated' | 'disrupted' | 'critical';
 export type NewsBullet = 'critical' | 'high' | 'medium' | 'accent';
 export type CalendarUrgency = 'today' | 'soon' | 'future';
@@ -302,4 +309,86 @@ export interface GTDSummary {
   primaryRegions: string[];
   primaryTactics: string[];
   yearlyData: { year: number; incidents: number; killed: number }[];
+}
+
+export interface CongressBill {
+  number: string;
+  title: string;
+  sponsor: string;
+  party: string;
+  introduced_date: string;
+  latest_action: string;
+  latest_action_date: string;
+  status: BillStatus;
+  subjects: string[];
+  committee: string;
+  relevance: BillRelevance;
+}
+
+export interface SenateNomination {
+  name: string;
+  position: string;
+  agency: string;
+  status: NominationStatus;
+  committee_vote_date?: string;
+  floor_vote_date?: string;
+}
+
+export interface ExecutiveOrder {
+  number: number;
+  title: string;
+  signing_date: string;
+  publication_date: string;
+  summary: string;
+  topics: string[];
+  federal_register_url: string;
+  status: EOStatus;
+}
+
+export interface PollEntry {
+  pollster: string;
+  date: string;
+  approve: number;
+  disapprove: number;
+}
+
+export interface PollingData {
+  presidential_approval: {
+    rcp_average: { approve: number; disapprove: number; spread: number };
+    recent_polls: PollEntry[];
+    trend: PollingTrend;
+  };
+  generic_ballot: {
+    rcp_average: { republican: number; democrat: number; spread: number };
+  };
+  direction: {
+    right_direction: number;
+    wrong_track: number;
+  };
+}
+
+export interface MilitaryFlight {
+  icao24: string;
+  callsign: string;
+  origin_country: string;
+  aircraft_type?: string;
+  category: FlightCategory;
+  lat: number;
+  lng: number;
+  altitude_m: number;
+  velocity_ms: number;
+  heading: number;
+  on_ground: boolean;
+  last_seen: number;
+  region?: string;
+}
+
+export interface UkraineFrontData {
+  source: UkraineFrontSource;
+  front_line_geojson?: unknown;
+  isw_map_image_url?: string;
+  isw_assessment_text?: string;
+  recent_events: { id: string; date: string; location: string; type: string; fatalities: number; lat: number; lng: number }[];
+  territory_summary?: string;
+  last_updated: string;
 }
