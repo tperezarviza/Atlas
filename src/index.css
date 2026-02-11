@@ -1,0 +1,210 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bg-deep: #030810;
+  --color-bg-primary: #070d1a;
+  --color-bg-card: #0b1224;
+  --color-bg-card-hover: #101a32;
+  --color-border: #14233f;
+  --color-border-bright: #1c3260;
+  --color-text-primary: #d8e2f0;
+  --color-text-secondary: #7a8ba8;
+  --color-text-muted: #3d506e;
+  --color-accent: #2d7aed;
+  --color-accent-glow: rgba(45, 122, 237, 0.25);
+  --color-critical: #e83b3b;
+  --color-high: #e8842b;
+  --color-medium: #d4a72c;
+  --color-low: #2d7aed;
+  --color-positive: #28b35a;
+  --color-purple: #9b59e8;
+  --color-cyan: #1abcdb;
+
+  --font-title: 'Rajdhani', sans-serif;
+  --font-data: 'JetBrains Mono', monospace;
+  --font-body: 'Source Sans 3', sans-serif;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  height: 100%;
+  overflow: hidden;
+  background: #030810;
+  color: #d8e2f0;
+  font-family: 'Source Sans 3', sans-serif;
+}
+
+/* Scanline overlay */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 1px,
+    rgba(0, 0, 0, 0.04) 1px,
+    rgba(0, 0, 0, 0.04) 2px
+  );
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 3px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #1c3260; border-radius: 3px; }
+
+/* Pulse animations */
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; box-shadow: 0 0 4px #e83b3b; }
+  50% { opacity: 0.4; box-shadow: 0 0 8px #e83b3b; }
+}
+
+@keyframes pulse-critical {
+  0% { box-shadow: 0 0 0 0 rgba(232, 59, 59, 0.5); }
+  70% { box-shadow: 0 0 0 14px rgba(232, 59, 59, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(232, 59, 59, 0); }
+}
+
+@keyframes pulse-high {
+  0% { box-shadow: 0 0 0 0 rgba(232, 132, 43, 0.4); }
+  70% { box-shadow: 0 0 0 10px rgba(232, 132, 43, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(232, 132, 43, 0); }
+}
+
+@keyframes pulse-news {
+  0% { box-shadow: 0 0 0 0 rgba(232, 59, 59, 0.35); }
+  70% { box-shadow: 0 0 0 8px rgba(232, 59, 59, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(232, 59, 59, 0); }
+}
+
+/* Ticker scroll */
+@keyframes scroll-ticker {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+/* Leaflet overrides */
+.leaflet-container {
+  background: #030810 !important;
+}
+
+.leaflet-tile-pane {
+  opacity: 0.85;
+}
+
+.leaflet-control-zoom {
+  display: none !important;
+}
+
+/* Conflict markers */
+.conflict-marker {
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.conflict-marker:hover {
+  transform: scale(1.3);
+  z-index: 1000 !important;
+}
+
+.conflict-marker.critical {
+  background: #e83b3b;
+  animation: pulse-critical 2s infinite;
+}
+
+.conflict-marker.high {
+  background: #e8842b;
+  animation: pulse-high 2.5s infinite;
+}
+
+.conflict-marker.medium {
+  background: #d4a72c;
+}
+
+.conflict-marker.low {
+  background: #2d7aed;
+  opacity: 0.7;
+}
+
+/* News markers */
+.news-marker {
+  border-radius: 50%;
+  border: 1.5px solid rgba(255, 255, 255, 0.2);
+  cursor: pointer;
+  opacity: 0.8;
+  transition: all 0.2s;
+}
+
+.news-marker:hover {
+  opacity: 1;
+  transform: scale(1.5);
+  z-index: 1000 !important;
+}
+
+.news-marker.neg-high {
+  background: #e83b3b;
+  animation: pulse-news 2s infinite;
+}
+
+.news-marker.neg-mid {
+  background: #e8842b;
+}
+
+.news-marker.neutral {
+  background: #d4a72c;
+  opacity: 0.5;
+}
+
+.news-marker.pos {
+  background: #28b35a;
+  opacity: 0.4;
+}
+
+/* Map tooltip */
+.map-tooltip {
+  background: rgba(7, 13, 26, 0.95) !important;
+  border: 1px solid #1c3260 !important;
+  border-radius: 3px !important;
+  padding: 8px 10px !important;
+  font-family: 'Source Sans 3', sans-serif !important;
+  color: #d8e2f0 !important;
+  font-size: 11px !important;
+  max-width: 260px !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5) !important;
+}
+
+.map-tooltip .tt-title {
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 600;
+  font-size: 13px;
+  margin-bottom: 2px;
+}
+
+.map-tooltip .tt-meta {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  color: #3d506e;
+}
+
+.map-tooltip .tt-headline {
+  font-size: 11px;
+  color: #7a8ba8;
+  margin-top: 4px;
+  line-height: 1.35;
+}
+
+.leaflet-tooltip-top:before,
+.leaflet-tooltip-bottom:before,
+.leaflet-tooltip-left:before,
+.leaflet-tooltip-right:before {
+  border-color: transparent !important;
+}
