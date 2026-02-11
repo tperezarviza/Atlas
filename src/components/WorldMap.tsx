@@ -1,16 +1,21 @@
 import { useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Tooltip, Polyline, useMap } from 'react-leaflet';
 import L from 'leaflet';
+import { useAutoRefresh } from '../hooks/useAutoRefresh';
+import { api } from '../services/api';
 import { mockConflicts } from '../data/mockConflicts';
 import { mockNews } from '../data/mockNews';
 import { mockConnections } from '../data/mockConnections';
 import { conflictMarkerSize, newsMarkerSize, toneToClass } from '../utils/formatters';
 import { connectionColors, connectionDash } from '../utils/colors';
 import MapLegend from './MapLegend';
+import type { Conflict, NewsPoint, Connection } from '../types';
 
 interface WorldMapProps {
   selectedConflictId: string | null;
   onSelectConflict: (id: string) => void;
+  conflicts: Conflict[] | null;
+  conflictsError: Error | null;
 }
 
 const conflictIconCache = new Map<string, L.DivIcon>();
@@ -54,7 +59,16 @@ function MapController() {
   return null;
 }
 
-export default function WorldMap({ selectedConflictId, onSelectConflict }: WorldMapProps) {
+export default function WorldMap({ selectedConflictId, onSelectConflict, conflicts, conflictsError }: WorldMapProps) {
+  const { data: news, error: newsError } = useAutoRefresh<NewsPoint[]>(api.news, 60_000);
+  const { data: connections, error: connectionsError } = useAutoRefresh<Connection[]>(api.connections, 240_000);
+
+  const c = conflicts ?? mockConflicts;
+  const n = news ?? mockNews;
+  const conn = connections ?? mockConnections;
+
+  const hasErrors = !!(conflictsError || newsError || connectionsError);
+
   return (
     <div className="h-full w-full relative" style={{ border: '1px solid #14233f' }}>
       <MapContainer
@@ -75,37 +89,37 @@ export default function WorldMap({ selectedConflictId, onSelectConflict }: World
         />
 
         {/* Connection lines */}
-        {mockConnections.map((conn) => {
+        {conn.map((connection) => {
           const isSelected = selectedConflictId
-            ? mockConflicts.some(
-                (c) =>
-                  c.id === selectedConflictId &&
-                  ((Math.abs(c.lat - conn.from[0]) < 1 && Math.abs(c.lng - conn.from[1]) < 1) ||
-                    (Math.abs(c.lat - conn.to[0]) < 1 && Math.abs(c.lng - conn.to[1]) < 1))
+            ? c.some(
+                (conflict) =>
+                  conflict.id === selectedConflictId &&
+                  ((Math.abs(conflict.lat - connection.from[0]) < 1 && Math.abs(conflict.lng - connection.from[1]) < 1) ||
+                    (Math.abs(conflict.lat - connection.to[0]) < 1 && Math.abs(conflict.lng - connection.to[1]) < 1))
               )
             : false;
 
           return (
             <Polyline
-              key={conn.id}
-              positions={[conn.from, conn.to]}
+              key={connection.id}
+              positions={[connection.from, connection.to]}
               pathOptions={{
-                color: connectionColors[conn.type] || '#2d7aed',
+                color: connectionColors[connection.type] || '#2d7aed',
                 weight: 1.5,
                 opacity: isSelected ? 0.8 : 0.45,
-                dashArray: connectionDash[conn.type] || undefined,
+                dashArray: connectionDash[connection.type] || undefined,
               }}
             >
               <Tooltip sticky className="map-tooltip">
-                <div className="tt-meta">{conn.type.replace('_', ' ').toUpperCase()}</div>
-                <div className="tt-headline">{conn.label}</div>
+                <div className="tt-meta">{connection.type.replace('_', ' ').toUpperCase()}</div>
+                <div className="tt-headline">{connection.label}</div>
               </Tooltip>
             </Polyline>
           );
         })}
 
         {/* Conflict markers */}
-        {mockConflicts.map((conflict) => (
+        {c.map((conflict) => (
           <Marker
             key={conflict.id}
             position={[conflict.lat, conflict.lng]}
@@ -134,17 +148,17 @@ export default function WorldMap({ selectedConflictId, onSelectConflict }: World
         ))}
 
         {/* News markers */}
-        {mockNews.map((news) => (
+        {n.map((item) => (
           <Marker
-            key={news.id}
-            position={[news.lat, news.lng]}
-            icon={getNewsIcon(news.tone)}
-            zIndexOffset={news.tone < -5 ? 500 : 0}
+            key={item.id}
+            position={[item.lat, item.lng]}
+            icon={getNewsIcon(item.tone)}
+            zIndexOffset={item.tone < -5 ? 500 : 0}
           >
             <Tooltip direction="top" offset={[0, -6]} className="map-tooltip">
-              <div className="tt-title">📍 {news.source}</div>
-              <div className="tt-meta">Tone: {news.tone} · {news.category.toUpperCase()}</div>
-              <div className="tt-headline">{news.headline}</div>
+              <div className="tt-title">📍 {item.source}</div>
+              <div className="tt-meta">Tone: {item.tone} · {item.category.toUpperCase()}</div>
+              <div className="tt-headline">{item.headline}</div>
             </Tooltip>
           </Marker>
         ))}
@@ -162,8 +176,8 @@ export default function WorldMap({ selectedConflictId, onSelectConflict }: World
         <div className="text-[8px] tracking-[1.5px] text-text-muted uppercase mb-[2px]">
           Live News Markers
         </div>
-        <span className="text-critical font-bold text-[16px]">847</span>
-        <span className="text-text-muted text-[10px]"> from 142 countries</span>
+        <span className="text-critical font-bold text-[16px]">{n.length}</span>
+        <span className="text-text-muted text-[10px]"> from GDELT</span>
       </div>
 
       {/* Legend - top right */}
@@ -179,14 +193,19 @@ export default function WorldMap({ selectedConflictId, onSelectConflict }: World
         }}
       >
         <span>
-          Last update: <b className="text-text-secondary">2 min ago</b>
+          Conflicts: <b className="text-text-secondary">{c.length}</b>
         </span>
         <span>
           Sources: <b className="text-text-secondary">GDELT · ACLED · USGS</b>
         </span>
         <span>
-          Refresh: <b className="text-text-secondary">15 min</b>
+          Refresh: <b className="text-text-secondary">60s</b>
         </span>
+        {hasErrors && (
+          <span className="text-critical font-bold">
+            FEED ERROR
+          </span>
+        )}
       </div>
     </div>
   );

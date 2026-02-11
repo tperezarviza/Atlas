@@ -1,8 +1,12 @@
 import { mockConflicts } from '../data/mockConflicts';
+import DataBadge from './DataBadge';
+import type { Conflict } from '../types';
 
 interface ConflictListProps {
   selectedId: string | null;
   onSelect: (id: string) => void;
+  conflicts: Conflict[] | null;
+  conflictsError: Error | null;
 }
 
 const severityBg: Record<string, string> = {
@@ -26,7 +30,9 @@ const severityBorder: Record<string, string> = {
   low: 'rgba(45,122,237,.2)',
 };
 
-export default function ConflictList({ selectedId, onSelect }: ConflictListProps) {
+export default function ConflictList({ selectedId, onSelect, conflicts, conflictsError }: ConflictListProps) {
+  const items = conflicts ?? mockConflicts;
+
   return (
     <div className="h-full flex flex-col rounded-[3px] overflow-hidden" style={{ background: '#0b1224', border: '1px solid #14233f' }}>
       {/* Header */}
@@ -37,12 +43,19 @@ export default function ConflictList({ selectedId, onSelect }: ConflictListProps
         <div className="font-title text-[12px] font-semibold tracking-[2px] uppercase text-text-secondary">
           ⚔️ Active Conflicts
         </div>
-        <div className="font-data text-[9px] text-text-muted">ACLED Live</div>
+        <DataBadge data={conflicts} error={conflictsError} liveLabel="ACLED Live" mockLabel="Mock" />
       </div>
+
+      {/* Error message */}
+      {conflictsError && !conflicts && (
+        <div className="px-3 py-2 text-[10px] text-critical font-data" style={{ background: 'rgba(232,59,59,.04)' }}>
+          Failed to load conflicts: {conflictsError.message}
+        </div>
+      )}
 
       {/* List */}
       <div className="flex-1 overflow-y-auto">
-        {mockConflicts.map((conflict) => {
+        {items.map((conflict) => {
           const isSelected = conflict.id === selectedId;
           return (
             <div

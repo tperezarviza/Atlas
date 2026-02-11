@@ -1,4 +1,8 @@
+import { useAutoRefresh } from '../hooks/useAutoRefresh';
+import { api } from '../services/api';
 import { mockLeaderFeed } from '../data/mockLeaderFeed';
+import DataBadge from './DataBadge';
+import type { FeedItem } from '../types';
 
 const borderColors: Record<string, string> = {
   trump: '#e83b3b',
@@ -8,6 +12,9 @@ const borderColors: Record<string, string> = {
 };
 
 export default function LeaderFeed() {
+  const { data, error } = useAutoRefresh<FeedItem[]>(api.leaders, 60_000);
+  const feed = data ?? mockLeaderFeed;
+
   return (
     <div className="h-full flex flex-col rounded-[3px] overflow-hidden" style={{ background: '#0b1224', border: '1px solid #14233f' }}>
       {/* Header */}
@@ -18,17 +25,19 @@ export default function LeaderFeed() {
         <div className="font-title text-[12px] font-semibold tracking-[2px] uppercase text-text-secondary">
           📡 Leader Feed
         </div>
-        <div
-          className="font-data text-[9px] px-[6px] py-[1px] rounded-[2px] tracking-[0.5px]"
-          style={{ background: 'rgba(232,59,59,.1)', color: '#e83b3b', border: '1px solid rgba(232,59,59,.2)' }}
-        >
-          LIVE
-        </div>
+        <DataBadge data={data} error={error} />
       </div>
+
+      {/* Error message */}
+      {error && !data && (
+        <div className="px-3 py-2 text-[10px] text-critical font-data" style={{ background: 'rgba(232,59,59,.04)' }}>
+          Failed to load feed: {error.message}
+        </div>
+      )}
 
       {/* Feed items */}
       <div className="flex-1 overflow-y-auto">
-        {mockLeaderFeed.map((item) => (
+        {feed.map((item) => (
           <div
             key={item.id}
             className="px-3 py-[10px] cursor-pointer transition-colors duration-200 hover:bg-bg-card-hover"

@@ -1,7 +1,13 @@
 import { useClock } from '../hooks/useClock';
+import { useAutoRefresh } from '../hooks/useAutoRefresh';
+import { api } from '../services/api';
+import type { TopBarData } from '../services/api';
+
+const REFRESH_MS = 30_000; // 30s
 
 export default function TopBar() {
   const { utc, buenosAires } = useClock();
+  const { data, error } = useAutoRefresh<TopBarData>(api.topbar, REFRESH_MS);
 
   return (
     <div
@@ -22,23 +28,23 @@ export default function TopBar() {
         <span className="text-critical">▣</span> ATLAS
       </div>
 
-      {/* LIVE badge */}
+      {/* Status badge */}
       <div
         className="flex items-center gap-[5px] rounded-[3px] px-2 py-[2px] font-data text-[10px] font-semibold tracking-[1px] mr-4"
         style={{
-          background: 'rgba(232,59,59,.12)',
-          border: '1px solid rgba(232,59,59,.3)',
-          color: '#e83b3b',
+          background: error && !data ? 'rgba(212,167,44,.12)' : 'rgba(232,59,59,.12)',
+          border: error && !data ? '1px solid rgba(212,167,44,.3)' : '1px solid rgba(232,59,59,.3)',
+          color: error && !data ? '#d4a72c' : '#e83b3b',
         }}
       >
         <div
           className="w-[6px] h-[6px] rounded-full"
           style={{
-            background: '#e83b3b',
+            background: error && !data ? '#d4a72c' : '#e83b3b',
             animation: 'pulse-dot 1.5s infinite',
           }}
         />
-        LIVE
+        {error && !data ? 'OFFLINE' : 'LIVE'}
       </div>
 
       {/* Clocks */}
@@ -53,14 +59,10 @@ export default function TopBar() {
 
       {/* KPIs */}
       <div className="flex gap-[2px] flex-1 justify-center">
-        <KPI label="Active Conflicts" value="23" colorClass="text-critical" />
-        <KPI label="Critical" value="3" colorClass="text-critical" />
-        <KPI label="News Markers" value="847" />
-        <KPI label="BTC" value="$97,234" colorClass="text-positive" />
-        <KPI label="WTI Oil" value="$72.34" colorClass="text-medium" />
-        <KPI label="Gold" value="$2,847" />
-        <KPI label="S&P 500" value="6,127" colorClass="text-positive" />
-        <KPI label="VIX" value="14.2" />
+        <KPI label="Active Conflicts" value={data?.activeConflicts?.toString() ?? '—'} colorClass="text-critical" />
+        <KPI label="Critical" value={data?.criticalConflicts?.toString() ?? '—'} colorClass="text-critical" />
+        <KPI label="BTC" value={data?.btcPrice ?? '—'} colorClass="text-positive" />
+        <KPI label="WTI Oil" value={data?.oilPrice ?? '—'} colorClass="text-medium" />
       </div>
 
       {/* Threat Level */}
@@ -72,7 +74,9 @@ export default function TopBar() {
         }}
       >
         <div className="font-data text-[9px] text-text-muted tracking-[1px]">THREAT</div>
-        <div className="font-title text-[20px] font-bold text-high">3</div>
+        <div className="font-title text-[20px] font-bold text-high">
+          {data?.threatLevel === 'HIGH' ? '3' : data?.threatLevel === 'ELEVATED' ? '2' : '1'}
+        </div>
       </div>
 
       {/* Bell */}
@@ -82,7 +86,7 @@ export default function TopBar() {
           className="absolute -top-1 -right-[6px] font-data text-[8px] font-bold text-white rounded-[6px] px-1"
           style={{ background: '#e83b3b' }}
         >
-          5
+          {data?.criticalConflicts ?? 0}
         </span>
       </div>
     </div>

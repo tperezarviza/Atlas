@@ -1,0 +1,86 @@
+import Anthropic from '@anthropic-ai/sdk';
+import { ANTHROPIC_API_KEY, TTL } from '../config.js';
+import { cache } from '../cache.js';
+import { mockConflicts } from '../mock/conflicts.js';
+import { mockNews } from '../mock/news.js';
+import { mockLeaderFeed } from '../mock/leaderFeed.js';
+import { mockMarketSections } from '../mock/markets.js';
+import type { BriefResponse, Conflict, NewsPoint, FeedItem, MarketSection } from '../types.js';
+
+const SYSTEM_PROMPT = `You are ATLAS, a senior geopolitical intelligence analyst providing briefings for a decision-maker interested in global security, US national interests, Middle East stability, China threat assessment, border security, and market impacts of geopolitical events.
+
+Your briefings should be:
+- Direct, no-nonsense, factual
+- Structured with clear sections
+- Focused on actionable intelligence and what to watch
+- Always connect geopolitical events to market implications
+- Flag anything relevant to US national security interests
+- Highlight wins for current US administration policy where data supports it
+- Note threats from Iran, China, Russia, non-state actors
+- Include border security developments when relevant
+
+FORMAT (use HTML tags for formatting):
+<h2>■ SITUATION OVERVIEW</h2>
+<p>2-3 sentences, big picture</p>
+<h2>■ CRITICAL DEVELOPMENTS</h2>
+<ul><li>bullet points of last 24h developments</li></ul>
+<h2>■ THREAT MATRIX</h2>
+<p><strong>CRITICAL:</strong> items</p>
+<p><strong>ELEVATED:</strong> items</p>
+<p><strong>WATCH:</strong> items</p>
+<h2>■ MARKET IMPLICATIONS</h2>
+<p>How geopolitics affects markets today</p>
+<h2>■ 72-HOUR OUTLOOK</h2>
+<p>What to expect next</p>
+<h2>■ RECOMMENDED MONITORING</h2>
+<ul><li>Specific things to track</li></ul>`;
+
+export async function fetchBrief(): Promise<BriefResponse> {
+  if (!ANTHROPIC_API_KEY) {
+    console.warn('[AI-BRIEF] No ANTHROPIC_API_KEY configured, skipping');
+    throw new Error('No API key');
+  }
+
+  console.log('[AI-BRIEF] Generating intelligence brief...');
+
+  const conflicts = cache.get<Conflict[]>('conflicts') ?? mockConflicts;
+  const news = cache.get<NewsPoint[]>('news') ?? mockNews;
+  const feed = cache.get<FeedItem[]>('feed') ?? mockLeaderFeed;
+  const markets = cache.get<MarketSection[]>('markets') ?? mockMarketSections;
+
+  const client = new Anthropic({ apiKey: ANTHROPIC_API_KEY });
+
+  const message = await client.messages.create({
+    model: 'claude-sonnet-4-5-20250929',
+    max_tokens: 2000,
+    system: SYSTEM_PROMPT,
+    messages: [{
+      role: 'user',
+      content: `Generate intelligence brief based on this data:
+
+CONFLICTS: ${JSON.stringify(conflicts.slice(0, 10))}
+
+TOP NEWS (most negative tone): ${JSON.stringify(news.sort((a, b) => a.tone - b.tone).slice(0, 15))}
+
+LEADER STATEMENTS: ${JSON.stringify(feed.slice(0, 8))}
+
+MARKETS: ${JSON.stringify(markets.map((s) => ({ title: s.title, items: s.items.map((i) => ({ name: i.name, price: i.price, delta: i.delta })) })))}
+
+Current UTC: ${new Date().toISOString()}`,
+    }],
+  });
+
+  const textBlock = message.content.find((b) => b.type === 'text');
+  const html = textBlock?.text ?? '<p>Brief generation failed</p>';
+
+  const brief: BriefResponse = {
+    html,
+    generatedAt: new Date().toISOString(),
+    model: 'claude-sonnet-4-5-20250929',
+    sources: ['ACLED', 'GDELT', 'Market Data', 'Leader Feeds'],
+  };
+
+  cache.set('brief', brief, TTL.BRIEF);
+  console.log('[AI-BRIEF] Brief generated and cached');
+  return brief;
+}

@@ -11,6 +11,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "dompurify": "^3.3.1",
     "leaflet": "^1.9.4",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
@@ -21,6 +22,7 @@
     "@tailwindcss/vite": "^4.1.18",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
+    "@types/dompurify": "^3.0.5",
     "@types/leaflet": "^1.9.21",
     "@types/node": "^24.10.1",
     "@types/react": "^19.2.7",

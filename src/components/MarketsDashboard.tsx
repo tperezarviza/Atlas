@@ -1,6 +1,16 @@
+import { useAutoRefresh } from '../hooks/useAutoRefresh';
+import { api } from '../services/api';
+import type { MarketsResponse } from '../services/api';
 import { mockMarketSections, mockMacro, mockBorderStats } from '../data/mockMarkets';
+import DataBadge from './DataBadge';
 
 export default function MarketsDashboard() {
+  const { data, error } = useAutoRefresh<MarketsResponse>(api.markets, 60_000);
+
+  const sections = data?.sections ?? mockMarketSections;
+  const macro = data?.macro ?? mockMacro;
+  const border = data?.border ?? mockBorderStats;
+
   return (
     <div className="h-full flex flex-col rounded-[3px] overflow-hidden" style={{ background: '#0b1224', border: '1px solid #14233f' }}>
       {/* Header */}
@@ -11,18 +21,20 @@ export default function MarketsDashboard() {
         <div className="font-title text-[12px] font-semibold tracking-[2px] uppercase text-text-secondary">
           💹 Markets & Indicators
         </div>
-        <div
-          className="font-data text-[9px] px-[6px] py-[1px] rounded-[2px] tracking-[0.5px]"
-          style={{ background: 'rgba(40,179,90,.1)', color: '#28b35a', border: '1px solid rgba(40,179,90,.2)' }}
-        >
-          LIVE
-        </div>
+        <DataBadge data={data} error={error} />
       </div>
+
+      {/* Error message */}
+      {error && !data && (
+        <div className="px-3 py-2 text-[10px] text-critical font-data" style={{ background: 'rgba(232,59,59,.04)' }}>
+          Failed to load markets: {error.message}
+        </div>
+      )}
 
       {/* Body */}
       <div className="flex-1 overflow-y-auto">
         {/* Market sections */}
-        {mockMarketSections.map((section) => (
+        {sections.map((section) => (
           <div key={section.title} className="py-[6px]" style={{ borderBottom: '1px solid #14233f' }}>
             <div className="font-data text-[8px] tracking-[1.5px] text-text-muted px-[10px] mb-[2px] uppercase">
               {section.icon} {section.title}
@@ -73,7 +85,7 @@ export default function MarketsDashboard() {
           <div className="font-data text-[8px] tracking-[1.5px] text-text-muted px-[10px] mb-[2px] uppercase">
             🇺🇸 US Macro
           </div>
-          {mockMacro.map((item) => (
+          {macro.map((item) => (
             <div key={item.label} className="flex justify-between px-[10px] py-[3px]">
               <span className="font-data text-[10px] text-text-muted">{item.label}</span>
               <span
@@ -91,7 +103,7 @@ export default function MarketsDashboard() {
           <div className="font-data text-[8px] tracking-[1.5px] text-text-muted px-[10px] mb-[2px] uppercase">
             🛃 Border Security (FY26)
           </div>
-          {mockBorderStats.map((stat) => (
+          {border.map((stat) => (
             <div key={stat.label} className="flex justify-between items-center px-[10px] py-1">
               <span className="font-data text-[10px] text-text-muted">{stat.label}</span>
               <span className="font-data text-[12px] font-semibold" style={{ color: stat.color || '#d8e2f0' }}>

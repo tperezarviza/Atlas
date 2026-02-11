@@ -1,8 +1,15 @@
+import { useAutoRefresh } from '../hooks/useAutoRefresh';
+import { api } from '../services/api';
 import { mockNewsWire } from '../data/mockNewsWire';
 import { bulletColors } from '../utils/colors';
 import { toneToColor } from '../utils/formatters';
+import DataBadge from './DataBadge';
+import type { NewsWireItem } from '../types';
 
 export default function NewsWire() {
+  const { data, error } = useAutoRefresh<NewsWireItem[]>(api.newswire, 60_000);
+  const wire = data ?? mockNewsWire;
+
   return (
     <div className="h-full flex flex-col rounded-[3px] overflow-hidden" style={{ background: '#0b1224', border: '1px solid #14233f' }}>
       {/* Header */}
@@ -13,12 +20,19 @@ export default function NewsWire() {
         <div className="font-title text-[12px] font-semibold tracking-[2px] uppercase text-text-secondary">
           📰 Breaking Wire
         </div>
-        <div className="font-data text-[9px] text-text-muted">GDELT · Reuters · Fox</div>
+        <DataBadge data={data} error={error} liveLabel="GDELT Live" mockLabel="Mock" />
       </div>
+
+      {/* Error message */}
+      {error && !data && (
+        <div className="px-3 py-2 text-[10px] text-critical font-data" style={{ background: 'rgba(232,59,59,.04)' }}>
+          Failed to load wire: {error.message}
+        </div>
+      )}
 
       {/* Items */}
       <div className="flex-1 overflow-y-auto">
-        {mockNewsWire.map((item) => {
+        {wire.map((item) => {
           const tColor = toneToColor(item.tone);
           const toneWidth = Math.min(Math.abs(item.tone) * 8, 100);
           return (

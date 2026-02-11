@@ -1,4 +1,8 @@
+import { useAutoRefresh } from '../hooks/useAutoRefresh';
+import { api } from '../services/api';
 import { mockCalendar } from '../data/mockCalendar';
+import DataBadge from './DataBadge';
+import type { CalendarEvent } from '../types';
 
 const urgencyBorder: Record<string, string> = {
   today: '#e83b3b',
@@ -7,6 +11,9 @@ const urgencyBorder: Record<string, string> = {
 };
 
 export default function DiplomaticCalendar() {
+  const { data, error } = useAutoRefresh<CalendarEvent[]>(api.calendar, 300_000);
+  const events = data ?? mockCalendar;
+
   return (
     <div className="h-full flex flex-col rounded-[3px] overflow-hidden" style={{ background: '#0b1224', border: '1px solid #14233f' }}>
       {/* Header */}
@@ -17,11 +24,19 @@ export default function DiplomaticCalendar() {
         <div className="font-title text-[12px] font-semibold tracking-[2px] uppercase text-text-secondary">
           📅 Diplomatic Calendar
         </div>
+        <DataBadge data={data} error={error} liveLabel="Live" mockLabel="Mock" />
       </div>
+
+      {/* Error message */}
+      {error && !data && (
+        <div className="px-3 py-2 text-[10px] text-critical font-data" style={{ background: 'rgba(232,59,59,.04)' }}>
+          Failed to load calendar: {error.message}
+        </div>
+      )}
 
       {/* Events */}
       <div className="flex-1 overflow-y-auto">
-        {mockCalendar.map((event) => (
+        {events.map((event) => (
           <div
             key={event.id}
             className="px-[10px] py-2"
