@@ -66,6 +66,14 @@ app.setErrorHandler((error: { statusCode?: number; code?: string; message?: stri
   reply.status(status).send({ error: status >= 500 ? 'Internal server error' : (error.message ?? 'Error') });
 });
 
+// Serve frontend static files (built by Vite into /app/dist)
+const distPath = path.resolve(process.cwd(), '..', 'dist');
+await app.register(fastifyStatic, {
+  root: distPath,
+  prefix: '/',
+  wildcard: false,
+});
+
 // Register all routes
 registerHealthRoutes(app);
 registerConflictsRoutes(app);
@@ -100,6 +108,15 @@ registerEconomicCalendarRoutes(app);
 registerAlertsRoutes(app);
 registerVesselsRoutes(app);
 registerEarthquakeRoutes(app);
+
+// SPA fallback — serve index.html for non-API routes
+app.setNotFoundHandler((request, reply) => {
+  if (request.url.startsWith('/api/')) {
+    reply.status(404).send({ error: 'Not found' });
+  } else {
+    reply.sendFile('index.html');
+  }
+});
 
 // Start server
 try {
