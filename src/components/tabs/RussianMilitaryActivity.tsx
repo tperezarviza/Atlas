@@ -17,8 +17,6 @@ const NUCLEAR_LEVELS = [
   { label: 'IMMINENT', color: '#ff3b3b' },
 ] as const;
 
-const CURRENT_NUCLEAR_LEVEL = 'ELEVATED';
-
 export default function RussianMilitaryActivity() {
   const {
     data: flights,
@@ -193,49 +191,36 @@ export default function RussianMilitaryActivity() {
                 <span className="font-data text-[10px] text-text-muted">Current Level:</span>
                 <span
                   className="font-data text-[12px] font-bold tracking-[1px]"
-                  style={{ color: '#ff8c00' }}
+                  style={{ color: 'rgba(255,255,255,.25)' }}
                 >
-                  ELEVATED
+                  —
                 </span>
               </div>
               {/* Gauge bar */}
               <div className="flex gap-[2px] mb-[6px]">
-                {NUCLEAR_LEVELS.map((level) => {
-                  const isActive = level.label === CURRENT_NUCLEAR_LEVEL;
-                  const isPast = NUCLEAR_LEVELS.findIndex(l => l.label === level.label) <=
-                    NUCLEAR_LEVELS.findIndex(l => l.label === CURRENT_NUCLEAR_LEVEL);
-                  return (
+                {NUCLEAR_LEVELS.map((level) => (
+                  <div
+                    key={level.label}
+                    className="flex-1 flex flex-col items-center gap-[3px]"
+                  >
                     <div
-                      key={level.label}
-                      className="flex-1 flex flex-col items-center gap-[3px]"
+                      className="w-full h-[6px] rounded-[1px]"
+                      style={{
+                        background: 'rgba(255,255,255,.06)',
+                        opacity: 0.4,
+                      }}
+                    />
+                    <span
+                      className="font-data text-[7px] tracking-[0.5px] uppercase"
+                      style={{ color: 'rgba(255,255,255,.25)' }}
                     >
-                      <div
-                        className="w-full h-[6px] rounded-[1px] relative"
-                        style={{
-                          background: isPast ? level.color : 'rgba(255,255,255,.06)',
-                          opacity: isPast ? 1 : 0.4,
-                          boxShadow: isActive ? `0 0 6px ${level.color}60` : undefined,
-                        }}
-                      >
-                        {isActive && (
-                          <div
-                            className="absolute -top-[2px] -bottom-[2px] -left-[1px] -right-[1px] rounded-[2px]"
-                            style={{ border: `1px solid ${level.color}`, animation: 'pulse-dot 2s infinite' }}
-                          />
-                        )}
-                      </div>
-                      <span
-                        className="font-data text-[7px] tracking-[0.5px] uppercase"
-                        style={{ color: isPast ? level.color : 'rgba(255,255,255,.25)' }}
-                      >
-                        {level.label}
-                      </span>
-                    </div>
-                  );
-                })}
+                      {level.label}
+                    </span>
+                  </div>
+                ))}
               </div>
               <div className="font-data text-[9px] text-text-muted leading-[1.4]" style={{ opacity: 0.7 }}>
-                Periodic nuclear signaling, no operational indicators
+                No real-time data source available
               </div>
             </div>
           </MaybeFadeIn>

@@ -1,6 +1,5 @@
 import type { FastifyInstance } from 'fastify';
 import { cache } from '../cache.js';
-import { mockNaturalEvents } from '../mock/eonet.js';
 import type { NaturalEvent } from '../types.js';
 
 const VALID_CATEGORIES = new Set([
@@ -11,7 +10,7 @@ const VALID_CATEGORIES = new Set([
 
 export function registerEonetRoutes(app: FastifyInstance) {
   app.get('/api/natural-events', async (req, reply) => {
-    const events = cache.get<NaturalEvent[]>('natural_events') ?? mockNaturalEvents;
+    const events = cache.get<NaturalEvent[]>('natural_events') ?? [];
     const category = (req.query as Record<string, string>).category;
     if (category) {
       if (!VALID_CATEGORIES.has(category)) {

@@ -3,9 +3,6 @@ import { MapContainer, TileLayer, Marker, Tooltip, Polyline, GeoJSON, useMap } f
 import L from 'leaflet';
 import { useApiData } from '../hooks/useApiData';
 import { api } from '../services/api';
-import { mockConflicts } from '../data/mockConflicts';
-import { mockNews } from '../data/mockNews';
-import { mockConnections } from '../data/mockConnections';
 import { conflictMarkerSize, newsMarkerSize, toneToClass } from '../utils/formatters';
 import { connectionColors, connectionDash } from '../utils/colors';
 import MapLegend from './MapLegend';
@@ -228,9 +225,9 @@ export default function WorldMap({ selectedConflictId, onSelectConflict, onCount
     return () => controller.abort();
   }, []);
 
-  const c = conflicts ?? mockConflicts;
-  const n = news ?? mockNews;
-  const conn = connections ?? mockConnections;
+  const c = conflicts ?? [];
+  const n = news ?? [];
+  const conn = connections ?? [];
 
   const hasErrors = !!(conflictsError || newsError || connectionsError);
 

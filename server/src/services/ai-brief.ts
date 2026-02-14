@@ -1,10 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { ANTHROPIC_API_KEY, TTL } from '../config.js';
 import { cache } from '../cache.js';
-import { mockConflicts } from '../mock/conflicts.js';
-import { mockNews } from '../mock/news.js';
-import { mockLeaderFeed } from '../mock/leaderFeed.js';
-import { mockMarketSections } from '../mock/markets.js';
 import type { BriefResponse, Conflict, NewsPoint, FeedItem, MarketSection } from '../types.js';
 
 const SYSTEM_PROMPT = `You are ATLAS, a senior geopolitical intelligence analyst providing briefings for a decision-maker interested in global security, US national interests, Middle East stability, China threat assessment, border security, and market impacts of geopolitical events.
@@ -65,10 +61,10 @@ export async function fetchBrief(focus?: string): Promise<BriefResponse> {
 
   console.log(`[AI-BRIEF] Generating intelligence brief${focus ? ` (focus: ${focus})` : ''}...`);
 
-  const conflicts = cache.get<Conflict[]>('conflicts') ?? mockConflicts;
-  const news = cache.get<NewsPoint[]>('news') ?? mockNews;
-  const feed = cache.get<FeedItem[]>('feed') ?? mockLeaderFeed;
-  const markets = cache.get<MarketSection[]>('markets') ?? mockMarketSections;
+  const conflicts = cache.get<Conflict[]>('conflicts') ?? [];
+  const news = cache.get<NewsPoint[]>('news') ?? [];
+  const feed = cache.get<FeedItem[]>('feed') ?? [];
+  const markets = cache.get<MarketSection[]>('markets') ?? [];
 
   const systemPrompt = SYSTEM_PROMPT + (focus && FOCUS_PROMPTS[focus] ? FOCUS_PROMPTS[focus] : '');
 

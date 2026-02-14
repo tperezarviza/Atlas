@@ -1,7 +1,6 @@
 import { useRef, useEffect, useMemo } from 'react';
 import { useApiData } from '../hooks/useApiData';
 import { api } from '../services/api';
-import { mockCalendar } from '../data/mockCalendar';
 import { getSensitiveDateEvents } from '../utils/sensitiveDateEvents';
 import MaybeFadeIn from './MaybeFadeIn';
 import DataBadge from './DataBadge';
@@ -18,7 +17,7 @@ const urgencyBorder: Record<string, string> = {
 
 export default function DiplomaticCalendar() {
   const { data, loading, error, lastUpdate } = useApiData<CalendarEvent[]>(api.calendar, REFRESH_MS);
-  const baseEvents = data ?? mockCalendar;
+  const baseEvents = data ?? [];
   const events = useMemo(() => {
     const sensitive = getSensitiveDateEvents();
     const order: Record<string, number> = { today: 0, soon: 1, future: 2 };

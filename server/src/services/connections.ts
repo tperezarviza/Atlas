@@ -1,7 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { ANTHROPIC_API_KEY, TTL } from '../config.js';
 import { cache } from '../cache.js';
-import { mockConflicts } from '../mock/conflicts.js';
 import type { Connection, Conflict, ConnectionType } from '../types.js';
 
 const VALID_TYPES: ConnectionType[] = ['proxy_war', 'arms_flow', 'alliance', 'spillover', 'military', 'cyber'];
@@ -77,7 +76,7 @@ export async function fetchConnections(): Promise<void> {
   console.log('[CONNECTIONS] Generating conflict connections...');
 
   try {
-    const conflicts = cache.get<Conflict[]>('conflicts') ?? mockConflicts;
+    const conflicts = cache.get<Conflict[]>('conflicts') ?? [];
 
     const client = new Anthropic({ apiKey: ANTHROPIC_API_KEY });
 

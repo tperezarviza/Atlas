@@ -2,7 +2,6 @@ import { useRef, useEffect } from 'react';
 import { useApiData } from '../hooks/useApiData';
 import { api } from '../services/api';
 import type { MarketsResponse } from '../services/api';
-import { mockMarketSections, mockForexSections } from '../data/mockMarkets';
 import type { MarketSection, MarketItem } from '../types';
 import MaybeFadeIn from './MaybeFadeIn';
 import DataBadge from './DataBadge';
@@ -65,8 +64,8 @@ export default function MarketsDashboard() {
   const hasShownData = useRef(false);
   useEffect(() => { if (data) hasShownData.current = true; }, [data]);
 
-  const sections = data?.sections ?? mockMarketSections;
-  const forex = data?.forex ?? mockForexSections;
+  const sections = data?.sections ?? [];
+  const forex = data?.forex ?? [];
 
   // Regional indices: keep Americas, Europe, Asia-Pacific as separate sections (no ME/Africa)
   // No sparklines — just name + price + delta

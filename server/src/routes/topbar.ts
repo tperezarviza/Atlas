@@ -1,7 +1,5 @@
 import type { FastifyInstance } from 'fastify';
 import { cache } from '../cache.js';
-import { mockConflicts } from '../mock/conflicts.js';
-import { mockMarketSections, mockBorderStats, mockMacro } from '../mock/markets.js';
 import type { Conflict, MarketSection, BorderStat, MacroItem, TopBarData, TopBarKPI, CDSSpread, CyberThreatPulse } from '../types.js';
 
 function findMarketPrice(sections: MarketSection[], sectionTitle: string, itemName: string, fallback: string): string {
@@ -19,11 +17,11 @@ function findForexRate(forex: MarketSection[], pair: string, fallback: string): 
 }
 
 function computeTopbar(tab?: string): TopBarData {
-  const conflicts = cache.get<Conflict[]>('conflicts') ?? mockConflicts;
-  const sections = cache.get<MarketSection[]>('markets') ?? mockMarketSections;
+  const conflicts = cache.get<Conflict[]>('conflicts') ?? [];
+  const sections = cache.get<MarketSection[]>('markets') ?? [];
   const forex = cache.get<MarketSection[]>('forex') ?? [];
-  const border = cache.get<BorderStat[]>('border') ?? mockBorderStats;
-  const macro = cache.get<MacroItem[]>('macro') ?? mockMacro;
+  const border = cache.get<BorderStat[]>('border') ?? [];
+  const macro = cache.get<MacroItem[]>('macro') ?? [];
   const cds = cache.get<CDSSpread[]>('cds') ?? [];
   const criticalConflicts = conflicts.filter(c => c.severity === 'critical').length;
   const threatLevel = criticalConflicts >= 3 ? 'HIGH' : criticalConflicts >= 2 ? 'ELEVATED' : 'GUARDED';

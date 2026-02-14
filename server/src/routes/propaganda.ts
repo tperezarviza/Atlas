@@ -1,11 +1,10 @@
 import type { FastifyInstance } from 'fastify';
 import { cache } from '../cache.js';
-import { mockPropaganda } from '../mock/propaganda.js';
 import type { PropagandaEntry } from '../types.js';
 
 export function registerPropagandaRoutes(app: FastifyInstance) {
   app.get('/api/propaganda', async () => {
-    return cache.get<PropagandaEntry[]>('propaganda') ?? mockPropaganda;
+    return cache.get<PropagandaEntry[]>('propaganda') ?? [];
   });
 
   app.get<{ Params: { country: string } }>('/api/propaganda/:country', async (req, reply) => {
@@ -14,7 +13,7 @@ export function registerPropagandaRoutes(app: FastifyInstance) {
       reply.status(400);
       return { error: 'Invalid country code format' };
     }
-    const entries = cache.get<PropagandaEntry[]>('propaganda') ?? mockPropaganda;
+    const entries = cache.get<PropagandaEntry[]>('propaganda') ?? [];
     const entry = entries.find((e) => e.countryCode.toUpperCase() === country.toUpperCase());
     if (!entry) {
       reply.status(404);

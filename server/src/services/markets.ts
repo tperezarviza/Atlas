@@ -1,7 +1,5 @@
 import { EIA_API_KEY, FETCH_TIMEOUT_API, TTL } from '../config.js';
 import { cache } from '../cache.js';
-import { mockMarketSections } from '../mock/markets.js';
-import { mockRegionalIndices, mockForexSections } from '../mock/globalMarkets.js';
 import { INDEX_SYMBOLS, FOREX_SYMBOLS, ALWAYS_FETCH, type SymbolDef } from '../data/symbols.js';
 import { getActiveRegions } from './sessions.js';
 import { fetchYahooBatch } from './yahoo.js';
@@ -254,66 +252,40 @@ export async function fetchMarkets(): Promise<void> {
       console.log(`[MARKETS] Yahoo: ${Object.keys(yahooResults.value).length} items`);
     }
 
-    // 4. Build base sections (Energy, Metals, Crypto, Commodities) from mock + real overlays
-    const baseSections: MarketSection[] = JSON.parse(JSON.stringify(mockMarketSections));
+    // 4. Build commodity sections from real data only
+    const commoditySections: MarketSection[] = [];
 
-    // Remove the old "Indices" section — replaced by regional sections
-    const baseFiltered = baseSections.filter((s) => s.title !== 'Indices');
-
-    // Update crypto
-    if (crypto.status === 'fulfilled' && crypto.value.length > 0) {
-      const cryptoSection = baseFiltered.find((s) => s.title === 'Crypto');
-      if (cryptoSection) {
-        for (const item of crypto.value) {
-          const idx = cryptoSection.items.findIndex((i) => i.name === item.name);
-          if (idx >= 0) cryptoSection.items[idx] = item;
-        }
-      }
-      console.log(`[MARKETS] CoinGecko: ${crypto.value.length} items`);
+    const oilItems = oil.status === 'fulfilled' ? oil.value : [];
+    if (oilItems.length > 0) {
+      commoditySections.push({ title: 'Energy', icon: '⛽', items: oilItems });
     }
 
-    // Update oil
-    if (oil.status === 'fulfilled' && oil.value.length > 0) {
-      const energySection = baseFiltered.find((s) => s.title === 'Energy');
-      if (energySection) {
-        for (const item of oil.value) {
-          const idx = energySection.items.findIndex((i) => i.name === item.name);
-          if (idx >= 0) energySection.items[idx] = item;
-        }
-      }
+    const metalItems = metals.status === 'fulfilled' ? metals.value : [];
+    if (metalItems.length > 0) {
+      commoditySections.push({ title: 'Precious Metals', icon: '🥇', items: metalItems });
     }
 
-    // Update metals
-    if (metals.status === 'fulfilled' && metals.value.length > 0) {
-      const metalsSection = baseFiltered.find((s) => s.title === 'Precious Metals');
-      if (metalsSection) {
-        for (const item of metals.value) {
-          const idx = metalsSection.items.findIndex((i) => i.name === item.name);
-          if (idx >= 0) metalsSection.items[idx] = item;
-        }
-      }
+    const cryptoItems = crypto.status === 'fulfilled' ? crypto.value : [];
+    if (cryptoItems.length > 0) {
+      commoditySections.push({ title: 'Crypto', icon: '₿', items: cryptoItems });
+      console.log(`[MARKETS] CoinGecko: ${cryptoItems.length} items`);
     }
 
-    // 5. Build regional index sections
+    // 5. Build regional index sections from Yahoo data
     const regionalSections = buildRegionalSections(allItems);
-    const finalSections = [...regionalSections, ...baseFiltered];
+    const finalSections = [...regionalSections, ...commoditySections];
 
     // 6. Build forex sections
     const forexSections = buildForexSections(allItems);
 
-    // 7. Fill in mock sections for any regions with no real data
-    const requiredRegions = ['Americas', 'Europe', 'Asia-Pacific', 'Middle East/Africa'];
-    const existingTitles = new Set(finalSections.map((s) => s.title));
-    for (const mock of mockRegionalIndices) {
-      if (requiredRegions.includes(mock.title) && !existingTitles.has(mock.title)) {
-        finalSections.unshift(mock);
-      }
+    // 7. Cache everything (only if we have data)
+    if (finalSections.length > 0) {
+      cache.set('markets', finalSections, TTL.MARKETS);
     }
-
-    // 8. Cache everything
-    cache.set('markets', finalSections, TTL.MARKETS);
-    cache.set('forex', forexSections.length >= 2 ? forexSections : mockForexSections, TTL.FOREX);
-    console.log(`[MARKETS] Cached: ${finalSections.length} sections, ${forexSections.length > 0 ? forexSections.length : 'mock'} forex sections`);
+    if (forexSections.length > 0) {
+      cache.set('forex', forexSections, TTL.FOREX);
+    }
+    console.log(`[MARKETS] Cached: ${finalSections.length} sections, ${forexSections.length} forex sections`);
   } catch (err) {
     console.error('[MARKETS] Fetch failed:', err);
   }

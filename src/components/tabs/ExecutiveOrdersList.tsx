@@ -21,14 +21,6 @@ const STATUS_COLORS: Record<string, { bg: string; text: string }> = {
   revoked:    { bg: 'rgba(255,59,59,.15)',  text: '#ff3b3b' },
 };
 
-const FALLBACK_EOS: ExecutiveOrder[] = [
-  { number: 14147, title: 'Securing the Border', signing_date: '2025-01-20', publication_date: '2025-01-22', topics: ['Immigration'], status: 'active', summary: 'Directs DHS to deploy all available resources to secure the southern border...', federal_register_url: '' },
-  { number: 14148, title: 'Declaring National Energy Emergency', signing_date: '2025-01-20', publication_date: '2025-01-22', topics: ['Energy'], status: 'active', summary: 'Declares a national emergency regarding US energy supply...', federal_register_url: '' },
-  { number: 14151, title: 'Restoring Common Sense to Federal Procurement', signing_date: '2025-01-20', publication_date: '2025-01-22', topics: ['Technology'], status: 'challenged', summary: 'Eliminates DEI mandates from federal contracting...', federal_register_url: '' },
-  { number: 14154, title: 'America First Trade Policy', signing_date: '2025-01-20', publication_date: '2025-01-22', topics: ['Trade'], status: 'active', summary: 'Reviews all trade agreements and deficit relationships...', federal_register_url: '' },
-  { number: 14159, title: 'Rebuilding the Military', signing_date: '2025-01-27', publication_date: '2025-01-29', topics: ['Defense'], status: 'active', summary: 'Directs SecDef to review force structure and readiness...', federal_register_url: '' },
-];
-
 function getTopicStyle(topic: string): { bg: string; text: string } {
   return TOPIC_COLORS[topic] ?? { bg: 'rgba(255,200,50,.15)', text: '#7a6418' };
 }
@@ -37,7 +29,7 @@ export default function ExecutiveOrdersList() {
   const { data, loading, error, lastUpdate } = useApiData<ExecutiveOrder[]>(api.executiveOrders, REFRESH_MS);
   const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set());
 
-  const orders = data ?? FALLBACK_EOS;
+  const orders = data ?? [];
 
   const toggleExpand = (num: number) => {
     setExpandedIds(prev => {

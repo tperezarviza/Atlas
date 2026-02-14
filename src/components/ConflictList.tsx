@@ -1,5 +1,4 @@
 import { useRef, useEffect, useCallback } from 'react';
-import { mockConflicts } from '../data/mockConflicts';
 import MaybeFadeIn from './MaybeFadeIn';
 import DataBadge from './DataBadge';
 import Skeleton from './Skeleton';
@@ -38,7 +37,7 @@ const severityBorder: Record<string, string> = {
 };
 
 export default function ConflictList({ selectedId, onSelect, conflicts, conflictsLoading, conflictsError, conflictsLastUpdate }: ConflictListProps) {
-  const items = conflicts ?? mockConflicts;
+  const items = conflicts ?? [];
   const hasShownData = useRef(false);
   useEffect(() => { if (conflicts) hasShownData.current = true; }, [conflicts]);
 

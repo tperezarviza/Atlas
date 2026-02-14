@@ -1,13 +1,12 @@
 import type { FastifyInstance } from 'fastify';
 import { cache } from '../cache.js';
-import { mockTwitter } from '../mock/twitter.js';
 import type { TwitterIntelItem, TweetCategory } from '../types.js';
 
 const VALID_CATEGORIES = new Set<TweetCategory>(['crisis', 'military', 'geopolitical', 'border', 'osint', 'trump']);
 
 export function registerTwitterRoutes(app: FastifyInstance) {
   app.get('/api/twitter', async (req, reply) => {
-    const tweets = cache.get<TwitterIntelItem[]>('twitter') ?? mockTwitter;
+    const tweets = cache.get<TwitterIntelItem[]>('twitter') ?? [];
     const cat = (req.query as Record<string, string>).category;
     if (cat) {
       if (!VALID_CATEGORIES.has(cat as TweetCategory)) {
@@ -19,7 +18,7 @@ export function registerTwitterRoutes(app: FastifyInstance) {
   });
 
   app.get('/api/twitter/trending', async () => {
-    const tweets = cache.get<TwitterIntelItem[]>('twitter') ?? mockTwitter;
+    const tweets = cache.get<TwitterIntelItem[]>('twitter') ?? [];
     // Extract trending keywords from recent tweets
     const wordFreq = new Map<string, number>();
     const stopWords = new Set(['the', 'a', 'an', 'is', 'are', 'was', 'were', 'in', 'on', 'at', 'to', 'for', 'of', 'and', 'or', 'but', 'not', 'with', 'from', 'by', 'this', 'that', 'it', 'its', 'has', 'have', 'had', 'be', 'been', 'will', 'would', 'could', 'should', 'can', 'may', 'rt', 'via', 'just', 'now', 'new', 'says', 'said', 'https', 'http']);

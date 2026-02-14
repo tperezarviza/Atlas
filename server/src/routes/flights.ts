@@ -1,6 +1,5 @@
 import type { FastifyInstance } from 'fastify';
 import { cache } from '../cache.js';
-import { mockFlights } from '../mock/flights.js';
 import type { MilitaryFlight } from '../types.js';
 
 const VALID_REGIONS = new Set([
@@ -10,7 +9,7 @@ const VALID_REGIONS = new Set([
 
 export function registerFlightsRoutes(app: FastifyInstance) {
   app.get('/api/flights', async (req, reply) => {
-    const allFlights = cache.get<MilitaryFlight[]>('flights') ?? mockFlights;
+    const allFlights = cache.get<MilitaryFlight[]>('flights') ?? [];
     const region = (req.query as Record<string, string>).region;
     if (region) {
       if (!VALID_REGIONS.has(region)) {

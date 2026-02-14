@@ -1,13 +1,12 @@
 import { useApiData } from '../hooks/useApiData';
 import { api } from '../services/api';
-import { mockTicker } from '../data/mockTicker';
 import type { TickerItem } from '../types';
 
 const REFRESH_MS = 300_000; // 5 min
 
 export default function Ticker() {
   const { data, error } = useApiData<TickerItem[]>(api.ticker, REFRESH_MS);
-  const items = data ?? mockTicker;
+  const items = data ?? [];
 
   const label = error && !data ? 'ERR' : data ? 'LIVE' : 'MOCK';
   const labelColor = error && !data ? '#ff3b3b' : data && error ? '#d4a72c' : data ? '#00ff88' : '#ff3b3b';

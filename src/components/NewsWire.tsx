@@ -1,7 +1,6 @@
 import { useRef, useEffect } from 'react';
 import { useApiData } from '../hooks/useApiData';
 import { api } from '../services/api';
-import { mockNewsWire } from '../data/mockNewsWire';
 import { bulletColors } from '../utils/colors';
 import { toneToColor } from '../utils/formatters';
 import MaybeFadeIn from './MaybeFadeIn';
@@ -18,7 +17,7 @@ interface NewsWireProps {
 
 export default function NewsWire({ filter, title }: NewsWireProps = {}) {
   const { data, loading, error, lastUpdate } = useApiData<NewsWireItem[]>(api.newswire, REFRESH_MS);
-  const allItems = data ?? mockNewsWire;
+  const allItems = data ?? [];
   const wire = filter ? allItems.filter(filter) : allItems;
   const hasShownData = useRef(false);
   useEffect(() => { if (data) hasShownData.current = true; }, [data]);

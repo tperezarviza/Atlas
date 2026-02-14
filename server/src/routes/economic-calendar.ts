@@ -1,11 +1,10 @@
 import type { FastifyInstance } from 'fastify';
 import { cache } from '../cache.js';
-import { mockEconomicCalendar } from '../mock/economic-calendar.js';
 import type { EconomicEvent } from '../types.js';
 
 export function registerEconomicCalendarRoutes(app: FastifyInstance) {
   app.get('/api/economic-calendar', async (req, reply) => {
-    const events = cache.get<EconomicEvent[]>('economic_calendar') ?? mockEconomicCalendar;
+    const events = cache.get<EconomicEvent[]>('economic_calendar') ?? [];
     const currency = (req.query as Record<string, string>).currency?.toUpperCase();
     if (currency) {
       if (!/^[A-Z]{3}$/.test(currency)) {

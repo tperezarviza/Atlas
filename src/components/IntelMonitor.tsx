@@ -1,7 +1,6 @@
 import { useMemo } from 'react';
 import { useApiData } from '../hooks/useApiData';
 import { api } from '../services/api';
-import { mockCalendar } from '../data/mockCalendar';
 import { getSensitiveDateEvents } from '../utils/sensitiveDateEvents';
 import DataBadge from './DataBadge';
 import Skeleton from './Skeleton';
@@ -39,7 +38,7 @@ export default function IntelMonitor() {
     const events: UnifiedEvent[] = [];
 
     // Diplomatic events
-    const calendarEvents = calData ?? mockCalendar;
+    const calendarEvents = calData ?? [];
     const sensitive = getSensitiveDateEvents();
     const allDiplomatic = [...sensitive, ...calendarEvents];
     const urgencyOrder: Record<string, number> = { today: 0, soon: 1, future: 2 };

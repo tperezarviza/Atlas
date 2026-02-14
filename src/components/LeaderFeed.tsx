@@ -2,8 +2,6 @@ import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useApiData } from '../hooks/useApiData';
 import { api } from '../services/api';
-import { mockLeaderFeed } from '../data/mockLeaderFeed';
-import { mockTwitter } from '../data/mockTwitter';
 import MaybeFadeIn from './MaybeFadeIn';
 import DataBadge from './DataBadge';
 import Skeleton from './Skeleton';
@@ -47,8 +45,8 @@ export default function LeaderFeed({ filter, title }: LeaderFeedProps = {}) {
     { enabled: !filter },
   );
 
-  const allItems = data ?? mockLeaderFeed;
-  const tweets = twitterData ?? mockTwitter;
+  const allItems = data ?? [];
+  const tweets = twitterData ?? [];
 
   const feed = useMemo(() => {
     if (filter) return allItems.filter(filter);

@@ -36,18 +36,6 @@ const STAGE_INDEX: Record<string, number> = {
   vetoed: 4,
 };
 
-const FALLBACK_BILLS: CongressBill[] = [
-  { number: 'H.R.2', title: 'Secure the Border Act', sponsor: 'Rep. Green', party: 'R', status: 'passed_house', relevance: 'immigration', introduced_date: '2025-01-03', latest_action: 'Passed House', latest_action_date: '2025-05-15', subjects: ['Immigration'], committee: 'Homeland Security' },
-  { number: 'S.1', title: 'Laken Riley Act', sponsor: 'Sen. Ernst', party: 'R', status: 'signed', relevance: 'immigration', introduced_date: '2025-01-03', latest_action: 'Signed into law', latest_action_date: '2025-01-29', subjects: ['Immigration'], committee: 'Judiciary' },
-  { number: 'H.R.21', title: 'DOGE Transparency Act', sponsor: 'Rep. Mace', party: 'R', status: 'committee', relevance: 'other', introduced_date: '2025-01-07', latest_action: 'Referred to committee', latest_action_date: '2025-01-07', subjects: ['Government'], committee: 'Oversight' },
-];
-
-const FALLBACK_NOMS: SenateNomination[] = [
-  { name: 'Pete Hegseth', position: 'Secretary of Defense', agency: 'DOD', status: 'confirmed' },
-  { name: 'Tulsi Gabbard', position: 'Director of National Intelligence', agency: 'ODNI', status: 'confirmed' },
-  { name: 'Kash Patel', position: 'FBI Director', agency: 'FBI', status: 'confirmed' },
-];
-
 function BillPipeline({ status }: { status: string }) {
   const currentIdx = STAGE_INDEX[status] ?? 0;
   return (
@@ -97,8 +85,8 @@ export default function CongressTracker() {
 
   const toggle = (key: string) => setOpenSections(prev => ({ ...prev, [key]: !prev[key] }));
 
-  const bills = billsData ?? FALLBACK_BILLS;
-  const noms = nomsData ?? FALLBACK_NOMS;
+  const bills = billsData ?? [];
+  const noms = nomsData ?? [];
 
   // Aggregate loading/error for badge
   const loading = billsLoading || nomsLoading;
