@@ -43,7 +43,6 @@ export default function EarthquakeMarkers({ data, visible }: EarthquakeMarkersPr
             weight: 1.5,
             opacity: 0.8,
           }}
-          zIndexOffset={560}
         >
           <Tooltip direction="top" offset={[0, -8]} className="map-tooltip">
             <div className="tt-title">M{quake.magnitude.toFixed(1)} Earthquake</div>
