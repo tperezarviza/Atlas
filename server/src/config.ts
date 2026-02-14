@@ -48,7 +48,6 @@ export const TTL = {
   CONNECTIONS: 4 * 60 * 60 * 1000, // 4 h
   CALENDAR:  12 * 60 * 60 * 1000,  // 12 h
   BORDER:    24 * 60 * 60 * 1000,  // 24 h
-  CDS:        6 * 60 * 60 * 1000,  // 6 h
   FOREX:      5 * 60 * 1000,       // 5 min
   COUNTRIES:  60 * 60 * 1000,      // 1 h
   SANCTIONS:  24 * 60 * 60 * 1000, // 24 h

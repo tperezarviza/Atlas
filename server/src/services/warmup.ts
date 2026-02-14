@@ -8,7 +8,6 @@ import { fetchCalendar } from './calendar.js';
 import { fetchBorderStats } from './border.js';
 import { fetchBrief } from './ai-brief.js';
 import { fetchConnections } from './connections.js';
-import { fetchCDS } from './cds.js';
 import { fetchOoniIncidents } from './ooni.js';
 import { fetchSanctions } from './sanctions.js';
 import { fetchShippingData } from './shipping.js';
@@ -46,7 +45,6 @@ export async function warmUpCache(): Promise<void> {
     safeRun('Feeds', fetchFeeds),
     safeRun('Markets', fetchMarkets),
     safeRun('Calendar', fetchCalendar),
-    safeRun('CDS', fetchCDS),
     safeRun('OONI', fetchOoniIncidents),
     safeRun('Executive Orders', fetchExecutiveOrders),
     safeRun('EONET', fetchNaturalEvents),

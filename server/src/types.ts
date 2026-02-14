@@ -18,7 +18,6 @@ export type EconImpact = 'high' | 'medium' | 'low';
 export type ChokepointStatus = 'normal' | 'elevated' | 'disrupted' | 'critical';
 export type AlertPriority = 'flash' | 'urgent' | 'priority' | 'routine';
 export type AlertSource = 'gdelt' | 'acled' | 'acled_spike' | 'ooni' | 'markets' | 'executive_orders';
-export type CDSRiskLevel = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
 export type NewsBullet = 'critical' | 'high' | 'medium' | 'accent';
 export type CalendarUrgency = 'today' | 'soon' | 'future';
 export type SessionRegion = 'americas' | 'europe' | 'asia_pacific' | 'middle_east_africa';
@@ -148,15 +147,6 @@ export interface MarketSession {
   nextEvent: string;
 }
 
-export interface CDSSpread {
-  country: string;
-  code: string;
-  spread5Y: number;
-  change: number;
-  direction: 'up' | 'down' | 'flat';
-  rating: string;
-}
-
 export interface StrategicDependency {
   resource: string;
   icon: string;
@@ -200,7 +190,6 @@ export interface CountryProfile {
   usRelationship?: string;
   recentEvents?: number;
   sentiment?: number;
-  cdsSpread?: number;
   activeConflicts?: number;
   armedGroupCount?: number;
 }

@@ -37,13 +37,6 @@ function riskBarColor(val: number, max: number, invert?: boolean): string {
   return '#00ff88';
 }
 
-function cdsRiskLabel(spread: number): { label: string; color: string } {
-  if (spread > 700) return { label: 'CRITICAL', color: '#ff3b3b' };
-  if (spread > 300) return { label: 'HIGH', color: '#ff8c00' };
-  if (spread > 100) return { label: 'MEDIUM', color: '#d4a72c' };
-  return { label: 'LOW', color: '#00ff88' };
-}
-
 interface CountryProfilePanelProps {
   countryCode: string | null;
   onClose: () => void;
@@ -230,23 +223,6 @@ export default function CountryProfilePanel({ countryCode, onClose, conflicts }:
                     )}
                     {profile.pressFreedom != null && (
                       <RiskBar label="Press Freedom" value={profile.pressFreedom} max={100} />
-                    )}
-                    {profile.cdsSpread != null && profile.cdsSpread > 0 && (
-                      <div className="flex items-center gap-2 mt-1">
-                        <span className="font-data text-[9px] text-text-muted w-[120px]">CDS 5Y Spread</span>
-                        <span className="font-data text-[10px] font-semibold" style={{ color: cdsRiskLabel(profile.cdsSpread).color }}>
-                          {profile.cdsSpread} bps
-                        </span>
-                        <span
-                          className="font-data text-[7px] px-[3px] py-[0.5px] rounded-[2px] uppercase"
-                          style={{
-                            background: `${cdsRiskLabel(profile.cdsSpread).color}20`,
-                            color: cdsRiskLabel(profile.cdsSpread).color,
-                          }}
-                        >
-                          {cdsRiskLabel(profile.cdsSpread).label}
-                        </span>
-                      </div>
                     )}
                   </Section>
                 )}

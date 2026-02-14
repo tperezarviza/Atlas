@@ -1,6 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { cache } from '../cache.js';
-import type { Conflict, MarketSection, BorderStat, MacroItem, TopBarData, TopBarKPI, CDSSpread, CyberThreatPulse } from '../types.js';
+import type { Conflict, MarketSection, BorderStat, MacroItem, TopBarData, TopBarKPI, CyberThreatPulse } from '../types.js';
 
 function findMarketPrice(sections: MarketSection[], sectionTitle: string, itemName: string, fallback: string): string {
   const section = sections.find(s => s.title === sectionTitle);
@@ -22,7 +22,6 @@ function computeTopbar(tab?: string): TopBarData {
   const forex = cache.get<MarketSection[]>('forex') ?? [];
   const border = cache.get<BorderStat[]>('border') ?? [];
   const macro = cache.get<MacroItem[]>('macro') ?? [];
-  const cds = cache.get<CDSSpread[]>('cds') ?? [];
   const criticalConflicts = conflicts.filter(c => c.severity === 'critical').length;
   const threatLevel = criticalConflicts >= 3 ? 'HIGH' : criticalConflicts >= 2 ? 'ELEVATED' : 'GUARDED';
 
@@ -33,13 +32,10 @@ function computeTopbar(tab?: string): TopBarData {
       const oilPrice = findMarketPrice(sections, 'Energy', 'WTI OIL', '—');
       const goldPrice = findMarketPrice(sections, 'Commodities', 'GOLD', '—');
       const natGasPrice = findMarketPrice(sections, 'Energy', 'NAT GAS', '—');
-      const israelCds = cds.find(c => c.code === 'IL');
-      const israelCdsStr = israelCds ? `${israelCds.spread5Y} bps` : '—';
       kpis = [
         { label: 'WTI Oil', value: oilPrice, colorClass: 'text-medium' },
         { label: 'Gold', value: goldPrice, colorClass: 'text-positive' },
         { label: 'Nat Gas', value: natGasPrice, colorClass: 'text-medium' },
-        { label: 'Israel CDS', value: israelCdsStr, colorClass: 'text-high' },
       ];
       break;
     }

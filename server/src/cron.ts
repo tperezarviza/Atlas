@@ -10,7 +10,6 @@ import { fetchBrief } from './services/ai-brief.js';
 import { fetchConnections } from './services/connections.js';
 import { fetchCalendar } from './services/calendar.js';
 import { fetchBorderStats } from './services/border.js';
-import { fetchCDS } from './services/cds.js';
 import { fetchOoniIncidents } from './services/ooni.js';
 import { fetchCountries } from './services/countries.js';
 import { fetchArmedGroups } from './services/terrorism.js';
@@ -76,11 +75,8 @@ export function startCronJobs() {
   // 0 6 * * * -> Border stats (1x/day)
   cron.schedule('0 6 * * *', safeRun('border', fetchBorderStats));
 
-  // 0 */6 * * * -> CDS spreads + Hostility Index
-  cron.schedule('0 */6 * * *', safeRun('cds+hostility', async () => {
-    await fetchCDS();
-    await fetchHostilityIndex();
-  }));
+  // 0 */6 * * * -> Hostility Index
+  cron.schedule('0 */6 * * *', safeRun('hostility', fetchHostilityIndex));
 
   // 0 * * * * (offset 30) -> OONI + Countries + Armed Groups
   cron.schedule('30 * * * *', safeRun('intel', async () => {

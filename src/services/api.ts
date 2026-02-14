@@ -41,7 +41,6 @@ import type {
   Connection,
   TickerItem,
   MarketSession,
-  CDSSpread,
   StrategicDependency,
   CountryProfile,
   OFACSanction,
@@ -90,7 +89,6 @@ export interface MarketsResponse {
   sections: MarketSection[];
   forex: MarketSection[];
   sessions: MarketSession[];
-  cds: CDSSpread[];
   macro: MacroItem[];
   border: BorderStat[];
 }

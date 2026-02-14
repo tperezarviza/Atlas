@@ -1,7 +1,7 @@
 import { TTL } from '../config.js';
 import { cache } from '../cache.js';
 import { COUNTRY_PROFILES } from '../data/countries.js';
-import type { CountryProfile, Conflict, CDSSpread, ArmedGroup } from '../types.js';
+import type { CountryProfile, Conflict, ArmedGroup } from '../types.js';
 
 export async function fetchCountries(): Promise<void> {
   console.log('[COUNTRIES] Enriching country profiles from cache...');
@@ -9,7 +9,6 @@ export async function fetchCountries(): Promise<void> {
   try {
     // Get cached data for enrichment (no new API calls)
     const conflicts = cache.get<Conflict[]>('conflicts');
-    const cdsData = cache.get<CDSSpread[]>('cds');
     const actorCounts = cache.get<Record<string, number>>('acled_actors');
 
     // Build lookup maps for O(1) enrichment
@@ -18,13 +17,6 @@ export async function fetchCountries(): Promise<void> {
       for (const c of conflicts) {
         const existing = conflictsByCountry.get(c.name) ?? 0;
         conflictsByCountry.set(c.name, existing + 1);
-      }
-    }
-
-    const cdsByCode = new Map<string, number>();
-    if (cdsData) {
-      for (const cds of cdsData) {
-        cdsByCode.set(cds.code, cds.spread5Y);
       }
     }
 
@@ -64,7 +56,6 @@ export async function fetchCountries(): Promise<void> {
     const enriched: CountryProfile[] = COUNTRY_PROFILES.map((profile) => ({
       ...profile,
       activeConflicts: conflictsByCountry.get(profile.name) ?? 0,
-      cdsSpread: cdsByCode.get(profile.code) ?? undefined,
       recentEvents: eventsByCountry.get(profile.code) ?? 0,
       armedGroupCount: armedGroupsByCountry.get(profile.code) ?? 0,
     }));

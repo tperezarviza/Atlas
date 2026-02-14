@@ -2,7 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import { cache } from '../cache.js';
 
 const CACHE_KEYS = [
-  'conflicts', 'news', 'feed', 'markets', 'forex', 'cds',
+  'conflicts', 'news', 'feed', 'markets', 'forex',
   'macro', 'border', 'calendar', 'brief', 'connections', 'ticker', 'topbar',
   'countries', 'ofac_sanctions', 'armed_groups', 'shipping', 'ooni', 'hostility', 'propaganda', 'acled_actors',
   'congress_bills', 'congress_nominations', 'executive_orders', 'flights', 'ukraine_front',
@@ -18,7 +18,6 @@ const SERVICE_META: Record<string, { name: string; category: string }> = {
   feed: { name: 'Leader Feed', category: 'Intelligence' },
   markets: { name: 'Markets (Yahoo)', category: 'Markets' },
   forex: { name: 'Forex Rates', category: 'Markets' },
-  cds: { name: 'CDS Spreads', category: 'Markets' },
   macro: { name: 'US Macro', category: 'Markets' },
   border: { name: 'Border Stats', category: 'Domestic' },
   calendar: { name: 'Diplomatic Calendar', category: 'Intelligence' },
