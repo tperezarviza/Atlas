@@ -70,13 +70,17 @@ function classifyAlert(alert: Alert): EventDisplay {
     return { type: 'natural', icon, label: 'NATURAL EVENT', ...EVENT_STYLES.natural }
   }
 
-  // Military / GDELT / ACLED
+  // Military / GDELT / ACLED / Twitter / RSS
   const icon = title.includes('missile') || title.includes('strike') ? '🚀'
     : title.includes('explosion') || title.includes('bomb') ? '💥'
     : title.includes('nuclear') ? '☢️'
     : title.includes('coup') || title.includes('invasion') ? '⚔️'
+    : title.includes('shooting') || title.includes('attack') ? '💥'
     : '🔴'
-  return { type: 'military', icon, label: 'MILITARY', ...EVENT_STYLES.military }
+  const label = source === 'twitter' ? 'X / INTEL'
+    : source === 'rss' ? 'RSS / INTEL'
+    : 'MILITARY'
+  return { type: 'military', icon, label, ...EVENT_STYLES.military }
 }
 
 function formatUtcTime(): string {

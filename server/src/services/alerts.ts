@@ -1,7 +1,7 @@
 import { createHash } from 'crypto';
 import { readFileSync, writeFileSync, mkdirSync } from 'fs';
 import { cache } from '../cache.js';
-import type { Alert, AlertPriority, AlertSource, Conflict, NewsPoint, InternetIncident, MarketSection, ExecutiveOrder, NaturalEvent } from '../types.js';
+import type { Alert, AlertPriority, AlertSource, Conflict, NewsPoint, InternetIncident, MarketSection, ExecutiveOrder, NaturalEvent, TwitterIntelItem, FeedItem } from '../types.js';
 import type { Earthquake } from './earthquakes.js';
 
 const MAX_ALERTS = 200;
@@ -162,6 +162,50 @@ function checkNaturalEvents(): void {
   }
 }
 
+function checkTwitterIntel(): void {
+  const tweets = cache.get<TwitterIntelItem[]>('twitter');
+  if (!tweets) return;
+
+  for (const tweet of tweets) {
+    // Only crisis and military categories
+    if (tweet.category !== 'crisis' && tweet.category !== 'military') continue;
+
+    const hasKeywords = MILITARY_KEYWORDS.test(tweet.text);
+    const isHighPriority = tweet.priority === 'flash' || tweet.priority === 'urgent';
+
+    if (!hasKeywords && !isHighPriority) continue;
+
+    // Map priority: keywords + high-priority → keep tweet priority; keywords only → priority; high-priority only → keep
+    let alertPriority: AlertPriority;
+    if (hasKeywords && isHighPriority) {
+      alertPriority = tweet.priority;
+    } else if (hasKeywords) {
+      alertPriority = 'priority';
+    } else {
+      alertPriority = tweet.priority;
+    }
+
+    const author = `@${tweet.author.username}`;
+    const engagement = `${tweet.metrics.retweet_count} RT • ${tweet.metrics.like_count} likes`;
+    addAlert(alertPriority, 'twitter', tweet.text.substring(0, 200), `${author} • ${engagement} • ${tweet.url}`);
+  }
+}
+
+function checkRssFeeds(): void {
+  const feed = cache.get<FeedItem[]>('feed');
+  if (!feed) return;
+
+  for (const item of feed) {
+    // Skip trump — handled separately by TrumpNewsPopup
+    if (item.category === 'trump') continue;
+
+    if (MILITARY_KEYWORDS.test(item.text)) {
+      const priority: AlertPriority = item.category === 'military' ? 'urgent' : 'priority';
+      addAlert(priority, 'rss', item.text.substring(0, 200), `${item.handle} (${item.source}) • ${item.role}`);
+    }
+  }
+}
+
 // ── Public API ──
 
 export function analyzeAlerts(): void {
@@ -174,6 +218,8 @@ export function analyzeAlerts(): void {
   checkExecutiveOrders();
   checkEarthquakes();
   checkNaturalEvents();
+  checkTwitterIntel();
+  checkRssFeeds();
   pruneOld();
 
   console.log(`[ALERTS] ${alertStore.length} alerts in store (${alertStore.filter(a => !a.read).length} unread)`);
@@ -181,6 +227,13 @@ export function analyzeAlerts(): void {
 
 export function getAlerts(): Alert[] {
   return [...alertStore].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+}
+
+export function injectTestAlert(priority: AlertPriority, source: AlertSource, title: string, detail?: string): Alert {
+  const hash = contentHash(source, `TEST-${Date.now()}-${title}`);
+  const alert: Alert = { id: hash, priority, source, title, detail, timestamp: new Date().toISOString(), read: false };
+  alertStore.push(alert);
+  return alert;
 }
 
 export function markAlertRead(id: string): boolean {
