@@ -116,8 +116,8 @@ export default function CriticalEventPopup() {
         // Only flash/urgent from non-trump sources
         const critical = alerts.filter(a =>
           (a.priority === 'flash' || a.priority === 'urgent') &&
-          \!a.read &&
-          a.source \!== 'executive_orders'
+          !a.read &&
+          a.source !== 'executive_orders'
         )
 
         if (initialLoadRef.current) {
@@ -126,8 +126,8 @@ export default function CriticalEventPopup() {
           return
         }
 
-        const newest = critical.find(a => \!seenIdsRef.current.has(a.id))
-        if (\!newest) return
+        const newest = critical.find(a => !seenIdsRef.current.has(a.id))
+        if (!newest) return
 
         for (const a of critical) seenIdsRef.current.add(a.id)
         showAlert(newest)
@@ -141,7 +141,7 @@ export default function CriticalEventPopup() {
   }, [showAlert])
 
   useEffect(() => {
-    if (\!visible) return
+    if (!visible) return
     const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') dismiss() }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
@@ -149,7 +149,7 @@ export default function CriticalEventPopup() {
 
   useEffect(() => () => clearTimers(), [clearTimers])
 
-  if (\!alert) return null
+  if (!alert) return null
   const ev = classifyAlert(alert)
 
 
