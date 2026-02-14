@@ -1,11 +1,13 @@
 import { createHash } from 'crypto';
+import { readFileSync, writeFileSync, mkdirSync } from 'fs';
 import { cache } from '../cache.js';
-import type { Alert, AlertPriority, AlertSource, Conflict, NewsPoint, InternetIncident, MarketSection, ExecutiveOrder } from '../types.js';
+import type { Alert, AlertPriority, AlertSource, Conflict, NewsPoint, InternetIncident, MarketSection, ExecutiveOrder, NaturalEvent } from '../types.js';
+import type { Earthquake } from './earthquakes.js';
 
 const MAX_ALERTS = 200;
 const RETENTION_MS = 24 * 60 * 60 * 1000; // 24h
 
-const MILITARY_KEYWORDS = /\b(nuclear test|invasion|coup|assassination|missile|bomb|attack|strike|troops)\b/i;
+const MILITARY_KEYWORDS = /\b(nuclear test|invasion|coup|assassination|missile|bomb|attack|strike|troops|explosion|shooting|massacre|hostage|chemical|biological|earthquake|tsunami|hurricane|typhoon|volcanic eruption)\b/i;
 
 let alertStore: Alert[] = [];
 const seenHashes = new Set<string>();
@@ -130,6 +132,36 @@ function checkExecutiveOrders(): void {
   }
 }
 
+function checkEarthquakes(): void {
+  const quakes = cache.get<Earthquake[]>('earthquakes');
+  if (!quakes) return;
+
+  for (const q of quakes) {
+    if (q.tsunami) {
+      addAlert('flash', 'usgs', `TSUNAMI WARNING: ${q.place} — M${q.magnitude}`, `Depth ${q.depth}km • ${q.url}`);
+    } else if (q.alert === 'red') {
+      addAlert('urgent', 'usgs', `Major earthquake: M${q.magnitude} ${q.place} — USGS RED`, `Depth ${q.depth}km • ${q.url}`);
+    } else if (q.alert === 'orange') {
+      addAlert('urgent', 'usgs', `Significant earthquake: M${q.magnitude} ${q.place} — USGS ORANGE`, `Depth ${q.depth}km • ${q.url}`);
+    } else if (q.magnitude >= 6.0) {
+      addAlert('priority', 'usgs', `M${q.magnitude} earthquake: ${q.place}`, `Depth ${q.depth}km • ${q.url}`);
+    }
+  }
+}
+
+function checkNaturalEvents(): void {
+  const events = cache.get<NaturalEvent[]>('natural_events');
+  if (!events) return;
+
+  for (const evt of events) {
+    if (evt.severity === 'extreme') {
+      addAlert('urgent', 'eonet', `EXTREME: ${evt.title}`, `${evt.category} • ${evt.link}`);
+    } else if (evt.severity === 'severe') {
+      addAlert('priority', 'eonet', `Severe: ${evt.title}`, `${evt.category} • ${evt.link}`);
+    }
+  }
+}
+
 // ── Public API ──
 
 export function analyzeAlerts(): void {
@@ -140,6 +172,8 @@ export function analyzeAlerts(): void {
   checkInternetShutdowns();
   checkMarketMoves();
   checkExecutiveOrders();
+  checkEarthquakes();
+  checkNaturalEvents();
   pruneOld();
 
   console.log(`[ALERTS] ${alertStore.length} alerts in store (${alertStore.filter(a => !a.read).length} unread)`);
@@ -155,3 +189,36 @@ export function markAlertRead(id: string): boolean {
   alert.read = true;
   return true;
 }
+
+
+// ── Persistence ──
+
+import { join } from 'path';
+const ALERT_STORE_PATH = join(process.cwd(), 'data', 'alert-store.json');
+
+function loadAlerts(): void {
+  try {
+    const raw = readFileSync(ALERT_STORE_PATH, 'utf8');
+    const data = JSON.parse(raw) as { alerts: Alert[]; hashes: string[] };
+    alertStore = data.alerts || [];
+    for (const h of data.hashes || []) seenHashes.add(h);
+    console.log(`[ALERTS] Loaded ${alertStore.length} alerts from disk`);
+  } catch {
+    // No saved file yet — start fresh
+  }
+}
+
+function saveAlerts(): void {
+  try {
+    mkdirSync(join(process.cwd(), 'data'), { recursive: true });
+    writeFileSync(ALERT_STORE_PATH, JSON.stringify({ alerts: alertStore, hashes: [...seenHashes] }), 'utf8');
+  } catch (err) {
+    console.error('[ALERTS] Failed to save alert store:', err);
+  }
+}
+
+// Load on startup
+loadAlerts();
+
+// Save periodically (every 5 min)
+setInterval(saveAlerts, 5 * 60 * 1000);

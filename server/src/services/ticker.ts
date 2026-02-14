@@ -1,6 +1,7 @@
 import { cache } from '../cache.js';
 import { TTL } from '../config.js';
 import type { TickerItem, NewsPoint, FeedItem, MarketSection } from '../types.js';
+import type { Earthquake } from './earthquakes.js';
 
 function toneToColor(tone: number): string {
   if (tone < -7) return '#e83b3b'; // critical red
@@ -60,6 +61,21 @@ export function composeTicker(): void {
           });
         }
       }
+    }
+  }
+
+
+  // 4. Earthquake alerts
+  const quakes = cache.get<Earthquake[]>('earthquakes');
+  if (quakes) {
+    const significant = quakes.filter(q => q.magnitude >= 5.5).slice(0, 3);
+    for (const q of significant) {
+      items.push({
+        id: `tk-${idCounter++}`,
+        bulletColor: q.tsunami ? '#e83b3b' : q.magnitude >= 7 ? '#e8842b' : '#d4a72c',
+        source: 'USGS',
+        text: `M${q.magnitude} ${q.place}${q.tsunami ? ' ⚠ TSUNAMI' : ''}`,
+      });
     }
   }
 

@@ -209,6 +209,8 @@ async function searchTweets(q: { query: string; category: TweetCategory; priorit
       } satisfies TwitterIntelItem;
     })
     .filter((t: TwitterIntelItem) => {
+      // Filter retweets for trump category
+      if (q.category === 'trump' && t.text.startsWith('RT @')) return false;
       // Filter image-only / link-only tweets with no real text
       const textWithoutUrls = t.text.replace(/https?:\/\/\S+/g, '').trim();
       return textWithoutUrls.length >= 10;

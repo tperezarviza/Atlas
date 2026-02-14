@@ -13,6 +13,7 @@ import Ticker from './components/Ticker'
 import AlertBanner from './components/AlertBanner'
 import CountryProfilePanel from './components/CountryProfilePanel'
 import TrumpNewsPopup from './components/TrumpNewsPopup'
+import CriticalEventPopup from './components/CriticalEventPopup'
 import TabPanel from './components/tabs/TabPanel'
 import DashboardLayout from './components/layout/DashboardLayout'
 import { getWidgetComponent, getWidgetProps } from './config/widgetComponents'
@@ -216,6 +217,9 @@ export default function App() {
 
       {/* Trump News Flash Popup */}
       <TrumpNewsPopup />
+
+      {/* Critical Event Popup (military, earthquake, natural disaster) */}
+      <CriticalEventPopup />
     </ErrorBoundary>
   )
 }
