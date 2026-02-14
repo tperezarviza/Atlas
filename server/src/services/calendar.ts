@@ -8,7 +8,7 @@ const parser = new RSSParser({ timeout: FETCH_TIMEOUT_RSS });
 
 const CALENDAR_FEEDS = [
   { url: 'https://www.federalreserve.gov/feeds/press_monetary.xml', prefix: 'Fed' },
-  { url: 'https://www.nato.int/cps/en/natohq/events.rss', prefix: 'NATO' },
+  { url: 'https://news.google.com/rss/search?q=when:7d+site:nato.int&ceid=US:en&hl=en-US&gl=US', prefix: 'NATO' },
   { url: 'https://news.un.org/feed/subscribe/en/news/topic/peace-and-security/feed/rss.xml', prefix: 'UN' },
 ];
 

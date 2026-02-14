@@ -84,7 +84,7 @@ const FEED_SOURCES: FeedSource[] = [
   },
   // Regional / Leaders
   {
-    url: 'http://en.kremlin.ru/events/president/news.rss',
+    url: 'https://news.google.com/rss/search?q=when:24h+site:en.kremlin.ru&ceid=US:en&hl=en-US&gl=US',
     flag: '🇷🇺', handle: 'Kremlin Press', role: 'Office of the President',
     sourceName: 'Kremlin', category: 'leader', tags: ['Russia', 'Kremlin'],
   },
@@ -110,7 +110,7 @@ const FEED_SOURCES: FeedSource[] = [
     sourceName: 'CSIS', category: 'think_tank', tags: ['Think Tank', 'Policy'],
   },
   {
-    url: 'https://www.brookings.edu/feeds/rss/research/',
+    url: 'https://news.google.com/rss/search?q=when:7d+site:brookings.edu&ceid=US:en&hl=en-US&gl=US',
     flag: '🏛️', handle: 'Brookings', role: 'Brookings Institution',
     sourceName: 'Brookings', category: 'think_tank', tags: ['Think Tank', 'Policy'],
   },
@@ -125,7 +125,7 @@ const FEED_SOURCES: FeedSource[] = [
     sourceName: 'Heritage', category: 'think_tank', tags: ['Think Tank', 'Conservative'],
   },
   {
-    url: 'https://www.iswresearch.org/feeds/posts/default?alt=rss',
+    url: 'https://news.google.com/rss/search?q=when:7d+site:understandingwar.org&ceid=US:en&hl=en-US&gl=US',
     flag: '🏛️', handle: 'ISW', role: 'Institute for the Study of War',
     sourceName: 'ISW', category: 'think_tank', tags: ['Think Tank', 'Military'],
   },
@@ -135,7 +135,7 @@ const FEED_SOURCES: FeedSource[] = [
     sourceName: 'Atlantic Council', category: 'think_tank', tags: ['Think Tank', 'NATO'],
   },
   {
-    url: 'https://www.chathamhouse.org/feed/default/rss.xml',
+    url: 'https://news.google.com/rss/search?q=when:7d+site:chathamhouse.org&ceid=US:en&hl=en-US&gl=US',
     flag: '🏛️', handle: 'Chatham House', role: 'Royal Institute of Intl Affairs',
     sourceName: 'Chatham House', category: 'think_tank', tags: ['Think Tank', 'UK'],
   },
@@ -202,7 +202,7 @@ const FEED_SOURCES: FeedSource[] = [
     sourceName: 'Sputnik', category: 'state_media', tags: ['Russia', 'State Media'],
   },
   {
-    url: 'https://english.alarabiya.net/tools/rss',
+    url: 'https://news.google.com/rss/search?q=when:24h+site:english.alarabiya.net&ceid=US:en&hl=en-US&gl=US',
     flag: '🇸🇦', handle: 'Al Arabiya', role: 'Saudi-funded News',
     sourceName: 'Al Arabiya', category: 'state_media', tags: ['Saudi Arabia', 'Middle East'],
   },
@@ -217,7 +217,7 @@ const FEED_SOURCES: FeedSource[] = [
     sourceName: 'IRNA', category: 'state_media', tags: ['Iran', 'State Media'],
   },
   {
-    url: 'https://english.almayadeen.net/rss',
+    url: 'https://news.google.com/rss/search?q=when:24h+site:english.almayadeen.net&ceid=US:en&hl=en-US&gl=US',
     flag: '🇱🇧', handle: 'Al Mayadeen', role: 'Lebanese News Network',
     sourceName: 'Al Mayadeen', category: 'state_media', tags: ['Lebanon', 'Iran-aligned'],
   },
@@ -253,7 +253,7 @@ const FEED_SOURCES: FeedSource[] = [
     sourceName: 'Times of Israel', category: 'leader', tags: ['News', 'Israel'],
   },
   {
-    url: 'https://www.jpost.com/rss/rssfeedsfrontpage.aspx',
+    url: 'https://news.google.com/rss/search?q=when:24h+site:jpost.com&ceid=US:en&hl=en-US&gl=US',
     flag: '🇮🇱', handle: 'Jerusalem Post', role: 'Israeli Daily',
     sourceName: 'Jerusalem Post', category: 'leader', tags: ['News', 'Israel'],
   },
