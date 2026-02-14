@@ -1,6 +1,6 @@
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
-import { PORT } from './config.js';
+import { PORT, sanitizeError } from './config.js';
 import { registerHealthRoutes } from './routes/health.js';
 import { registerConflictsRoutes } from './routes/conflicts.js';
 import { registerNewsRoutes } from './routes/news.js';
@@ -14,6 +14,28 @@ import { registerConnectionsRoutes } from './routes/connections.js';
 import { registerTickerRoutes } from './routes/ticker.js';
 import { registerTopbarRoutes } from './routes/topbar.js';
 import { registerDependenciesRoutes } from './routes/dependencies.js';
+import { registerCountriesRoutes } from './routes/countries.js';
+import { registerSanctionsRoutes } from './routes/sanctions.js';
+import { registerArmedGroupsRoutes } from './routes/armed-groups.js';
+import { registerShippingRoutes } from './routes/shipping.js';
+import { registerOoniRoutes } from './routes/ooni.js';
+import { registerHostilityRoutes } from './routes/hostility.js';
+import { registerPropagandaRoutes } from './routes/propaganda.js';
+import { registerSipriRoutes } from './routes/sipri.js';
+import { registerGtdRoutes } from './routes/gtd.js';
+import { registerCongressRoutes } from './routes/congress.js';
+import { registerExecutiveOrdersRoutes } from './routes/executive-orders.js';
+import { registerPollingRoutes } from './routes/polling.js';
+import { registerFlightsRoutes } from './routes/flights.js';
+import { registerUkraineFrontRoutes } from './routes/ukraine-front.js';
+import { registerTwitterRoutes } from './routes/twitter.js';
+import { registerCyberRoutes } from './routes/cyber.js';
+import { registerSatelliteRoutes } from './routes/satellite.js';
+import { registerEonetRoutes } from './routes/eonet.js';
+import { registerEconomicCalendarRoutes } from './routes/economic-calendar.js';
+import { registerAlertsRoutes } from './routes/alerts.js';
+import { registerVesselsRoutes } from './routes/vessels.js';
+import { registerEarthquakeRoutes } from './routes/earthquakes.js';
 import { startCronJobs } from './cron.js';
 import { warmUpCache } from './services/warmup.js';
 import fastifyStatic from '@fastify/static';
@@ -27,20 +49,23 @@ const CORS_ORIGINS = process.env.CORS_ORIGINS
 
 await app.register(cors, { origin: CORS_ORIGINS });
 
-// Serve frontend static files
-await app.register(fastifyStatic, {
-  root: path.join(import.meta.dirname, '../../dist'),
-  prefix: '/',
-  decorateReply: false,
+// Security response headers
+app.addHook('onSend', async (_request, reply) => {
+  reply.header('X-Content-Type-Options', 'nosniff');
+  reply.header('X-Frame-Options', 'DENY');
+  reply.header('X-XSS-Protection', '1; mode=block');
+  reply.header('Referrer-Policy', 'strict-origin-when-cross-origin');
+  reply.header('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+  reply.header('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
 });
 
-// SPA fallback: send index.html for non-API routes
-app.setNotFoundHandler((req, reply) => {
-  if (req.url.startsWith('/api/')) {
-    reply.code(404).send({ error: 'Not found' });
-  } else {
-    reply.sendFile('index.html');
+// Global error handler — never leak internals to clients
+app.setErrorHandler((error: { statusCode?: number; code?: string; message?: string }, _request, reply) => {
+  const status = error.statusCode ?? 500;
+  if (status >= 500) {
+    console.error(`[SERVER] ${error.code ?? 'ERR'}:`, sanitizeError(error));
   }
+  reply.status(status).send({ error: status >= 500 ? 'Internal server error' : (error.message ?? 'Error') });
 });
 
 // Register all routes
@@ -57,6 +82,28 @@ registerConnectionsRoutes(app);
 registerTickerRoutes(app);
 registerTopbarRoutes(app);
 registerDependenciesRoutes(app);
+registerCountriesRoutes(app);
+registerSanctionsRoutes(app);
+registerArmedGroupsRoutes(app);
+registerShippingRoutes(app);
+registerOoniRoutes(app);
+registerHostilityRoutes(app);
+registerPropagandaRoutes(app);
+registerSipriRoutes(app);
+registerGtdRoutes(app);
+registerCongressRoutes(app);
+registerExecutiveOrdersRoutes(app);
+registerPollingRoutes(app);
+registerFlightsRoutes(app);
+registerUkraineFrontRoutes(app);
+registerTwitterRoutes(app);
+registerCyberRoutes(app);
+registerSatelliteRoutes(app);
+registerEonetRoutes(app);
+registerEconomicCalendarRoutes(app);
+registerAlertsRoutes(app);
+registerVesselsRoutes(app);
+registerEarthquakeRoutes(app);
 
 // Start server
 try {
@@ -65,7 +112,7 @@ try {
 
   // Warm up caches in background (don't block startup)
   warmUpCache().catch((err) => {
-    console.error('Cache warmup error:', err);
+    console.error('Cache warmup error:', sanitizeError(err));
   });
 
   // Start cron jobs

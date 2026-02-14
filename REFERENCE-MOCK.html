@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ATLAS — Global Situation Room</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Rajdhani:wght@400;500;600;700&family=Source+Sans+3:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg-deep:#030810;--bg-primary:#070d1a;--bg-card:#0b1224;--bg-card-hover:#101a32;
+  --border:#14233f;--border-bright:#1c3260;
+  --text-primary:#d8e2f0;--text-secondary:#7a8ba8;--text-muted:#3d506e;
+  --accent:#2d7aed;--accent-glow:rgba(45,122,237,.25);
+  --critical:#e83b3b;--high:#e8842b;--medium:#d4a72c;--low:#2d7aed;
+  --positive:#28b35a;--purple:#9b59e8;--cyan:#1abcdb;
+  --font-data:'JetBrains Mono',monospace;--font-title:'Rajdhani',sans-serif;--font-body:'Source Sans 3',sans-serif;
+}
+html,body{height:100%;overflow:hidden;background:var(--bg-deep);color:var(--text-primary);font-family:var(--font-body)}
+
+/* SCANLINE OVERLAY */
+body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;
+  background:repeating-linear-gradient(0deg,transparent,transparent 1px,rgba(0,0,0,.04) 1px,rgba(0,0,0,.04) 2px);
+}
+
+/* GRID */
+.grid{display:grid;height:100vh;width:100vw;
+  grid-template-rows:48px 1fr 1fr 36px;
+  grid-template-columns:320px 1fr 340px;
+  gap:2px;padding:2px;background:var(--bg-deep);
+}
+
+/* TOP BAR */
+.topbar{grid-column:1/-1;background:linear-gradient(180deg,#0d1628,#080f1e);
+  display:flex;align-items:center;padding:0 16px;border-bottom:1px solid var(--border);position:relative;overflow:hidden}
+.topbar::before{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--accent),transparent)}
+.logo{font-family:var(--font-title);font-weight:700;font-size:20px;letter-spacing:3px;color:#fff;margin-right:8px}
+.logo span{color:var(--critical)}
+.live-badge{display:flex;align-items:center;gap:5px;background:rgba(232,59,59,.12);border:1px solid rgba(232,59,59,.3);
+  border-radius:3px;padding:2px 8px;font-family:var(--font-data);font-size:10px;font-weight:600;color:var(--critical);margin-right:16px;letter-spacing:1px}
+.live-dot{width:6px;height:6px;border-radius:50%;background:var(--critical);animation:pulse-dot 1.5s infinite}
+@keyframes pulse-dot{0%,100%{opacity:1;box-shadow:0 0 4px var(--critical)}50%{opacity:.4;box-shadow:0 0 8px var(--critical)}}
+.clock{font-family:var(--font-data);font-size:13px;color:var(--text-secondary);margin-right:6px;letter-spacing:.5px}
+.clock b{color:var(--text-primary)}
+.sep{width:1px;height:24px;background:var(--border);margin:0 12px}
+.kpi-row{display:flex;gap:2px;flex:1;justify-content:center}
+.kpi{display:flex;flex-direction:column;align-items:center;padding:2px 14px;position:relative}
+.kpi-label{font-size:8px;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-muted);font-family:var(--font-data);font-weight:500}
+.kpi-value{font-family:var(--font-data);font-size:15px;font-weight:600;color:var(--text-primary)}
+.kpi-value.critical{color:var(--critical)}
+.kpi-value.positive{color:var(--positive)}
+.kpi-value.warn{color:var(--medium)}
+.defcon{display:flex;align-items:center;gap:6px;background:rgba(232,59,59,.08);border:1px solid rgba(232,59,59,.2);
+  border-radius:3px;padding:4px 10px;margin-left:8px}
+.defcon-label{font-family:var(--font-data);font-size:9px;color:var(--text-muted);letter-spacing:1px}
+.defcon-val{font-family:var(--font-title);font-size:20px;font-weight:700;color:var(--high)}
+.bell{position:relative;cursor:pointer;margin-left:12px;font-size:18px;color:var(--text-secondary)}
+.bell-count{position:absolute;top:-4px;right:-6px;background:var(--critical);color:#fff;font-size:8px;
+  font-family:var(--font-data);padding:1px 4px;border-radius:6px;font-weight:700}
+
+/* PANELS */
+.panel{background:var(--bg-card);border:1px solid var(--border);border-radius:3px;overflow:hidden;display:flex;flex-direction:column}
+.panel-header{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;
+  border-bottom:1px solid var(--border);background:rgba(255,255,255,.01);min-height:32px;flex-shrink:0}
+.panel-title{font-family:var(--font-title);font-size:12px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--text-secondary)}
+.panel-badge{font-family:var(--font-data);font-size:9px;padding:1px 6px;border-radius:2px;letter-spacing:.5px}
+.panel-body{flex:1;overflow-y:auto;padding:0}
+.panel-body::-webkit-scrollbar{width:3px}
+.panel-body::-webkit-scrollbar-track{background:transparent}
+.panel-body::-webkit-scrollbar-thumb{background:var(--border-bright);border-radius:3px}
+
+/* LEFT: TRUMP + LEADERS */
+.left-top{grid-row:2;grid-column:1}
+.feed-item{padding:10px 12px;border-bottom:1px solid var(--border);transition:background .2s;cursor:pointer}
+.feed-item:hover{background:var(--bg-card-hover)}
+.feed-item.trump{border-left:3px solid var(--critical)}
+.feed-item.leader{border-left:3px solid var(--accent)}
+.feed-item.musk{border-left:3px solid var(--purple)}
+.feed-item.military{border-left:3px solid var(--high)}
+.feed-meta{display:flex;align-items:center;gap:6px;margin-bottom:4px}
+.feed-flag{font-size:14px}
+.feed-handle{font-family:var(--font-data);font-size:10px;color:var(--accent);font-weight:500}
+.feed-source{font-family:var(--font-data);font-size:9px;color:var(--text-muted);margin-left:auto;letter-spacing:.3px}
+.feed-time{font-family:var(--font-data);font-size:9px;color:var(--text-muted)}
+.feed-role{font-size:9px;color:var(--text-muted);font-family:var(--font-data);margin-bottom:4px}
+.feed-text{font-size:13px;line-height:1.45;color:var(--text-primary)}
+.feed-text .highlight{color:var(--medium);font-weight:600}
+.feed-engagement{display:flex;gap:12px;margin-top:6px;font-family:var(--font-data);font-size:9px;color:var(--text-muted)}
+.feed-tags{display:flex;gap:4px;margin-top:5px}
+.feed-tag{font-family:var(--font-data);font-size:8px;padding:1px 5px;border-radius:2px;background:rgba(45,122,237,.1);color:var(--accent);border:1px solid rgba(45,122,237,.2)}
+
+/* MAP */
+.map-area{grid-row:2;grid-column:2;position:relative}
+#map{width:100%;height:100%;background:var(--bg-deep)}
+.leaflet-control-zoom{display:none!important}
+.map-overlay-stats{position:absolute;bottom:8px;left:8px;z-index:800;
+  background:rgba(7,13,26,.85);border:1px solid var(--border);border-radius:3px;padding:4px 10px;
+  font-family:var(--font-data);font-size:9px;color:var(--text-muted);display:flex;gap:12px;backdrop-filter:blur(8px)}
+.map-overlay-stats b{color:var(--text-secondary)}
+.map-legend{position:absolute;top:8px;right:8px;z-index:800;
+  background:rgba(7,13,26,.9);border:1px solid var(--border);border-radius:3px;padding:8px 10px;backdrop-filter:blur(8px)}
+.legend-title{font-family:var(--font-title);font-size:10px;letter-spacing:1.5px;color:var(--text-secondary);margin-bottom:6px;text-transform:uppercase}
+.legend-item{display:flex;align-items:center;gap:6px;margin-bottom:3px;font-family:var(--font-data);font-size:9px;color:var(--text-secondary);cursor:pointer}
+.legend-item:hover{color:var(--text-primary)}
+.legend-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.legend-line{width:20px;height:2px;flex-shrink:0;border-radius:1px}
+.news-count-badge{position:absolute;top:8px;left:8px;z-index:800;
+  background:rgba(7,13,26,.9);border:1px solid var(--border);border-radius:3px;padding:6px 10px;
+  font-family:var(--font-data);font-size:10px;color:var(--text-secondary);backdrop-filter:blur(8px)}
+.news-count-badge .count{color:var(--critical);font-weight:700;font-size:16px}
+
+/* RIGHT: MARKETS */
+.right-top{grid-row:2;grid-column:3}
+.market-section{padding:6px 0;border-bottom:1px solid var(--border)}
+.market-section-title{font-family:var(--font-data);font-size:8px;letter-spacing:1.5px;color:var(--text-muted);
+  padding:0 10px;margin-bottom:2px;text-transform:uppercase}
+.market-row{display:flex;align-items:center;padding:3px 10px;transition:background .15s}
+.market-row:hover{background:var(--bg-card-hover)}
+.market-name{font-family:var(--font-data);font-size:10px;color:var(--text-secondary);width:80px;flex-shrink:0}
+.market-spark{flex:1;height:20px;display:flex;align-items:end;gap:1px;padding:0 6px}
+.market-spark .bar{width:3px;border-radius:1px 1px 0 0;background:var(--accent);opacity:.5;transition:height .3s}
+.market-price{font-family:var(--font-data);font-size:11px;font-weight:600;color:var(--text-primary);width:72px;text-align:right}
+.market-delta{font-family:var(--font-data);font-size:10px;width:60px;text-align:right;font-weight:500}
+.market-delta.up{color:var(--positive)}
+.market-delta.down{color:var(--critical)}
+.market-delta.flat{color:var(--text-muted)}
+
+.macro-row{display:flex;justify-content:space-between;padding:3px 10px}
+.macro-label{font-family:var(--font-data);font-size:10px;color:var(--text-muted)}
+.macro-val{font-family:var(--font-data);font-size:10px;color:var(--text-primary);font-weight:500}
+
+.border-stat{display:flex;justify-content:space-between;align-items:center;padding:4px 10px}
+.border-stat-label{font-family:var(--font-data);font-size:10px;color:var(--text-muted)}
+.border-stat-val{font-family:var(--font-data);font-size:12px;font-weight:600}
+.border-delta{font-family:var(--font-data);font-size:9px;margin-left:4px}
+
+/* BOTTOM LEFT: CONFLICT DETAIL */
+.left-bottom{grid-row:3;grid-column:1}
+.conflict-card{padding:10px 12px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s}
+.conflict-card:hover{background:var(--bg-card-hover)}
+.conflict-card.selected{background:rgba(45,122,237,.08);border-left:3px solid var(--accent)}
+.conflict-top{display:flex;align-items:center;gap:6px;margin-bottom:3px}
+.severity-badge{font-family:var(--font-data);font-size:8px;font-weight:700;letter-spacing:1px;padding:1px 6px;border-radius:2px;text-transform:uppercase}
+.severity-badge.critical{background:rgba(232,59,59,.15);color:var(--critical);border:1px solid rgba(232,59,59,.3)}
+.severity-badge.high{background:rgba(232,132,43,.12);color:var(--high);border:1px solid rgba(232,132,43,.25)}
+.severity-badge.medium{background:rgba(212,167,44,.1);color:var(--medium);border:1px solid rgba(212,167,44,.2)}
+.severity-badge.low{background:rgba(45,122,237,.1);color:var(--low);border:1px solid rgba(45,122,237,.2)}
+.conflict-name{font-family:var(--font-title);font-size:14px;font-weight:600;color:var(--text-primary)}
+.conflict-region{font-family:var(--font-data);font-size:9px;color:var(--text-muted);letter-spacing:.5px}
+.conflict-stats{display:flex;gap:10px;margin-top:4px;font-family:var(--font-data);font-size:9px;color:var(--text-secondary)}
+.conflict-stats span{display:flex;align-items:center;gap:3px}
+.trend-up{color:var(--critical)}
+.trend-stable{color:var(--medium)}
+.trend-down{color:var(--positive)}
+
+/* BOTTOM CENTER: NEWS + CALENDAR */
+.bottom-center{grid-row:3;grid-column:2;display:grid;grid-template-columns:1fr 1fr;gap:2px}
+.news-item{padding:8px 10px;border-bottom:1px solid var(--border);transition:background .15s;cursor:pointer}
+.news-item:hover{background:var(--bg-card-hover)}
+.news-meta{display:flex;align-items:center;gap:6px;margin-bottom:3px}
+.news-bullet{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.news-source{font-family:var(--font-data);font-size:9px;color:var(--text-muted)}
+.news-time{font-family:var(--font-data);font-size:9px;color:var(--text-muted);margin-left:auto}
+.news-headline{font-size:12px;line-height:1.4;color:var(--text-primary)}
+.news-tone{font-family:var(--font-data);font-size:8px;margin-top:3px}
+.news-tone .bar{display:inline-block;height:3px;border-radius:1px;vertical-align:middle;margin-right:4px}
+
+.cal-event{padding:8px 10px;border-bottom:1px solid var(--border)}
+.cal-date{font-family:var(--font-data);font-size:9px;color:var(--accent);font-weight:600;letter-spacing:.5px}
+.cal-title{font-size:12px;color:var(--text-primary);margin-top:2px;font-weight:500}
+.cal-detail{font-family:var(--font-data);font-size:9px;color:var(--text-muted);margin-top:2px}
+.cal-event.today{border-left:3px solid var(--critical)}
+.cal-event.soon{border-left:3px solid var(--high)}
+.cal-event.future{border-left:3px solid var(--accent)}
+
+/* BOTTOM RIGHT: AI BRIEF */
+.right-bottom{grid-row:3;grid-column:3}
+.ai-brief{padding:10px 12px;font-size:12px;line-height:1.55}
+.ai-brief .section-head{font-family:var(--font-title);font-size:11px;font-weight:600;letter-spacing:1.5px;
+  color:var(--accent);margin:8px 0 4px;text-transform:uppercase}
+.ai-brief .section-head:first-child{margin-top:0}
+.ai-brief p{color:var(--text-secondary);margin-bottom:6px}
+.ai-brief .threat-item{display:flex;align-items:flex-start;gap:6px;margin-bottom:4px;padding:3px 0}
+.ai-brief .threat-num{font-family:var(--font-data);font-size:10px;font-weight:700;flex-shrink:0;width:14px}
+.ai-brief .threat-text{font-size:11px;color:var(--text-secondary);line-height:1.4}
+.ai-brief .watch-item{font-family:var(--font-data);font-size:10px;color:var(--text-muted);padding:2px 0;display:flex;align-items:flex-start;gap:4px}
+.ai-brief .watch-item::before{content:'›';color:var(--accent);font-weight:700}
+.ai-regen{display:flex;align-items:center;gap:6px;margin-top:8px;padding-top:8px;border-top:1px solid var(--border)}
+.ai-regen button{font-family:var(--font-data);font-size:9px;padding:3px 10px;border-radius:2px;border:1px solid var(--border);
+  background:rgba(45,122,237,.08);color:var(--accent);cursor:pointer;letter-spacing:.5px}
+.ai-regen button:hover{background:rgba(45,122,237,.15)}
+.ai-timestamp{font-family:var(--font-data);font-size:8px;color:var(--text-muted)}
+
+/* TICKER */
+.ticker{grid-column:1/-1;background:var(--bg-primary);border-top:1px solid var(--border);
+  display:flex;align-items:center;overflow:hidden;position:relative}
+.ticker::before{content:'LIVE';font-family:var(--font-data);font-size:8px;font-weight:700;letter-spacing:1px;
+  color:var(--critical);padding:0 10px;flex-shrink:0;border-right:1px solid var(--border)}
+.ticker-track{display:flex;animation:scroll-ticker 120s linear infinite;white-space:nowrap}
+.ticker-item{display:flex;align-items:center;gap:6px;padding:0 24px;font-size:11px;flex-shrink:0}
+.ticker-item .bullet{width:5px;height:5px;border-radius:50%;flex-shrink:0}
+.ticker-item .src{font-family:var(--font-data);font-size:9px;color:var(--text-muted);flex-shrink:0}
+.ticker-item .txt{color:var(--text-secondary)}
+@keyframes scroll-ticker{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+
+/* CUSTOM LEAFLET */
+.leaflet-container{background:var(--bg-deep)!important}
+.leaflet-tile-pane{opacity:.85}
+
+/* TOOLTIP */
+.map-tooltip{background:rgba(7,13,26,.95)!important;border:1px solid var(--border-bright)!important;
+  border-radius:3px!important;padding:8px 10px!important;font-family:var(--font-body)!important;
+  color:var(--text-primary)!important;font-size:11px!important;max-width:260px!important;
+  box-shadow:0 4px 20px rgba(0,0,0,.5)!important;backdrop-filter:blur(8px)}
+.map-tooltip .tt-title{font-family:var(--font-title);font-weight:600;font-size:13px;margin-bottom:2px}
+.map-tooltip .tt-meta{font-family:var(--font-data);font-size:9px;color:var(--text-muted)}
+.map-tooltip .tt-headline{font-size:11px;color:var(--text-secondary);margin-top:4px;line-height:1.35}
+
+/* PULSE MARKERS */
+@keyframes pulse-critical{0%{box-shadow:0 0 0 0 rgba(232,59,59,.5)}70%{box-shadow:0 0 0 14px rgba(232,59,59,0)}100%{box-shadow:0 0 0 0 rgba(232,59,59,0)}}
+@keyframes pulse-high{0%{box-shadow:0 0 0 0 rgba(232,132,43,.4)}70%{box-shadow:0 0 0 10px rgba(232,132,43,0)}100%{box-shadow:0 0 0 0 rgba(232,132,43,0)}}
+@keyframes pulse-news{0%{box-shadow:0 0 0 0 rgba(232,59,59,.35)}70%{box-shadow:0 0 0 8px rgba(232,59,59,0)}100%{box-shadow:0 0 0 0 rgba(232,59,59,0)}}
+
+.conflict-marker{border-radius:50%;border:2px solid rgba(255,255,255,.3);cursor:pointer;transition:transform .2s}
+.conflict-marker:hover{transform:scale(1.3);z-index:1000!important}
+.conflict-marker.critical{background:var(--critical);animation:pulse-critical 2s infinite}
+.conflict-marker.high{background:var(--high);animation:pulse-high 2.5s infinite}
+.conflict-marker.medium{background:var(--medium)}
+.conflict-marker.low{background:var(--low);opacity:.7}
+
+.news-marker{border-radius:50%;border:1.5px solid rgba(255,255,255,.2);cursor:pointer;opacity:.8;transition:all .2s}
+.news-marker:hover{opacity:1;transform:scale(1.5);z-index:1000!important}
+.news-marker.neg-high{background:var(--critical);animation:pulse-news 2s infinite}
+.news-marker.neg-mid{background:var(--high)}
+.news-marker.neutral{background:var(--medium);opacity:.5}
+.news-marker.positive{background:var(--positive);opacity:.4}
+
+/* CONNECTION LINES via SVG overlay */
+.connection-svg{position:absolute;inset:0;z-index:450;pointer-events:none}
+</style>
+</head>
+<body>
+<div class="grid">
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div class="logo"><span>▣</span> ATLAS</div>
+    <div class="live-badge"><div class="live-dot"></div>LIVE</div>
+    <div class="clock">UTC <b id="utc-clock">14:32:07</b></div>
+    <div class="sep"></div>
+    <div class="clock">BsAs <b id="ba-clock">11:32:07</b></div>
+    <div class="sep"></div>
+    <div class="kpi-row">
+      <div class="kpi"><div class="kpi-label">Active Conflicts</div><div class="kpi-value critical">23</div></div>
+      <div class="kpi"><div class="kpi-label">Critical</div><div class="kpi-value critical">3</div></div>
+      <div class="kpi"><div class="kpi-label">News Markers</div><div class="kpi-value">847</div></div>
+      <div class="kpi"><div class="kpi-label">BTC</div><div class="kpi-value positive">$97,234</div></div>
+      <div class="kpi"><div class="kpi-label">WTI Oil</div><div class="kpi-value warn">$72.34</div></div>
+      <div class="kpi"><div class="kpi-label">Gold</div><div class="kpi-value">$2,847</div></div>
+      <div class="kpi"><div class="kpi-label">S&P 500</div><div class="kpi-value positive">6,127</div></div>
+      <div class="kpi"><div class="kpi-label">VIX</div><div class="kpi-value">14.2</div></div>
+    </div>
+    <div class="defcon">
+      <div class="defcon-label">THREAT</div>
+      <div class="defcon-val">3</div>
+    </div>
+    <div class="bell">🔔<span class="bell-count">5</span></div>
+  </div>
+
+  <!-- LEFT TOP: TRUMP + LEADERS FEED -->
+  <div class="panel left-top">
+    <div class="panel-header">
+      <div class="panel-title">📡 Leader Feed</div>
+      <div class="panel-badge" style="background:rgba(232,59,59,.1);color:var(--critical);border:1px solid rgba(232,59,59,.2)">LIVE</div>
+    </div>
+    <div class="panel-body" id="leader-feed"></div>
+  </div>
+
+  <!-- MAP -->
+  <div class="panel map-area" style="border:none;border-radius:0">
+    <div id="map"></div>
+    <div class="news-count-badge">
+      <div style="font-size:8px;letter-spacing:1.5px;color:var(--text-muted);text-transform:uppercase;margin-bottom:2px">Live News Markers</div>
+      <span class="count">847</span>
+      <span style="color:var(--text-muted);font-size:10px"> from 142 countries</span>
+    </div>
+    <div class="map-legend" id="map-legend">
+      <div class="legend-title">Map Layers</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--critical)"></div>News: Crisis (tone &lt; -5)</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--high)"></div>News: Negative</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--medium);opacity:.5"></div>News: Neutral</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--positive);opacity:.5"></div>News: Positive</div>
+      <div style="height:6px"></div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--critical);width:12px;height:12px;border:2px solid rgba(255,255,255,.3)"></div>Conflict: Critical</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--high);width:10px;height:10px;border:2px solid rgba(255,255,255,.3)"></div>Conflict: High</div>
+      <div style="height:6px"></div>
+      <div class="legend-item"><div class="legend-line" style="background:var(--critical)"></div>Proxy War</div>
+      <div class="legend-item"><div class="legend-line" style="background:var(--high);border-top:2px dashed var(--high);height:0"></div>Arms Flow</div>
+      <div class="legend-item"><div class="legend-line" style="background:var(--accent)"></div>Alliance</div>
+      <div class="legend-item"><div class="legend-line" style="background:var(--medium);border-top:2px dotted var(--medium);height:0"></div>Spillover</div>
+      <div class="legend-item"><div class="legend-line" style="background:var(--purple)"></div>Cyber</div>
+    </div>
+    <div class="map-overlay-stats">
+      <span>Last update: <b>2 min ago</b></span>
+      <span>Sources: <b>GDELT · ACLED · USGS</b></span>
+      <span>Refresh: <b>15 min</b></span>
+    </div>
+    <svg class="connection-svg" id="connection-svg"></svg>
+  </div>
+
+  <!-- RIGHT TOP: MARKETS -->
+  <div class="panel right-top">
+    <div class="panel-header">
+      <div class="panel-title">💹 Markets & Indicators</div>
+      <div class="panel-badge" style="background:rgba(40,179,90,.1);color:var(--positive);border:1px solid rgba(40,179,90,.2)">LIVE</div>
+    </div>
+    <div class="panel-body" id="markets-panel"></div>
+  </div>
+
+  <!-- LEFT BOTTOM: CONFLICTS -->
+  <div class="panel left-bottom">
+    <div class="panel-header">
+      <div class="panel-title">⚔️ Active Conflicts</div>
+      <div style="font-family:var(--font-data);font-size:9px;color:var(--text-muted)">ACLED Live</div>
+    </div>
+    <div class="panel-body" id="conflict-list"></div>
+  </div>
+
+  <!-- BOTTOM CENTER: NEWS + CALENDAR -->
+  <div class="bottom-center">
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">📰 Breaking Wire</div>
+        <div style="font-family:var(--font-data);font-size:9px;color:var(--text-muted)">GDELT · Reuters · Fox</div>
+      </div>
+      <div class="panel-body" id="news-wire"></div>
+    </div>
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">📅 Diplomatic Calendar</div>
+      </div>
+      <div class="panel-body" id="calendar"></div>
+    </div>
+  </div>
+
+  <!-- RIGHT BOTTOM: AI BRIEF -->
+  <div class="panel right-bottom">
+    <div class="panel-header">
+      <div class="panel-title">🤖 AI Intelligence Brief</div>
+      <div class="panel-badge" style="background:rgba(155,89,232,.1);color:var(--purple);border:1px solid rgba(155,89,232,.2)">ATLAS AI</div>
+    </div>
+    <div class="panel-body">
+      <div class="ai-brief" id="ai-brief"></div>
+    </div>
+  </div>
+
+  <!-- TICKER -->
+  <div class="ticker" id="ticker"></div>
+</div>
+
+<script>
+// ============ CLOCKS ============
+function updateClocks(){
+  const now=new Date();
+  const utc=now.toISOString().slice(11,19);
+  document.getElementById('utc-clock').textContent=utc;
+  const ba=new Date(now.toLocaleString('en-US',{timeZone:'America/Argentina/Buenos_Aires'}));
+  document.getElementById('ba-clock').textContent=ba.toTimeString().slice(0,8);
+}
+setInterval(updateClocks,1000);updateClocks();
+
+// ============ MAP ============
+const map=L.map('map',{zoomControl:false,attributionControl:false,minZoom:2,maxZoom:12}).setView([25,20],2.5);
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{subdomains:'abcd',maxZoom:19}).addTo(map);
+
+// Conflict data (simulating ACLED API response)
+const conflicts=[
+  {name:"Russia-Ukraine War",sev:"critical",lat:48.37,lng:35.18,region:"E. Europe",casualties:"500K+",displaced:"8.2M",trend:"escalating",since:"Feb 2022"},
+  {name:"Israel-Palestine",sev:"critical",lat:31.35,lng:34.31,region:"Middle East",casualties:"45K+",displaced:"2.3M",trend:"escalating",since:"Oct 2023"},
+  {name:"Sudan Civil War",sev:"critical",lat:15.5,lng:32.56,region:"E. Africa",casualties:"150K+",displaced:"10.7M",trend:"escalating",since:"Apr 2023"},
+  {name:"Myanmar Civil War",sev:"high",lat:19.76,lng:96.07,region:"SE Asia",casualties:"50K+",displaced:"2.6M",trend:"escalating",since:"Feb 2021"},
+  {name:"DRC Eastern Congo",sev:"high",lat:-1.68,lng:29.22,region:"Central Africa",casualties:"120K+",displaced:"6.9M",trend:"escalating",since:"2004"},
+  {name:"Yemen (Houthi)",sev:"high",lat:15.55,lng:48.52,region:"Middle East",casualties:"377K+",displaced:"4.5M",trend:"stable",since:"2014"},
+  {name:"Iran Nuclear Program",sev:"high",lat:35.69,lng:51.39,region:"Middle East",casualties:"-",displaced:"-",trend:"escalating",since:"2006"},
+  {name:"Sahel Insurgency",sev:"high",lat:14.72,lng:-1.52,region:"W. Africa",casualties:"40K+",displaced:"3.2M",trend:"stable",since:"2012"},
+  {name:"Somalia Al-Shabaab",sev:"high",lat:2.05,lng:45.32,region:"E. Africa",casualties:"20K+",displaced:"3.8M",trend:"stable",since:"2006"},
+  {name:"Syria Post-Assad",sev:"high",lat:35.24,lng:38.97,region:"Middle East",casualties:"500K+",displaced:"6.7M",trend:"stable",since:"2011"},
+  {name:"Taiwan Strait Tensions",sev:"medium",lat:23.7,lng:120.96,region:"E. Asia",casualties:"-",displaced:"-",trend:"escalating",since:"2022"},
+  {name:"Haiti Gang Crisis",sev:"medium",lat:18.97,lng:-72.28,region:"Caribbean",casualties:"8K+",displaced:"700K",trend:"escalating",since:"2021"},
+  {name:"N. Korea Nuclear",sev:"medium",lat:39.03,lng:125.75,region:"E. Asia",casualties:"-",displaced:"-",trend:"stable",since:"2006"},
+  {name:"Pakistan TTP",sev:"medium",lat:30.37,lng:69.34,region:"S. Asia",casualties:"12K+",displaced:"1.2M",trend:"stable",since:"2007"},
+  {name:"Mexico Cartels",sev:"medium",lat:23.63,lng:-102.55,region:"N. America",casualties:"30K+/yr",displaced:"380K",trend:"stable",since:"2006"},
+  {name:"Colombia ELN",sev:"low",lat:4.71,lng:-74.07,region:"S. America",casualties:"2K+",displaced:"120K",trend:"stable",since:"2017"},
+  {name:"South China Sea",sev:"low",lat:12,lng:114,region:"SE Asia",casualties:"-",displaced:"-",trend:"escalating",since:"2012"},
+  {name:"Libya Political",sev:"low",lat:32.9,lng:13.18,region:"N. Africa",casualties:"5K+",displaced:"280K",trend:"stable",since:"2014"},
+];
+
+// Draw conflict markers
+const markerSizes={critical:14,high:11,medium:8,low:6};
+conflicts.forEach(c=>{
+  const size=markerSizes[c.sev];
+  const icon=L.divIcon({className:'',html:`<div class="conflict-marker ${c.sev}" style="width:${size}px;height:${size}px"></div>`,iconSize:[size,size],iconAnchor:[size/2,size/2]});
+  const m=L.marker([c.lat,c.lng],{icon}).addTo(map);
+  m.bindTooltip(`<div class="map-tooltip"><div class="tt-title">${c.name}</div><div class="tt-meta">${c.sev.toUpperCase()} · ${c.region} · Since ${c.since}</div><div class="tt-headline">☠️ ${c.casualties} · 🏃 ${c.displaced} displaced<br>Trend: ${c.trend==='escalating'?'▲ ESCALATING':c.trend==='stable'?'▬ Stable':'▼ De-escalating'}</div></div>`,{className:'map-tooltip',direction:'top',offset:[0,-8]});
+});
+
+// Simulated GDELT news markers (in production these come from GDELT GEO 2.0 API every 15 min)
+const newsPoints=[
+  // Middle East cluster
+  {lat:31.5,lng:34.4,tone:-8.2,headline:"IDF reports intense operations in northern Gaza amid evacuation orders",src:"Reuters",cat:"conflict"},
+  {lat:31.8,lng:35.2,tone:-6.1,headline:"West Bank: Three killed in overnight raid near Jenin",src:"Al Jazeera",cat:"conflict"},
+  {lat:33.8,lng:35.5,tone:-7.5,headline:"Hezbollah launches drone attack on northern Israeli military base",src:"Times of Israel",cat:"conflict"},
+  {lat:15.3,lng:44.2,tone:-5.8,headline:"Houthi forces claim missile strike on commercial vessel in Red Sea",src:"AP",cat:"conflict"},
+  {lat:27.0,lng:50.5,tone:-4.2,headline:"IAEA: Iran enrichment levels reach 83.7%, near weapons grade",src:"Reuters",cat:"nuclear"},
+  {lat:35.7,lng:51.3,tone:-3.1,headline:"Tehran dismisses new EU sanctions package as 'hostile propaganda'",src:"PressTV",cat:"diplomacy"},
+  {lat:32.0,lng:36.0,tone:-2.5,headline:"Syrian transitional government struggles with armed faction control",src:"BBC",cat:"conflict"},
+  // Ukraine cluster
+  {lat:49.9,lng:36.2,tone:-9.1,headline:"Russia launches massive missile barrage on Kharkiv, 12 reported killed",src:"Kyiv Independent",cat:"conflict"},
+  {lat:48.0,lng:37.8,tone:-7.8,headline:"Ukrainian forces report heavy losses in Donetsk counteroffensive",src:"Reuters",cat:"conflict"},
+  {lat:51.5,lng:31.3,tone:-6.3,headline:"Drone attack hits infrastructure in Chernihiv region",src:"Ukrinform",cat:"conflict"},
+  {lat:47.0,lng:35.0,tone:-5.0,headline:"Zaporizhzhia nuclear plant: IAEA warns of continued shelling risk",src:"IAEA Press",cat:"nuclear"},
+  {lat:50.4,lng:30.5,tone:-3.5,headline:"Zelensky urges allies for more air defense systems",src:"BBC",cat:"diplomacy"},
+  // Asia
+  {lat:24.0,lng:121.5,tone:-4.5,headline:"PLA conducts live-fire exercises near Taiwan's ADIZ",src:"SCMP",cat:"military"},
+  {lat:16.0,lng:112.0,tone:-3.8,headline:"Philippines reports Chinese coast guard harassment near Scarborough Shoal",src:"Reuters",cat:"military"},
+  {lat:39.0,lng:125.7,tone:-6.0,headline:"North Korea fires ballistic missile into Sea of Japan",src:"Yonhap",cat:"military"},
+  {lat:19.5,lng:96.5,tone:-5.5,headline:"Myanmar junta intensifies airstrikes on Karen resistance positions",src:"Irrawaddy",cat:"conflict"},
+  // Africa
+  {lat:15.4,lng:32.5,tone:-8.5,headline:"RSF advances on El-Fasher: UN warns of potential genocide",src:"UN News",cat:"conflict"},
+  {lat:13.5,lng:25.0,tone:-6.2,headline:"Sudan: Aid workers killed in Darfur convoy attack",src:"ICRC",cat:"humanitarian"},
+  {lat:-1.5,lng:29.0,tone:-5.8,headline:"M23 rebels seize two more towns in eastern DRC",src:"AFP",cat:"conflict"},
+  {lat:14.5,lng:-2.0,tone:-4.8,headline:"Sahel: Wagner forces accused of civilian massacres in Mali",src:"France24",cat:"conflict"},
+  {lat:2.0,lng:45.3,tone:-4.5,headline:"Al-Shabaab claims car bombing in Mogadishu, 15 dead",src:"BBC",cat:"terrorism"},
+  // Americas
+  {lat:32.5,lng:-117.0,tone:-2.0,headline:"CBP reports record low border crossings for sixth straight month",src:"Fox News",cat:"us_politics"},
+  {lat:19.4,lng:-99.1,tone:-5.2,headline:"Cartel violence surges in Sinaloa after leadership split",src:"AP",cat:"conflict"},
+  {lat:18.5,lng:-72.3,tone:-6.0,headline:"Haiti: Armed gangs control 85% of Port-au-Prince",src:"Reuters",cat:"conflict"},
+  {lat:10.5,lng:-66.9,tone:-3.5,headline:"Venezuela: Opposition leaders report new wave of arrests",src:"Reuters",cat:"politics"},
+  // US/Trump related
+  {lat:38.9,lng:-77.0,tone:2.5,headline:"Trump signs executive order expanding tariffs on Chinese tech imports",src:"Fox News",cat:"us_politics"},
+  {lat:40.7,lng:-74.0,tone:1.8,headline:"Wall Street rallies on strong jobs data, Dow nears 45,000",src:"WSJ",cat:"economy"},
+  {lat:38.9,lng:-77.1,tone:1.2,headline:"DOGE claims $172B in government savings ahead of schedule",src:"Daily Wire",cat:"us_politics"},
+  // Europe
+  {lat:50.85,lng:4.35,tone:-1.5,headline:"NATO defense ministers discuss Ukraine aid package in Brussels",src:"NATO Press",cat:"diplomacy"},
+  {lat:48.85,lng:2.35,tone:-2.0,headline:"Macron warns of 'existential threat' if Russia wins in Ukraine",src:"France24",cat:"diplomacy"},
+  {lat:52.5,lng:13.4,tone:-1.0,headline:"Germany's new chancellor pledges increased defense spending",src:"DW",cat:"diplomacy"},
+  {lat:41.9,lng:12.5,tone:0.5,headline:"Italy pushes for EU-wide migration reform at summit",src:"ANSA",cat:"politics"},
+  // Energy/Markets
+  {lat:26.3,lng:50.1,tone:-3.0,headline:"OPEC+ considers production cut extension amid price volatility",src:"Reuters",cat:"energy"},
+  {lat:30.0,lng:32.5,tone:-4.0,headline:"Suez Canal traffic down 40% as Houthi attacks continue",src:"Lloyd's List",cat:"energy"},
+  {lat:59.9,lng:30.3,tone:-3.2,headline:"Russian oil exports shift to shadow fleet amid sanctions",src:"FT",cat:"energy"},
+];
+
+newsPoints.forEach(n=>{
+  let cls='neutral',size=4;
+  if(n.tone<-5){cls='neg-high';size=7}
+  else if(n.tone<-2){cls='neg-mid';size=5}
+  else if(n.tone>2){cls='positive';size=4}
+  const icon=L.divIcon({className:'',html:`<div class="news-marker ${cls}" style="width:${size}px;height:${size}px"></div>`,iconSize:[size,size],iconAnchor:[size/2,size/2]});
+  const m=L.marker([n.lat,n.lng],{icon,zIndexOffset:n.tone<-5?500:0}).addTo(map);
+  const toneColor=n.tone<-5?'var(--critical)':n.tone<-2?'var(--high)':n.tone>2?'var(--positive)':'var(--medium)';
+  m.bindTooltip(`<div class="map-tooltip"><div class="tt-title">📍 ${n.src}</div><div class="tt-meta">Tone: ${n.tone} · ${n.cat.toUpperCase()}</div><div class="tt-headline">${n.headline}</div></div>`,{className:'map-tooltip',direction:'top',offset:[0,-6]});
+});
+
+// Connection lines (drawn as polylines with animation class)
+const connections=[
+  {from:[35.69,51.39],to:[31.35,34.31],type:"proxy_war",label:"Iran → Hamas proxy"},
+  {from:[35.69,51.39],to:[15.55,48.52],type:"arms_flow",label:"Iran → Houthi arms"},
+  {from:[35.69,51.39],to:[35.24,38.97],type:"proxy_war",label:"Iran → Syria proxy"},
+  {from:[48.37,35.18],to:[35.69,51.39],type:"arms_flow",label:"Iran → Russia drones"},
+  {from:[48.37,35.18],to:[39.03,125.75],type:"alliance",label:"Russia-DPRK alliance"},
+  {from:[31.35,34.31],to:[15.55,48.52],type:"spillover",label:"Gaza ↔ Red Sea spillover"},
+  {from:[31.35,34.31],to:[33.8,35.5],type:"proxy_war",label:"Israel ↔ Hezbollah"},
+  {from:[23.7,120.96],to:[12,114],type:"military",label:"China SCS-Taiwan axis"},
+  {from:[14.72,-1.52],to:[2.05,45.32],type:"spillover",label:"Sahel-Somalia jihadi link"},
+  {from:[-1.68,29.22],to:[15.5,32.56],type:"spillover",label:"DRC-Sudan regional instability"},
+];
+
+const connColors={proxy_war:'#e83b3b',arms_flow:'#e8842b',alliance:'#2d7aed',spillover:'#d4a72c',military:'#9b59e8',cyber:'#9b59e8'};
+const connDash={proxy_war:null,arms_flow:'8 6',alliance:null,spillover:'4 4',military:'8 4',cyber:'6 4'};
+connections.forEach(c=>{
+  const line=L.polyline([c.from,c.to],{
+    color:connColors[c.type]||'#2d7aed',weight:1.5,opacity:.45,
+    dashArray:connDash[c.type]||null,className:'connection-line'
+  }).addTo(map);
+  line.bindTooltip(`<div class="map-tooltip"><div class="tt-meta">${c.type.replace('_',' ').toUpperCase()}</div><div class="tt-headline">${c.label}</div></div>`,{className:'map-tooltip',sticky:true});
+});
+
+// ============ LEADER FEED ============
+const feedItems=[
+  {flag:"🇺🇸",handle:"@realDonaldTrump",role:"President of the United States",source:"Truth Social",time:"3m",cls:"trump",
+    text:`Record Stock Market, and National Security, driven by our Great <span class="highlight">TARIFFS</span>. I am predicting 100,000 on the DOW by the end of my Term. REMEMBER, TRUMP WAS RIGHT ABOUT EVERYTHING!`,
+    engagement:"♥ 89.2K · 🔄 23.1K · 💬 12.4K",tags:["Economy","Markets","Tariffs"]},
+  {flag:"🇺🇸",handle:"@elonmusk",role:"DOGE — Dept. of Government Efficiency",source:"X",time:"12m",cls:"musk",
+    text:`DOGE has now saved $172B in taxpayer money. We are 43% ahead of schedule. The waste in government is even worse than we expected.`,
+    engagement:"♥ 245K · 🔄 67.3K",tags:["DOGE","Government"]},
+  {flag:"🇮🇱",handle:"@netanyahu",role:"Prime Minister of Israel",source:"X",time:"28m",cls:"leader",
+    text:`Israel will continue to act with full force against all threats on every front. We will not rest until all hostages are home and our enemies are defeated.`,
+    engagement:"♥ 34.1K · 🔄 8.7K",tags:["Israel","Security"]},
+  {flag:"🇺🇸",handle:"Pentagon Press",role:"Department of Defense",source:"DoD RSS",time:"45m",cls:"military",
+    text:`CENTCOM confirms precision strikes on Houthi missile storage facilities in Yemen. Operations conducted in coordination with allied forces to protect freedom of navigation in the Red Sea.`,
+    engagement:"",tags:["Military","Yemen","CENTCOM"]},
+  {flag:"🇺🇦",handle:"@ZelenskyyUa",role:"President of Ukraine",source:"X",time:"1h",cls:"leader",
+    text:`Another night of Russian terror. Kharkiv hit by 14 missiles. We need more air defense systems — not tomorrow, now. Every day of delay costs lives.`,
+    engagement:"♥ 56.3K · 🔄 18.9K",tags:["Ukraine","Defense"]},
+  {flag:"🇺🇸",handle:"@marcorubio",role:"Secretary of State",source:"X",time:"1.5h",cls:"leader",
+    text:`Met with NATO allies in Brussels today. Made clear: America expects fair burden-sharing. Our allies must invest in their own defense. The era of free-riding is over.`,
+    engagement:"♥ 12.8K · 🔄 3.1K",tags:["NATO","Diplomacy"]},
+  {flag:"🇺🇸",handle:"@CBP",role:"Customs & Border Protection",source:"CBP RSS",time:"2h",cls:"military",
+    text:`FY26 October data: 30,561 total encounters nationwide — lowest start to a fiscal year in CBP history. Sixth consecutive month of ZERO releases. Border security works.`,
+    engagement:"",tags:["Border","Immigration"]},
+  {flag:"🇷🇺",handle:"Kremlin Press",role:"Office of the President",source:"kremlin.ru RSS",time:"3h",cls:"leader",
+    text:`President Putin discussed the special military operation progress with Defence Minister Belousov. Emphasized the need to strengthen positions in Donetsk and maintain operational momentum.`,
+    engagement:"",tags:["Russia","Ukraine"]},
+  {flag:"🇨🇳",handle:"Xinhua News",role:"Chinese State Media",source:"xinhua.net RSS",time:"4h",cls:"leader",
+    text:`PLA Eastern Theatre Command conducted routine combat readiness patrols around Taiwan. China's sovereignty and territorial integrity will be firmly safeguarded.`,
+    engagement:"",tags:["China","Taiwan"]},
+  {flag:"🌐",handle:"@IABORZ",role:"IAEA Director General",source:"IAEA RSS",time:"5h",cls:"leader",
+    text:`New report: Iran's enrichment levels have reached 83.7% purity at Fordow facility. This is deeply concerning. We call on all parties to engage in meaningful diplomatic dialogue.`,
+    engagement:"♥ 8.2K · 🔄 4.1K",tags:["Nuclear","Iran","IAEA"]},
+];
+
+document.getElementById('leader-feed').innerHTML=feedItems.map(f=>`
+  <div class="feed-item ${f.cls}">
+    <div class="feed-meta">
+      <span class="feed-flag">${f.flag}</span>
+      <span class="feed-handle">${f.handle}</span>
+      <span class="feed-source">${f.source}</span>
+      <span class="feed-time">${f.time}</span>
+    </div>
+    <div class="feed-role">${f.role}</div>
+    <div class="feed-text">${f.text}</div>
+    ${f.engagement?`<div class="feed-engagement">${f.engagement}</div>`:''}
+    <div class="feed-tags">${f.tags.map(t=>`<span class="feed-tag">${t}</span>`).join('')}</div>
+  </div>
+`).join('');
+
+// ============ MARKETS ============
+function sparkBars(trend,color){
+  const heights=trend||Array.from({length:20},()=>30+Math.random()*70);
+  return heights.map(h=>`<div class="bar" style="height:${h}%;background:${color||'var(--accent)'}"></div>`).join('');
+}
+
+const marketsHTML=`
+<div class="market-section">
+  <div class="market-section-title">⛽ Energy</div>
+  <div class="market-row"><span class="market-name">WTI OIL</span><div class="market-spark">${sparkBars([40,45,50,55,48,52,58,62,55,60,65,58,62,68,72,70,75,72,68,72])}</div><span class="market-price">$72.34</span><span class="market-delta up">▲ +1.2%</span></div>
+  <div class="market-row"><span class="market-name">BRENT</span><div class="market-spark">${sparkBars([42,48,52,56,50,54,60,64,57,62,67,60,64,70,74,72,77,74,70,75])}</div><span class="market-price">$75.81</span><span class="market-delta up">▲ +0.9%</span></div>
+  <div class="market-row"><span class="market-name">NAT GAS</span><div class="market-spark">${sparkBars([60,55,50,48,52,58,62,65,70,68,72,75,70,65,60,58,55,52,50,48])}</div><span class="market-price">$3.42</span><span class="market-delta down">▼ -2.1%</span></div>
+</div>
+<div class="market-section">
+  <div class="market-section-title">🥇 Precious Metals</div>
+  <div class="market-row"><span class="market-name">GOLD</span><div class="market-spark">${sparkBars([55,58,60,62,65,68,70,72,75,73,76,78,80,82,85,83,86,88,85,87],'#d4a72c')}</div><span class="market-price">$2,847</span><span class="market-delta up">▲ +0.3%</span></div>
+  <div class="market-row"><span class="market-name">SILVER</span><div class="market-spark">${sparkBars([50,52,55,53,56,58,60,62,58,60,63,65,62,64,66,68,65,67,64,66],'#94a3b8')}</div><span class="market-price">$32.14</span><span class="market-delta up">▲ +0.5%</span></div>
+</div>
+<div class="market-section">
+  <div class="market-section-title">₿ Crypto</div>
+  <div class="market-row"><span class="market-name">BITCOIN</span><div class="market-spark">${sparkBars([85,82,78,75,72,68,65,70,74,78,82,80,76,73,70,68,72,75,78,74],'#e8842b')}</div><span class="market-price">$97,234</span><span class="market-delta down">▼ -2.1%</span></div>
+  <div class="market-row"><span class="market-name">ETHEREUM</span><div class="market-spark">${sparkBars([70,68,65,62,58,55,52,56,60,64,68,66,62,58,55,52,56,60,64,60],'#9b59e8')}</div><span class="market-price">$2,645</span><span class="market-delta down">▼ -3.4%</span></div>
+</div>
+<div class="market-section">
+  <div class="market-section-title">📈 Indices</div>
+  <div class="market-row"><span class="market-name">S&P 500</span><div class="market-spark">${sparkBars([60,62,65,68,70,72,75,73,76,78,80,82,78,80,83,85,82,84,86,84],'var(--positive)')}</div><span class="market-price">6,127</span><span class="market-delta up">▲ +0.4%</span></div>
+  <div class="market-row"><span class="market-name">DOW</span><div class="market-spark">${sparkBars([58,60,63,66,68,70,73,71,74,76,78,80,76,78,81,83,80,82,84,82],'var(--positive)')}</div><span class="market-price">44,892</span><span class="market-delta up">▲ +0.3%</span></div>
+  <div class="market-row"><span class="market-name">VIX</span><div class="market-spark">${sparkBars([40,45,42,38,35,32,30,34,36,32,28,25,28,32,30,26,24,22,20,18],'var(--critical)')}</div><span class="market-price">14.2</span><span class="market-delta down">▼ -3.1%</span></div>
+  <div class="market-row"><span class="market-name">DXY</span><div class="market-spark">${sparkBars([65,68,70,72,75,73,76,78,80,82,84,82,85,83,86,84,87,85,88,86])}</div><span class="market-price">108.3</span><span class="market-delta up">▲ +0.2%</span></div>
+  <div class="market-row"><span class="market-name">10Y YIELD</span><div class="market-spark">${sparkBars([60,62,64,66,68,65,63,66,68,70,72,70,68,66,64,62,60,62,64,62])}</div><span class="market-price">4.52%</span><span class="market-delta flat">▬ 0.0%</span></div>
+</div>
+<div class="market-section">
+  <div class="market-section-title">🌾 Geopolitical Commodities</div>
+  <div class="market-row"><span class="market-name">WHEAT</span><div class="market-spark">${sparkBars()}</div><span class="market-price">$5.82</span><span class="market-delta up">▲ +1.8%</span></div>
+  <div class="market-row"><span class="market-name">SOYBEANS</span><div class="market-spark">${sparkBars()}</div><span class="market-price">$10.24</span><span class="market-delta down">▼ -0.6%</span></div>
+</div>
+<div class="market-section">
+  <div class="market-section-title">🇺🇸 US Macro</div>
+  <div class="macro-row"><span class="macro-label">National Debt</span><span class="macro-val" style="color:var(--critical)">$36.42 T</span></div>
+  <div class="macro-row"><span class="macro-label">DOGE Savings</span><span class="macro-val" style="color:var(--positive)">$172B claimed</span></div>
+  <div class="macro-row"><span class="macro-label">Fed Rate</span><span class="macro-val">4.25-4.50%</span></div>
+  <div class="macro-row"><span class="macro-label">CPI (YoY)</span><span class="macro-val">2.9%</span></div>
+  <div class="macro-row"><span class="macro-label">Unemployment</span><span class="macro-val">4.0%</span></div>
+</div>
+<div class="market-section">
+  <div class="market-section-title">🛃 Border Security (FY26)</div>
+  <div class="border-stat"><span class="border-stat-label">SW Encounters/mo</span><span class="border-stat-val" style="color:var(--positive)">30,561 <span class="border-delta" style="color:var(--positive)">▼ -95% vs Biden</span></span></div>
+  <div class="border-stat"><span class="border-stat-label">USBP Releases</span><span class="border-stat-val" style="color:var(--positive)">ZERO (6 mo streak)</span></div>
+  <div class="border-stat"><span class="border-stat-label">Fentanyl Seized</span><span class="border-stat-val">12,400 lbs</span></div>
+  <div class="border-stat"><span class="border-stat-label">ICE Arrests</span><span class="border-stat-val">48,290</span></div>
+  <div class="border-stat"><span class="border-stat-label">Daily SW Apprehensions</span><span class="border-stat-val" style="color:var(--positive)">258/day <span class="border-delta" style="color:var(--positive)">▼ from 5,110</span></span></div>
+</div>`;
+document.getElementById('markets-panel').innerHTML=marketsHTML;
+
+// ============ CONFLICTS LIST ============
+document.getElementById('conflict-list').innerHTML=conflicts.map((c,i)=>`
+  <div class="conflict-card ${i===0?'selected':''}">
+    <div class="conflict-top">
+      <span class="severity-badge ${c.sev}">${c.sev}</span>
+      <span class="conflict-name">${c.name}</span>
+    </div>
+    <div class="conflict-region">🌍 ${c.region} · Since ${c.since}</div>
+    <div class="conflict-stats">
+      <span>☠️ ${c.casualties}</span>
+      <span>🏃 ${c.displaced}</span>
+      <span class="${c.trend==='escalating'?'trend-up':c.trend==='stable'?'trend-stable':'trend-down'}">${c.trend==='escalating'?'▲ Escalating':c.trend==='stable'?'▬ Stable':'▼ De-escalating'}</span>
+    </div>
+  </div>
+`).join('');
+
+// ============ NEWS WIRE ============
+const newsWire=[
+  {bullet:"critical",src:"Reuters",time:"3m",headline:"Russia launches massive missile barrage on Kharkiv — at least 12 killed, residential area hit",tone:-9.1},
+  {bullet:"critical",src:"UN News",time:"8m",headline:"RSF advances on El-Fasher: UN warns of 'potential genocide' in Darfur",tone:-8.5},
+  {bullet:"critical",src:"Kyiv Independent",time:"14m",headline:"Ukraine claims destruction of Russian ammo depot in Belgorod using ATACMS",tone:-7.2},
+  {bullet:"high",src:"Fox News",time:"18m",headline:"Trump signs executive order expanding tariffs on Chinese tech imports to 60%",tone:1.5},
+  {bullet:"high",src:"Times of Israel",time:"22m",headline:"IDF reports intense operations in northern Gaza as ceasefire talks stall",tone:-7.0},
+  {bullet:"medium",src:"AP",time:"28m",headline:"Houthi forces claim another missile strike on commercial vessel in Red Sea",tone:-5.8},
+  {bullet:"accent",src:"WSJ",time:"35m",headline:"Wall Street rallies on strong jobs data — Dow nears 45,000 milestone",tone:2.8},
+  {bullet:"high",src:"BBC",time:"42m",headline:"Myanmar junta airstrikes kill dozens in Karen State resistance stronghold",tone:-6.5},
+  {bullet:"medium",src:"SCMP",time:"50m",headline:"PLA conducts live-fire exercises near Taiwan's air defense identification zone",tone:-4.5},
+  {bullet:"accent",src:"Daily Wire",time:"1h",headline:"DOGE identifies $23B in duplicate federal contracts for elimination",tone:2.0},
+  {bullet:"high",src:"France24",time:"1.2h",headline:"Wagner-linked Africa Corps accused of civilian massacres in Mali",tone:-6.8},
+  {bullet:"medium",src:"Reuters",time:"1.5h",headline:"OPEC+ considers extending production cuts amid price volatility",tone:-2.5},
+];
+const bulletColors={critical:'var(--critical)',high:'var(--high)',medium:'var(--medium)',accent:'var(--accent)'};
+document.getElementById('news-wire').innerHTML=newsWire.map(n=>{
+  const toneColor=n.tone<-5?'var(--critical)':n.tone<-2?'var(--high)':n.tone>1?'var(--positive)':'var(--medium)';
+  const toneWidth=Math.min(Math.abs(n.tone)*8,100);
+  return`<div class="news-item">
+    <div class="news-meta">
+      <div class="news-bullet" style="background:${bulletColors[n.bullet]}"></div>
+      <span class="news-source">${n.src}</span>
+      <span class="news-time">${n.time}</span>
+    </div>
+    <div class="news-headline">${n.headline}</div>
+    <div class="news-tone"><span class="bar" style="width:${toneWidth}px;background:${toneColor}"></span>${n.tone>0?'+':''}${n.tone}</div>
+  </div>`
+}).join('');
+
+// ============ CALENDAR ============
+const calEvents=[
+  {date:"TODAY · Feb 10",title:"EU Foreign Affairs Council",detail:"Brussels · Sanctions review on Russia & Iran",cls:"today"},
+  {date:"Feb 12-13",title:"NATO Defence Ministers Meeting",detail:"Brussels · Ukraine aid package, burden sharing",cls:"today"},
+  {date:"Feb 14",title:"UN Security Council — Sudan",detail:"New York · Emergency session on Darfur humanitarian access",cls:"soon"},
+  {date:"Feb 14-16",title:"Munich Security Conference",detail:"Munich · Zelensky keynote, Rubio attending",cls:"soon"},
+  {date:"Feb 20",title:"IAEA Board of Governors",detail:"Vienna · Iran enrichment report review",cls:"soon"},
+  {date:"Mar 1",title:"OPEC+ Ministerial Meeting",detail:"Vienna · Production quota decision",cls:"future"},
+  {date:"Mar 18-19",title:"Federal Reserve FOMC",detail:"Washington · Rate decision",cls:"future"},
+  {date:"Apr 14-20",title:"IMF/World Bank Spring Meetings",detail:"Washington · Global economic outlook",cls:"future"},
+  {date:"Jun 15-17",title:"G7 Summit",detail:"Canada · Full agenda TBD",cls:"future"},
+  {date:"Sep 16-22",title:"UN General Assembly (UNGA 81)",detail:"New York · World leaders week",cls:"future"},
+];
+document.getElementById('calendar').innerHTML=calEvents.map(e=>`
+  <div class="cal-event ${e.cls}">
+    <div class="cal-date">${e.date}</div>
+    <div class="cal-title">${e.title}</div>
+    <div class="cal-detail">${e.detail}</div>
+  </div>
+`).join('');
+
+// ============ AI BRIEF ============
+document.getElementById('ai-brief').innerHTML=`
+<div class="section-head">■ Situation Overview</div>
+<p>Global threat level remains <b style="color:var(--high)">ELEVATED</b>. Three conflicts at Critical status. Russia has escalated strikes against Ukrainian civilian infrastructure in Kharkiv. Iran enrichment reaches 83.7% — near weapons grade. Red Sea shipping disruptions continue affecting global energy supply chains. US markets positive on strong economic data and continued DOGE savings.</p>
+
+<div class="section-head">■ Critical Developments (24h)</div>
+<div class="threat-item"><span class="threat-num" style="color:var(--critical)">1.</span><span class="threat-text"><b>UKRAINE:</b> Massive missile barrage on Kharkiv. 14+ missiles, 12 killed. Residential infrastructure targeted. Zelensky requests emergency air defense delivery.</span></div>
+<div class="threat-item"><span class="threat-num" style="color:var(--critical)">2.</span><span class="threat-text"><b>SUDAN:</b> RSF advancing on El-Fasher. UN warns potential genocide. 10.7M displaced — largest displacement crisis globally.</span></div>
+<div class="threat-item"><span class="threat-num" style="color:var(--critical)">3.</span><span class="threat-text"><b>IRAN:</b> IAEA confirms 83.7% enrichment at Fordow. Technical breakout capability within weeks. EU weighing additional sanctions package.</span></div>
+<div class="threat-item"><span class="threat-num" style="color:var(--high)">4.</span><span class="threat-text"><b>RED SEA:</b> Houthi forces claim new attack on commercial vessel. Suez Canal traffic down 40%. CENTCOM strikes on Yemen missile facilities.</span></div>
+
+<div class="section-head">■ Threat Matrix (72h outlook)</div>
+<div class="threat-item"><span class="threat-num" style="color:var(--critical)">🔴</span><span class="threat-text">Iran enrichment — potential IAEA emergency session trigger</span></div>
+<div class="threat-item"><span class="threat-num" style="color:var(--critical)">🔴</span><span class="threat-text">Kharkiv escalation — risk of further civilian targeting</span></div>
+<div class="threat-item"><span class="threat-num" style="color:var(--high)">🟠</span><span class="threat-text">Red Sea shipping — oil price sensitivity if attacks intensify</span></div>
+<div class="threat-item"><span class="threat-num" style="color:var(--high)">🟠</span><span class="threat-text">Taiwan Strait — PLA exercises near ADIZ, monitor for escalation</span></div>
+
+<div class="section-head">■ Market Implications</div>
+<p>Oil +1.2% on Red Sea disruption. Gold steady as safe haven. VIX low at 14.2 suggests market complacency despite geopolitical risks. Trump tariff expansion on Chinese tech may pressure semiconductor sector. DOGE savings narrative supporting fiscal optimism.</p>
+
+<div class="section-head">■ Watchlist</div>
+<div class="watch-item">Munich Security Conference (Feb 14-16): Zelensky keynote, Rubio bilateral meetings</div>
+<div class="watch-item">IAEA Board of Governors (Feb 20): Iran enrichment formal review</div>
+<div class="watch-item">PLA Taiwan ADIZ activity: 3rd exercise this month</div>
+<div class="watch-item">North Korea: ballistic missile test — monitor for ICBM capability</div>
+<div class="watch-item">OPEC+ March meeting: production cut extension decision</div>
+
+<div class="ai-regen">
+  <button>🔄 Regenerate Brief</button>
+  <button>📄 Full Report (PDF)</button>
+  <span class="ai-timestamp">Generated: ${new Date().toISOString().slice(0,16)} UTC · Model: Claude Sonnet 4.5 · Sources: ACLED, GDELT, Reuters, CBP</span>
+</div>`;
+
+// ============ TICKER ============
+const tickerItems=[
+  {bullet:'var(--critical)',src:'REUTERS',txt:'Russia launches massive missile barrage on Kharkiv — at least 12 killed'},
+  {bullet:'var(--critical)',src:'UN NEWS',txt:'RSF advances on El-Fasher: UN warns of potential genocide in Darfur'},
+  {bullet:'var(--high)',src:'IAEA',txt:'Iran enrichment reaches 83.7% purity at Fordow — near weapons grade'},
+  {bullet:'var(--accent)',src:'FOX NEWS',txt:'Trump signs executive order expanding tariffs on Chinese tech to 60%'},
+  {bullet:'var(--positive)',src:'WSJ',txt:'Wall Street rallies — Dow nears 45,000 on strong jobs data'},
+  {bullet:'var(--positive)',src:'DAILY WIRE',txt:'DOGE claims $172B in government savings, 43% ahead of schedule'},
+  {bullet:'var(--critical)',src:'KYIV IND.',txt:'Ukrainian forces destroy Russian ammo depot in Belgorod using ATACMS'},
+  {bullet:'var(--high)',src:'AP',txt:'Houthi forces claim missile strike on commercial vessel in Red Sea'},
+  {bullet:'var(--medium)',src:'SCMP',txt:'PLA conducts live-fire exercises near Taiwan ADIZ — 3rd this month'},
+  {bullet:'var(--positive)',src:'CBP',txt:'FY26 October: lowest border crossings in CBP history — 6th month of ZERO releases'},
+  {bullet:'var(--high)',src:'BBC',txt:'Myanmar junta airstrikes kill dozens in Karen State'},
+  {bullet:'var(--medium)',src:'REUTERS',txt:'OPEC+ considers extending production cuts amid oil price volatility'},
+  {bullet:'var(--critical)',src:'FRANCE24',txt:'Wagner Africa Corps accused of civilian massacres in Mali'},
+  {bullet:'var(--high)',src:'YONHAP',txt:'North Korea fires ballistic missile into Sea of Japan'},
+];
+const tickerHTML=tickerItems.map(t=>`<div class="ticker-item"><div class="bullet" style="background:${t.bullet}"></div><span class="src">${t.src}</span><span class="txt">${t.txt}</span></div>`).join(' │ ');
+document.getElementById('ticker').innerHTML+=`<div class="ticker-track">${tickerHTML} │ ${tickerHTML}</div>`;
+</script>
+</body>
+</html>

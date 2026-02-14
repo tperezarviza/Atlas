@@ -35,32 +35,56 @@ FORMAT (use HTML tags for formatting):
 <h2>■ RECOMMENDED MONITORING</h2>
 <ul><li>Specific things to track</li></ul>`;
 
-export async function fetchBrief(): Promise<BriefResponse> {
+const FOCUS_PROMPTS: Record<string, string> = {
+  mideast: '\n\nFocus exclusively on Middle East developments: Iran nuclear program, Israel-Palestine conflict, Houthi Red Sea attacks, Syria, Iraq, Gulf dynamics, Turkey. Filter out non-ME developments unless they directly impact the region.',
+  ukraine: '\n\nFocus on Russia-Ukraine conflict: front-line changes, military operations, NATO response, sanctions effectiveness, energy implications, nuclear risk assessment. Filter out non-Ukraine developments unless directly relevant.',
+  domestic: '\n\nFocus on US domestic developments: executive orders, Congress activity, border security metrics, economic indicators, polling trends, DOGE efficiency initiatives, trade policy. Filter out foreign policy unless it directly impacts domestic agenda.',
+  intel: '\n\nFocus on intelligence and security: state media propaganda narratives, bilateral hostility indices, internet freedom incidents, diplomatic calendar events, intelligence community assessments, covert operations indicators, sanctions enforcement, espionage developments. Highlight disinformation campaigns, cyber-espionage, and signals intelligence where relevant.',
+};
+
+const ALLOWED_HTML_TAGS = new Set(['h1','h2','h3','h4','p','ul','ol','li','b','strong','em','i','br','span']);
+
+/** Defense-in-depth: strip disallowed tags and attributes server-side (client also has DOMPurify). */
+function sanitizeServerHtml(raw: string): string {
+  return raw.replace(/<(\/?)([a-zA-Z][a-zA-Z0-9]*)\b([^>]*?)(\s*\/?)>/gi, (_match, slash, tag, attrs, selfClose) => {
+    const tagLower = tag.toLowerCase();
+    if (!ALLOWED_HTML_TAGS.has(tagLower)) return '';
+    if (slash) return `</${tagLower}>`;
+    // Only preserve class attribute, strip everything else
+    const classMatch = (attrs as string).match(/\bclass\s*=\s*"([^"]*)"/i);
+    const classAttr = classMatch ? ` class="${classMatch[1].replace(/[^a-zA-Z0-9_ -]/g, '')}"` : '';
+    return `<${tagLower}${classAttr}${selfClose}>`;
+  });
+}
+
+export async function fetchBrief(focus?: string): Promise<BriefResponse> {
   if (!ANTHROPIC_API_KEY) {
     console.warn('[AI-BRIEF] No ANTHROPIC_API_KEY configured, skipping');
     throw new Error('No API key');
   }
 
-  console.log('[AI-BRIEF] Generating intelligence brief...');
+  console.log(`[AI-BRIEF] Generating intelligence brief${focus ? ` (focus: ${focus})` : ''}...`);
 
   const conflicts = cache.get<Conflict[]>('conflicts') ?? mockConflicts;
   const news = cache.get<NewsPoint[]>('news') ?? mockNews;
   const feed = cache.get<FeedItem[]>('feed') ?? mockLeaderFeed;
   const markets = cache.get<MarketSection[]>('markets') ?? mockMarketSections;
 
+  const systemPrompt = SYSTEM_PROMPT + (focus && FOCUS_PROMPTS[focus] ? FOCUS_PROMPTS[focus] : '');
+
   const client = new Anthropic({ apiKey: ANTHROPIC_API_KEY });
 
   const message = await client.messages.create({
     model: 'claude-sonnet-4-5-20250929',
     max_tokens: 2000,
-    system: SYSTEM_PROMPT,
+    system: systemPrompt,
     messages: [{
       role: 'user',
       content: `Generate intelligence brief based on this data:
 
 CONFLICTS: ${JSON.stringify(conflicts.slice(0, 10))}
 
-TOP NEWS (most negative tone): ${JSON.stringify(news.sort((a, b) => a.tone - b.tone).slice(0, 15))}
+TOP NEWS (most negative tone): ${JSON.stringify([...news].sort((a, b) => a.tone - b.tone).slice(0, 15))}
 
 LEADER STATEMENTS: ${JSON.stringify(feed.slice(0, 8))}
 
@@ -71,8 +95,9 @@ Current UTC: ${new Date().toISOString()}`,
   });
 
   const textBlock = message.content.find((b) => b.type === 'text');
-  const html = textBlock?.text ?? '<p>Brief generation failed</p>';
+  const html = sanitizeServerHtml(textBlock?.text ?? '<p>Brief generation failed</p>');
 
+  const cacheKey = focus ? `brief:${focus}` : 'brief';
   const brief: BriefResponse = {
     html,
     generatedAt: new Date().toISOString(),
@@ -80,7 +105,7 @@ Current UTC: ${new Date().toISOString()}`,
     sources: ['ACLED', 'GDELT', 'Market Data', 'Leader Feeds'],
   };
 
-  cache.set('brief', brief, TTL.BRIEF);
-  console.log('[AI-BRIEF] Brief generated and cached');
+  cache.set(cacheKey, brief, TTL.BRIEF);
+  console.log(`[AI-BRIEF] Brief generated and cached (key: ${cacheKey})`);
   return brief;
 }

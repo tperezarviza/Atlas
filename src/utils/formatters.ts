@@ -9,9 +9,9 @@ export function formatTime(date: Date, timeZone: string): string {
 }
 
 export function toneToColor(tone: number): string {
-  if (tone < -5) return '#e83b3b';
-  if (tone < -2) return '#e8842b';
-  if (tone > 2) return '#28b35a';
+  if (tone < -5) return '#ff3b3b';
+  if (tone < -2) return '#ff8c00';
+  if (tone > 2) return '#00ff88';
   return '#d4a72c';
 }
 
