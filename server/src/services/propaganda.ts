@@ -1,8 +1,11 @@
 import Anthropic from '@anthropic-ai/sdk';
-import { ANTHROPIC_API_KEY, FETCH_TIMEOUT_API, TTL } from '../config.js';
+import RSSParser from 'rss-parser';
+import { ANTHROPIC_API_KEY, FETCH_TIMEOUT_RSS, TTL } from '../config.js';
 import { cache } from '../cache.js';
-import { safeJson } from '../utils.js';
+import { stripHTML } from '../utils.js';
 import type { PropagandaEntry } from '../types.js';
+
+const parser = new RSSParser({ timeout: FETCH_TIMEOUT_RSS });
 
 const STATE_MEDIA: { country: string; code: string; outlets: { name: string; domain: string }[] }[] = [
   {
@@ -77,37 +80,24 @@ export async function fetchPropaganda(): Promise<void> {
 
     for (const media of STATE_MEDIA) {
       try {
-        // Use sourcecountry filter + outlet names as keywords (GDELT rejects domain: and sourceurl: queries)
-        const outletNames = media.outlets.map((o) => `"${o.name}"`).join(' OR ');
-        const query = encodeURIComponent(`(${outletNames}) sourcecountry:${media.code}`);
-        const url = `https://api.gdeltproject.org/api/v2/doc/doc?query=${query}&mode=artlist&maxrecords=20&format=json&timespan=72h`;
+        // Use Google News RSS to get headlines from state media domains
+        const siteQueries = media.outlets.map((o) => `site:${o.domain}`).join('+OR+');
+        const rssUrl = `https://news.google.com/rss/search?q=when:3d+${siteQueries}&ceid=US:en&hl=en-US&gl=US`;
 
-        const res = await fetch(url, {
-          signal: AbortSignal.timeout(FETCH_TIMEOUT_API),
-          headers: { 'User-Agent': 'ATLAS/1.0' },
-        });
-
-        if (!res.ok) {
-          console.warn(`[PROPAGANDA] GDELT ${media.country}: ${res.status}`);
-          await delay(1500);
-          continue;
-        }
-
-        const json = await safeJson<Record<string, unknown>>(res);
-        const articles: { title?: string; tone?: number; domain?: string }[] = ((json.articles ?? []) as { title?: string; tone?: number; domain?: string }[]).slice(0, 50);
+        const feed = await parser.parseURL(rssUrl);
+        const articles = (feed.items ?? []).slice(0, 20);
 
         if (articles.length === 0) {
-          await delay(1500);
+          console.warn(`[PROPAGANDA] No articles for ${media.country}`);
+          await delay(1000);
           continue;
         }
 
         const headlines = articles
-          .map((a) => a.title ?? '')
+          .map((a) => stripHTML(a.title ?? ''))
           .filter(Boolean)
           .slice(0, 10)
           .map((h) => h.replace(/[<>{}[\]]/g, '').slice(0, 200));
-
-        const avgTone = articles.reduce((sum, a) => sum + (a.tone ?? 0), 0) / articles.length;
 
         // Use Claude AI to extract narratives
         let narratives: string[] = [];
@@ -141,15 +131,17 @@ export async function fetchPropaganda(): Promise<void> {
           domain: media.outlets[0].domain,
           narratives,
           sampleHeadlines: headlines.slice(0, 5),
-          toneAvg: Math.round(avgTone * 100) / 100,
+          toneAvg: 0, // Google News RSS doesn't provide tone
           articleCount: articles.length,
           analysisDate: new Date().toISOString(),
         });
+
+        console.log(`[PROPAGANDA] ${media.country}: ${articles.length} articles, ${narratives.length} narratives`);
       } catch (err) {
         console.warn(`[PROPAGANDA] ${media.country} failed:`, err instanceof Error ? err.message : err);
       }
 
-      await delay(1500);
+      await delay(1000);
     }
 
     if (entries.length > 0) {
