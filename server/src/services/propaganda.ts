@@ -77,10 +77,10 @@ export async function fetchPropaganda(): Promise<void> {
 
     for (const media of STATE_MEDIA) {
       try {
-        // Use sourceurl: filter (GDELT rejects domain:() queries with short domain names)
-        const domainQuery = media.outlets.map((o) => `sourceurl:${o.domain}`).join(' OR ');
-        const query = encodeURIComponent(domainQuery);
-        const url = `https://api.gdeltproject.org/api/v2/doc/doc?query=${query}&mode=artlist&maxrecords=20&format=json&timespan=24h`;
+        // Use sourcecountry filter + outlet names as keywords (GDELT rejects domain: and sourceurl: queries)
+        const outletNames = media.outlets.map((o) => `"${o.name}"`).join(' OR ');
+        const query = encodeURIComponent(`(${outletNames}) sourcecountry:${media.code}`);
+        const url = `https://api.gdeltproject.org/api/v2/doc/doc?query=${query}&mode=artlist&maxrecords=20&format=json&timespan=72h`;
 
         const res = await fetch(url, {
           signal: AbortSignal.timeout(FETCH_TIMEOUT_API),
