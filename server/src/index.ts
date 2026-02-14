@@ -16,14 +16,32 @@ import { registerTopbarRoutes } from './routes/topbar.js';
 import { registerDependenciesRoutes } from './routes/dependencies.js';
 import { startCronJobs } from './cron.js';
 import { warmUpCache } from './services/warmup.js';
+import fastifyStatic from '@fastify/static';
+import path from 'path';
 
 const app = Fastify({ logger: true });
 
 const CORS_ORIGINS = process.env.CORS_ORIGINS
   ? process.env.CORS_ORIGINS.split(',').map((s) => s.trim())
-  : ['http://localhost:5173', 'http://localhost:4173'];
+  : ['http://localhost:5173', 'http://localhost:4173', '*'];
 
 await app.register(cors, { origin: CORS_ORIGINS });
+
+// Serve frontend static files
+await app.register(fastifyStatic, {
+  root: path.join(import.meta.dirname, '../../dist'),
+  prefix: '/',
+  decorateReply: false,
+});
+
+// SPA fallback: send index.html for non-API routes
+app.setNotFoundHandler((req, reply) => {
+  if (req.url.startsWith('/api/')) {
+    reply.code(404).send({ error: 'Not found' });
+  } else {
+    reply.sendFile('index.html');
+  }
+});
 
 // Register all routes
 registerHealthRoutes(app);
