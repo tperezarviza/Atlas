@@ -1,0 +1,97 @@
+import Anthropic from '@anthropic-ai/sdk';
+import { ANTHROPIC_API_KEY } from '../config.js';
+
+/** Check if text is primarily Latin-script (English/European). */
+export function isLatinText(text: string): boolean {
+  const letters = text.replace(/[\s\d\p{P}\p{S}]/gu, '');
+  if (letters.length === 0) return true;
+  const latinChars = letters.replace(/[^\u0000-\u024F\u1E00-\u1EFF]/g, '');
+  return latinChars.length / letters.length > 0.7;
+}
+
+/** Translate a single batch of up to 50 texts via Claude Haiku. */
+async function translateBatchRaw(
+  client: Anthropic,
+  texts: string[],
+): Promise<Map<number, string>> {
+  const numbered = texts.map((t, i) => `${i + 1}. ${t}`).join('\n');
+
+  const message = await client.messages.create({
+    model: 'claude-haiku-4-5-20251001',
+    max_tokens: 2000,
+    system:
+      'You are a headline translator. Translate each numbered headline to English. Keep it concise (news headline style). Output ONLY the numbered translations, one per line, matching the input numbering. Do not add commentary.',
+    messages: [
+      { role: 'user', content: `Translate these headlines to English:\n\n${numbered}` },
+    ],
+  });
+
+  const responseText =
+    message.content[0]?.type === 'text' ? message.content[0].text : '';
+  const lines = responseText.split('\n').filter((l) => l.trim());
+  const results = new Map<number, string>();
+
+  for (const line of lines) {
+    const m = line.match(/^(\d+)[.)]\s*(.+)/);
+    if (m) {
+      const idx = parseInt(m[1], 10) - 1;
+      const translated = m[2].trim();
+      if (idx >= 0 && idx < texts.length && translated) {
+        results.set(idx, translated);
+      }
+    }
+  }
+  return results;
+}
+
+/**
+ * Translate non-Latin texts to English using Claude Haiku.
+ * Returns a new array with translations applied in-place;
+ * Latin/English texts pass through unchanged.
+ */
+export async function translateTexts(
+  texts: string[],
+  label = 'TRANSLATE',
+): Promise<string[]> {
+  if (!ANTHROPIC_API_KEY || texts.length === 0) return texts;
+
+  const toTranslate: { idx: number; text: string }[] = [];
+  for (let i = 0; i < texts.length; i++) {
+    if (texts[i] && !isLatinText(texts[i])) {
+      toTranslate.push({ idx: i, text: texts[i] });
+    }
+  }
+
+  if (toTranslate.length === 0) return texts;
+
+  console.log(
+    `[${label}] Translating ${toTranslate.length} non-English texts...`,
+  );
+
+  try {
+    const client = new Anthropic({ apiKey: ANTHROPIC_API_KEY });
+    const result = [...texts];
+    let totalTranslated = 0;
+
+    for (let start = 0; start < toTranslate.length; start += 50) {
+      const batch = toTranslate.slice(start, start + 50);
+      const translations = await translateBatchRaw(
+        client,
+        batch.map((b) => b.text),
+      );
+
+      for (const [batchIdx, translated] of translations) {
+        result[batch[batchIdx].idx] = translated;
+        totalTranslated++;
+      }
+    }
+
+    console.log(
+      `[${label}] Translated ${totalTranslated}/${toTranslate.length} texts`,
+    );
+    return result;
+  } catch (err) {
+    console.warn(`[${label}] Translation failed, keeping originals:`, err);
+    return texts;
+  }
+}

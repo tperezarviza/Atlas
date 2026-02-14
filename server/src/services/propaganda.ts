@@ -3,6 +3,7 @@ import RSSParser from 'rss-parser';
 import { ANTHROPIC_API_KEY, FETCH_TIMEOUT_RSS, TTL } from '../config.js';
 import { cache } from '../cache.js';
 import { stripHTML } from '../utils.js';
+import { translateTexts } from './translate.js';
 import type { PropagandaEntry } from '../types.js';
 
 const parser = new RSSParser({ timeout: FETCH_TIMEOUT_RSS });
@@ -93,11 +94,14 @@ export async function fetchPropaganda(): Promise<void> {
           continue;
         }
 
-        const headlines = articles
+        let headlines = articles
           .map((a) => stripHTML(a.title ?? ''))
           .filter(Boolean)
           .slice(0, 10)
           .map((h) => h.replace(/[<>{}[\]]/g, '').slice(0, 200));
+
+        // Translate non-English headlines before AI analysis
+        headlines = await translateTexts(headlines, `PROPAGANDA:${media.country}`);
 
         // Use Claude AI to extract narratives
         let narratives: string[] = [];

@@ -2,6 +2,7 @@ import RSSParser from 'rss-parser';
 import { FETCH_TIMEOUT_RSS, TTL } from '../config.js';
 import { cache } from '../cache.js';
 import { stripHTML } from '../utils.js';
+import { translateTexts } from './translate.js';
 import type { FeedItem, FeedCategory } from '../types.js';
 
 const parser = new RSSParser({
@@ -308,6 +309,22 @@ export async function fetchFeeds(): Promise<void> {
   });
 
   if (allItems.length > 0) {
+    // Translate non-English feed titles (state media may deliver non-English)
+    const nonLatinIndices: number[] = [];
+    const nonLatinTexts: string[] = [];
+    for (let i = 0; i < allItems.length; i++) {
+      if (allItems[i].text) {
+        nonLatinIndices.push(i);
+        nonLatinTexts.push(allItems[i].text);
+      }
+    }
+    if (nonLatinTexts.length > 0) {
+      const translated = await translateTexts(nonLatinTexts, 'FEEDS');
+      for (let j = 0; j < nonLatinIndices.length; j++) {
+        allItems[nonLatinIndices[j]].text = translated[j];
+      }
+    }
+
     // Sort by recency (shortest time string first as heuristic)
     allItems.sort((a, b) => {
       const timeToMin = (t: string): number => {

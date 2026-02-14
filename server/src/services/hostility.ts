@@ -1,5 +1,6 @@
 import { FETCH_TIMEOUT_API, TTL } from '../config.js';
 import { cache } from '../cache.js';
+import { translateTexts } from './translate.js';
 import type { HostilityPair, Severity } from '../types.js';
 
 const HOSTILITY_PAIRS = [
@@ -94,6 +95,11 @@ export async function fetchHostilityIndex(): Promise<void> {
           }
         } catch {
           // Headlines are optional
+        }
+
+        // Translate non-English headlines
+        if (topHeadlines.length > 0) {
+          topHeadlines = await translateTexts(topHeadlines, 'HOSTILITY');
         }
 
         pairs.push({

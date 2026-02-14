@@ -1,6 +1,6 @@
-import Anthropic from '@anthropic-ai/sdk';
-import { ANTHROPIC_API_KEY, FETCH_TIMEOUT_API, TTL } from '../config.js';
+import { FETCH_TIMEOUT_API, TTL } from '../config.js';
 import { cache } from '../cache.js';
+import { translateTexts } from './translate.js';
 import type { NewsPoint, NewsWireItem, NewsBullet } from '../types.js';
 
 interface GdeltFeature {
@@ -48,79 +48,12 @@ function extractHeadline(html: string | undefined): string | undefined {
   return (plain && plain !== 'No Title') ? plain : undefined;
 }
 
-/** Check if text is primarily Latin-script (English/European). */
-function isLatinText(text: string): boolean {
-  const letters = text.replace(/[\s\d\p{P}\p{S}]/gu, '');
-  if (letters.length === 0) return true;
-  const latinChars = letters.replace(/[^\u0000-\u024F\u1E00-\u1EFF]/g, '');
-  return latinChars.length / letters.length > 0.7;
-}
-
-/** Translate a single batch of up to 50 headlines. */
-async function translateBatch(
-  client: Anthropic,
-  points: NewsPoint[],
-  batch: { idx: number; text: string }[],
-): Promise<number> {
-  const numbered = batch.map((item, i) => `${i + 1}. ${item.text}`).join('\n');
-
-  const message = await client.messages.create({
-    model: 'claude-haiku-4-5-20251001',
-    max_tokens: 2000,
-    system: 'You are a headline translator. Translate each numbered headline to English. Keep it concise (news headline style). Output ONLY the numbered translations, one per line, matching the input numbering. Do not add commentary.',
-    messages: [{
-      role: 'user',
-      content: `Translate these headlines to English:\n\n${numbered}`,
-    }],
-  });
-
-  const responseText = message.content[0]?.type === 'text' ? message.content[0].text : '';
-  const lines = responseText.split('\n').filter(l => l.trim());
-  let count = 0;
-
-  for (const line of lines) {
-    const m = line.match(/^(\d+)[.)]\s*(.+)/);
-    if (m) {
-      const lineIdx = parseInt(m[1], 10) - 1;
-      const translated = m[2].trim();
-      if (lineIdx >= 0 && lineIdx < batch.length && translated) {
-        points[batch[lineIdx].idx].headline = translated;
-        count++;
-      }
-    }
-  }
-  return count;
-}
-
-/** Batch-translate ALL non-English headlines to English using Anthropic Haiku. */
+/** Batch-translate non-English headlines using the shared translate utility. */
 async function translateHeadlines(points: NewsPoint[]): Promise<void> {
-  if (!ANTHROPIC_API_KEY) return;
-
-  const toTranslate: { idx: number; text: string }[] = [];
+  const headlines = points.map((p) => p.headline);
+  const translated = await translateTexts(headlines, 'GDELT');
   for (let i = 0; i < points.length; i++) {
-    if (!isLatinText(points[i].headline)) {
-      toTranslate.push({ idx: i, text: points[i].headline });
-    }
-  }
-
-  if (toTranslate.length === 0) return;
-
-  console.log(`[GDELT] Translating ${toTranslate.length} non-English headlines in batches of 50...`);
-
-  try {
-    const client = new Anthropic({ apiKey: ANTHROPIC_API_KEY });
-    let totalTranslated = 0;
-
-    // Process in batches of 50
-    for (let start = 0; start < toTranslate.length; start += 50) {
-      const batch = toTranslate.slice(start, start + 50);
-      const count = await translateBatch(client, points, batch);
-      totalTranslated += count;
-    }
-
-    console.log(`[GDELT] Translated ${totalTranslated}/${toTranslate.length} headlines`);
-  } catch (err) {
-    console.warn('[GDELT] Translation failed, keeping original headlines:', err);
+    points[i].headline = translated[i];
   }
 }
 

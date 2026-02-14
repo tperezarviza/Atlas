@@ -1,6 +1,7 @@
 import * as cheerio from 'cheerio';
 import { FETCH_TIMEOUT_API, TTL } from '../config.js';
 import { cache } from '../cache.js';
+import { translateTexts } from './translate.js';
 import type { UkraineFrontData } from '../types.js';
 
 const HEADERS = {
@@ -134,6 +135,16 @@ export async function fetchUkraineFront(): Promise<void> {
     }
 
     if (data) {
+      // Translate assessment text if non-English (DeepStateMap may be Ukrainian)
+      if (data.isw_assessment_text) {
+        const [translated] = await translateTexts([data.isw_assessment_text], 'UKRAINE');
+        data.isw_assessment_text = translated;
+      }
+      if (data.territory_summary) {
+        const [translated] = await translateTexts([data.territory_summary], 'UKRAINE');
+        data.territory_summary = translated;
+      }
+
       cache.set('ukraine_front', data, TTL.UKRAINE_FRONT);
       console.log(`[UKRAINE] Cached front data (source: ${data.source})`);
     } else {
