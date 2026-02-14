@@ -7,7 +7,12 @@ export function registerGtdRoutes(app: FastifyInstance) {
   });
 
   app.get<{ Params: { group: string } }>('/api/terrorism/history/:group', async (req, reply) => {
-    const search = req.params.group.toLowerCase();
+    const raw = req.params.group;
+    if (raw.length > 100 || !/^[a-zA-Z0-9\s\-'.()]+$/.test(raw)) {
+      reply.status(400);
+      return { error: 'Invalid group name' };
+    }
+    const search = raw.toLowerCase();
     // Try exact match first, then word-boundary match, then substring as fallback
     const group = GTD_SUMMARIES.find((g) => g.groupName.toLowerCase() === search)
       ?? GTD_SUMMARIES.find((g) => {

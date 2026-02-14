@@ -1,47 +1,42 @@
-import { useAutoRefresh } from '../hooks/useAutoRefresh';
+import { useRef, useEffect } from 'react';
+import { useApiData } from '../hooks/useApiData';
 import { api } from '../services/api';
 import type { MarketsResponse } from '../services/api';
-import { mockMarketSections, mockMacro, mockBorderStats, mockForexSections, mockCDS } from '../data/mockMarkets';
-import type { MarketSection, MarketItem, CDSSpread, MarketSession } from '../types';
+import { mockMarketSections, mockForexSections } from '../data/mockMarkets';
+import type { MarketSection, MarketItem } from '../types';
+import MaybeFadeIn from './MaybeFadeIn';
 import DataBadge from './DataBadge';
+import Skeleton from './Skeleton';
 
-function SparkBar({ item }: { item: MarketItem }) {
-  return (
-    <div className="flex-1 h-5 flex items-end gap-px px-[6px]">
-      {item.sparkData.map((val, i) => (
-        <div
-          key={i}
-          className="rounded-t-[1px] transition-[height] duration-300"
-          style={{
-            width: 3,
-            height: `${val}%`,
-            background: item.color || '#2d7aed',
-            opacity: 0.5,
-          }}
-        />
-      ))}
-    </div>
-  );
-}
+const REFRESH_MS = 300_000; // 5 min
 
-function MarketRow({ item }: { item: MarketItem }) {
+// Regional sections to KEEP (ME/Africa eliminated per user request)
+const KEEP_REGIONS = new Set(['Americas', 'Europe', 'Asia-Pacific']);
+
+function SimplifiedMarketRow({ item }: { item: MarketItem }) {
+  const flashClass = item.direction === 'up' ? 'flash-up' : item.direction === 'down' ? 'flash-down' : '';
   return (
-    <div className="flex items-center px-[10px] py-[3px] transition-colors duration-150 hover:bg-bg-card-hover">
-      <span className="font-data text-[10px] text-text-secondary w-[80px] shrink-0">
+    <div
+      className="flex items-center transition-colors duration-150 hover:bg-bg-card-hover"
+      style={{ padding: '3px 18px', height: 28, gap: 6 }}
+    >
+      <span className="font-data text-[10px] text-text-secondary" style={{ flex: '0 0 85px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
         {item.name}
       </span>
-      <SparkBar item={item} />
-      <span className="font-data text-[11px] font-semibold text-text-primary w-[72px] text-right">
+      <span style={{ flex: 1 }} />
+      <span className="font-data text-[11px] font-semibold text-text-primary" style={{ flex: '0 0 85px', textAlign: 'right', paddingRight: 4 }}>
         {item.price}
       </span>
       <span
-        className={`font-data text-[10px] w-[60px] text-right font-medium ${
+        key={item.delta}
+        className={`font-data text-[10px] font-medium ${flashClass} ${
           item.direction === 'up'
             ? 'text-positive'
             : item.direction === 'down'
             ? 'text-critical'
             : 'text-text-muted'
         }`}
+        style={{ flex: '0 0 62px', textAlign: 'right', whiteSpace: 'nowrap' }}
       >
         {item.delta}
       </span>
@@ -49,169 +44,114 @@ function MarketRow({ item }: { item: MarketItem }) {
   );
 }
 
-function SectionBlock({ section }: { section: MarketSection }) {
+function SectionHeader({ title, icon }: { title: string; icon?: string }) {
   return (
-    <div className="py-[6px]" style={{ borderBottom: '1px solid #14233f' }}>
-      <div className="font-data text-[8px] tracking-[1.5px] text-text-muted px-[10px] mb-[2px] uppercase">
-        {section.icon} {section.title}
-      </div>
-      {section.items.map((item) => (
-        <MarketRow key={item.name} item={item} />
-      ))}
-    </div>
-  );
-}
-
-const SESSION_STYLES: Record<string, string> = {
-  open: 'bg-positive/15 text-positive',
-  pre_market: 'bg-accent/15 text-accent',
-  after_hours: 'bg-warning/15 text-warning',
-  closed: 'bg-text-muted/10 text-text-muted',
-};
-
-function SessionTracker({ sessions }: { sessions: MarketSession[] }) {
-  return (
-    <div className="py-[6px]" style={{ borderBottom: '1px solid #14233f' }}>
-      <div className="font-data text-[8px] tracking-[1.5px] text-text-muted px-[10px] mb-[2px] uppercase">
-        🕐 Market Sessions
-      </div>
-      {sessions.map((s) => (
-        <div key={s.region} className="flex justify-between items-center px-[10px] py-[3px]">
-          <span className="font-data text-[10px] text-text-secondary">{s.label}</span>
-          <div className="flex items-center gap-2">
-            <span className={`font-data text-[8px] px-[4px] py-[1px] rounded-[2px] uppercase ${SESSION_STYLES[s.status] ?? SESSION_STYLES.closed}`}>
-              {s.status.replace('_', ' ')}
-            </span>
-            <span className="font-data text-[9px] text-text-muted w-[80px] text-right">{s.nextEvent}</span>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function cdsRiskColor(spread: number): string {
-  if (spread === 0) return '#64748b';
-  if (spread > 700) return '#e83b3b';
-  if (spread > 300) return '#d4a72c';
-  if (spread > 100) return '#2d7aed';
-  return '#28b35a';
-}
-
-function CDSSpreads({ cds }: { cds: CDSSpread[] }) {
-  // Filter out NR (not rated / sanctioned) with 0 spread
-  const visible = cds.filter((c) => c.spread5Y > 0 || c.rating !== 'NR');
-  return (
-    <div className="py-[6px]" style={{ borderBottom: '1px solid #14233f' }}>
-      <div className="font-data text-[8px] tracking-[1.5px] text-text-muted px-[10px] mb-[2px] uppercase">
-        📊 Sovereign CDS 5Y (bps)
-      </div>
-      {visible.map((c) => (
-        <div key={c.code} className="flex justify-between items-center px-[10px] py-[2px]">
-          <span className="font-data text-[10px] text-text-secondary w-[80px]">{c.country}</span>
-          <span className="font-data text-[9px] text-text-muted w-[32px] text-center">{c.rating}</span>
-          <span className="font-data text-[10px] font-semibold w-[48px] text-right" style={{ color: cdsRiskColor(c.spread5Y) }}>
-            {c.spread5Y > 0 ? c.spread5Y : '—'}
-          </span>
-          <span
-            className={`font-data text-[9px] w-[40px] text-right ${
-              c.direction === 'up' ? 'text-critical' : c.direction === 'down' ? 'text-positive' : 'text-text-muted'
-            }`}
-          >
-            {c.change > 0 ? `+${c.change}` : c.change === 0 ? '—' : c.change}
-          </span>
-        </div>
-      ))}
+    <div
+      style={{
+        padding: '6px 18px',
+        borderBottom: '1px solid rgba(255,200,50,0.08)',
+        marginBottom: 4,
+      }}
+    >
+      <span className="font-data text-[8px] tracking-[1.2px] text-text-muted uppercase">
+        {icon ? `${icon} ` : ''}{title}
+      </span>
     </div>
   );
 }
 
 export default function MarketsDashboard() {
-  const { data, error } = useAutoRefresh<MarketsResponse>(api.markets, 60_000);
+  const { data, loading, error, lastUpdate } = useApiData<MarketsResponse>(api.markets, REFRESH_MS);
+  const hasShownData = useRef(false);
+  useEffect(() => { if (data) hasShownData.current = true; }, [data]);
 
   const sections = data?.sections ?? mockMarketSections;
   const forex = data?.forex ?? mockForexSections;
-  const sessions = data?.sessions;
-  const cds = data?.cds ?? mockCDS;
-  const macro = data?.macro ?? mockMacro;
-  const border = data?.border ?? mockBorderStats;
+
+  // Regional indices: keep Americas, Europe, Asia-Pacific as separate sections (no ME/Africa)
+  // No sparklines — just name + price + delta
+  const regionalSections = sections.filter(s => KEEP_REGIONS.has(s.title));
+
+  // Commodities & Energy — merge Energy + Precious Metals + Geopolitical Commodities
+  const commoditySections = sections.filter(s => s.title === 'Energy' || s.title === 'Precious Metals' || s.title === 'Geopolitical Commodities');
+  const commodityItems = commoditySections.flatMap(s => s.items);
+
+  // Crypto section
+  const cryptoSection = sections.find(s => s.title === 'Crypto');
+  const cryptoItems = cryptoSection?.items ?? [];
+
+  // Forex: only USD/ARS — unified with crypto in one section
+  const usdArs = forex.flatMap(s => s.items).filter(item => /USD\/ARS/i.test(item.name));
 
   return (
-    <div className="h-full flex flex-col rounded-[3px] overflow-hidden" style={{ background: '#0b1224', border: '1px solid #14233f' }}>
+    <div className="h-full flex flex-col rounded-[14px] overflow-hidden panel-glow" style={{ background: 'rgba(255,200,50,0.025)', border: '1px solid rgba(255,200,50,0.10)', backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)' }}>
       {/* Header */}
       <div
-        className="flex items-center justify-between px-3 py-2 shrink-0"
-        style={{ borderBottom: '1px solid #14233f', background: 'rgba(255,255,255,.01)', minHeight: 32 }}
+        className="flex items-center justify-between shrink-0"
+        style={{ borderBottom: '1px solid rgba(255,200,50,0.10)', background: 'rgba(255,200,50,0.025)', minHeight: 32, padding: '14px 18px 10px 18px' }}
       >
         <div className="font-title text-[12px] font-semibold tracking-[2px] uppercase text-text-secondary">
           💹 Markets & Indicators
         </div>
-        <DataBadge data={data} error={error} />
+        <DataBadge data={data} error={error} loading={loading} lastUpdate={lastUpdate} intervalMs={REFRESH_MS} />
       </div>
 
       {/* Error message */}
       {error && !data && (
-        <div className="px-3 py-2 text-[10px] text-critical font-data" style={{ background: 'rgba(232,59,59,.04)' }}>
-          Failed to load markets: {error.message}
+        <div style={{ padding: '8px 18px' }} className="text-[10px] text-critical font-data" >
+          Failed to load markets. Retrying...
         </div>
       )}
 
-      {/* Body */}
-      <div className="flex-1 overflow-y-auto">
-        {/* Session tracker */}
-        {sessions && <SessionTracker sessions={sessions} />}
+      {/* Loading skeleton */}
+      {loading && !data ? (
+        <Skeleton lines={8} />
+      ) : (
+        <div className="flex-1 overflow-y-auto">
+          <MaybeFadeIn show={hasShownData.current}>
+            {/* Regional Indices — Americas, Europe, Asia-Pacific (separate sections) */}
+            {regionalSections.map((section, idx) => (
+              section.items.length > 0 && (
+                <div key={section.title} style={{ marginTop: idx > 0 ? 14 : 0 }}>
+                  <SectionHeader title={section.title} icon={section.icon} />
+                  <div className="pb-[2px]">
+                    {section.items.map(item => (
+                      <SimplifiedMarketRow key={item.name} item={item} />
+                    ))}
+                  </div>
+                </div>
+              )
+            ))}
 
-        {/* Market index sections (regional) + commodity sections */}
-        {sections.map((section) => (
-          <SectionBlock key={section.title} section={section} />
-        ))}
+            {/* Commodities & Energy (unified: oil + metals + geo commodities) */}
+            {commodityItems.length > 0 && (
+              <div style={{ marginTop: 14 }}>
+                <SectionHeader title="Commodities & Energy" icon="🛢️" />
+                <div className="pb-[2px]">
+                  {commodityItems.map(item => (
+                    <SimplifiedMarketRow key={item.name} item={item} />
+                  ))}
+                </div>
+              </div>
+            )}
 
-        {/* Forex sections */}
-        {forex.map((section) => (
-          <SectionBlock key={section.title} section={section} />
-        ))}
-
-        {/* CDS Spreads */}
-        <CDSSpreads cds={cds} />
-
-        {/* US Macro */}
-        <div className="py-[6px]" style={{ borderBottom: '1px solid #14233f' }}>
-          <div className="font-data text-[8px] tracking-[1.5px] text-text-muted px-[10px] mb-[2px] uppercase">
-            🇺🇸 US Macro
-          </div>
-          {macro.map((item) => (
-            <div key={item.label} className="flex justify-between px-[10px] py-[3px]">
-              <span className="font-data text-[10px] text-text-muted">{item.label}</span>
-              <span
-                className="font-data text-[10px] font-medium"
-                style={{ color: item.color || '#d8e2f0' }}
-              >
-                {item.value}
-              </span>
-            </div>
-          ))}
+            {/* Crypto + USD/ARS (unified section) */}
+            {(cryptoItems.length > 0 || usdArs.length > 0) && (
+              <div style={{ marginTop: 14 }}>
+                <SectionHeader title="Crypto & Forex" icon="₿" />
+                <div className="pb-[2px]">
+                  {cryptoItems.map(item => (
+                    <SimplifiedMarketRow key={item.name} item={item} />
+                  ))}
+                  {usdArs.map(item => (
+                    <SimplifiedMarketRow key={item.name} item={item} />
+                  ))}
+                </div>
+              </div>
+            )}
+          </MaybeFadeIn>
         </div>
-
-        {/* Border Security */}
-        <div className="py-[6px]" style={{ borderBottom: '1px solid #14233f' }}>
-          <div className="font-data text-[8px] tracking-[1.5px] text-text-muted px-[10px] mb-[2px] uppercase">
-            🛃 Border Security (FY26)
-          </div>
-          {border.map((stat) => (
-            <div key={stat.label} className="flex justify-between items-center px-[10px] py-1">
-              <span className="font-data text-[10px] text-text-muted">{stat.label}</span>
-              <span className="font-data text-[12px] font-semibold" style={{ color: stat.color || '#d8e2f0' }}>
-                {stat.value}
-                {stat.delta && (
-                  <span className="font-data text-[9px] ml-1" style={{ color: stat.color || '#d8e2f0' }}>
-                    {stat.delta}
-                  </span>
-                )}
-              </span>
-            </div>
-          ))}
-        </div>
-      </div>
+      )}
     </div>
   );
 }

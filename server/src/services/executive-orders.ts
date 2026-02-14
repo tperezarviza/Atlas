@@ -10,7 +10,7 @@ function classifyTopics(title: string): string[] {
   if (/immigra|border|asylum|visa|deport|alien/.test(t)) topics.push('immigration');
   if (/tariff|trade|import|export|commerce|reciprocal/.test(t)) topics.push('trade');
   if (/defense|military|armed|pentagon|troops/.test(t)) topics.push('defense');
-  if (/energy|oil|gas|drill|pipeline|lng|coal|nuclear/.test(t)) topics.push('energy');
+  if (/energy|oil|gas|drill|pipeline|lng|coal|nuclear power|nuclear energy/.test(t)) topics.push('energy');
   if (/regulat|deregulat|red tape|epa|agency/.test(t)) topics.push('deregulation');
   if (/tech|ai|artificial|cyber|tiktok|digital/.test(t)) topics.push('tech');
   if (/china|russia|iran|north korea|cuba|venezuel/.test(t)) topics.push('foreign_policy');

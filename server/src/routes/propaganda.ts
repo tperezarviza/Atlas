@@ -9,8 +9,13 @@ export function registerPropagandaRoutes(app: FastifyInstance) {
   });
 
   app.get<{ Params: { country: string } }>('/api/propaganda/:country', async (req, reply) => {
+    const country = req.params.country;
+    if (country.length > 3 || !/^[A-Za-z]+$/.test(country)) {
+      reply.status(400);
+      return { error: 'Invalid country code format' };
+    }
     const entries = cache.get<PropagandaEntry[]>('propaganda') ?? mockPropaganda;
-    const entry = entries.find((e) => e.countryCode.toUpperCase() === req.params.country.toUpperCase());
+    const entry = entries.find((e) => e.countryCode.toUpperCase() === country.toUpperCase());
     if (!entry) {
       reply.status(404);
       return { error: 'Propaganda data not found for country' };

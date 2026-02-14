@@ -7,7 +7,8 @@ import type { FeedItem, FeedCategory } from '../types.js';
 const parser = new RSSParser({
   timeout: FETCH_TIMEOUT_RSS,
   headers: {
-    'User-Agent': 'ATLAS/1.0 (Geopolitical Dashboard)',
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+    'Accept': 'application/rss+xml, application/xml, text/xml, */*',
   },
 });
 
@@ -30,7 +31,7 @@ const FEED_SOURCES: FeedSource[] = [
   },
   // US Government
   {
-    url: 'https://www.whitehouse.gov/feed/',
+    url: 'https://www.whitehouse.gov/news/feed/',
     flag: '🇺🇸', handle: 'White House', role: 'Executive Office of the President',
     sourceName: 'White House', category: 'leader', tags: ['White House', 'Executive'],
   },
@@ -40,13 +41,13 @@ const FEED_SOURCES: FeedSource[] = [
     sourceName: 'Pentagon', category: 'military', tags: ['Military', 'DoD'],
   },
   {
-    url: 'https://www.state.gov/rss-feeds/press-releases/feed/',
+    url: 'https://www.state.gov/rss-feed/press-releases/feed/',
     flag: '🇺🇸', handle: 'State Dept', role: 'Department of State',
     sourceName: 'State Dept', category: 'leader', tags: ['Diplomacy', 'State'],
   },
   // International orgs
   {
-    url: 'https://www.nato.int/cps/en/natohq/news.rss',
+    url: 'https://news.google.com/rss/search?q=when:24h+site:nato.int&ceid=US:en&hl=en-US&gl=US',
     flag: '🌐', handle: 'NATO', role: 'North Atlantic Treaty Organization',
     sourceName: 'NATO', category: 'military', tags: ['NATO', 'Defense'],
   },
@@ -67,7 +68,7 @@ const FEED_SOURCES: FeedSource[] = [
     sourceName: 'Fox News', category: 'leader', tags: ['News', 'US'],
   },
   {
-    url: 'https://feeds.reuters.com/reuters/topNews',
+    url: 'https://news.google.com/rss/search?q=when:24h+allinurl:reuters.com&ceid=US:en&hl=en-US&gl=US',
     flag: '🌐', handle: 'Reuters', role: 'News Agency',
     sourceName: 'Reuters', category: 'leader', tags: ['News', 'Wire'],
   },
@@ -104,12 +105,12 @@ const FEED_SOURCES: FeedSource[] = [
   },
   // Think tanks
   {
-    url: 'https://www.csis.org/analysis/feed',
+    url: 'https://news.google.com/rss/search?q=when:7d+site:csis.org&ceid=US:en&hl=en-US&gl=US',
     flag: '🏛️', handle: 'CSIS', role: 'Center for Strategic & Intl Studies',
     sourceName: 'CSIS', category: 'think_tank', tags: ['Think Tank', 'Policy'],
   },
   {
-    url: 'https://www.brookings.edu/feed/',
+    url: 'https://www.brookings.edu/feeds/rss/research/',
     flag: '🏛️', handle: 'Brookings', role: 'Brookings Institution',
     sourceName: 'Brookings', category: 'think_tank', tags: ['Think Tank', 'Policy'],
   },
@@ -119,12 +120,12 @@ const FEED_SOURCES: FeedSource[] = [
     sourceName: 'RAND', category: 'think_tank', tags: ['Think Tank', 'Defense'],
   },
   {
-    url: 'https://www.heritage.org/rss/all-research',
+    url: 'https://www.dailysignal.com/feed/',
     flag: '🏛️', handle: 'Heritage', role: 'Heritage Foundation',
     sourceName: 'Heritage', category: 'think_tank', tags: ['Think Tank', 'Conservative'],
   },
   {
-    url: 'https://www.understandingwar.org/feed',
+    url: 'https://www.iswresearch.org/feeds/posts/default?alt=rss',
     flag: '🏛️', handle: 'ISW', role: 'Institute for the Study of War',
     sourceName: 'ISW', category: 'think_tank', tags: ['Think Tank', 'Military'],
   },
@@ -139,7 +140,7 @@ const FEED_SOURCES: FeedSource[] = [
     sourceName: 'Chatham House', category: 'think_tank', tags: ['Think Tank', 'UK'],
   },
   {
-    url: 'https://www.cfr.org/rss',
+    url: 'http://feeds.cfr.org/cfr_main',
     flag: '🏛️', handle: 'CFR', role: 'Council on Foreign Relations',
     sourceName: 'CFR', category: 'think_tank', tags: ['Think Tank', 'Foreign Policy'],
   },
@@ -155,7 +156,7 @@ const FEED_SOURCES: FeedSource[] = [
     sourceName: 'Breitbart', category: 'conservative', tags: ['Conservative', 'US'],
   },
   {
-    url: 'https://www.theepochtimes.com/c-us/feed',
+    url: 'https://feed.theepochtimes.com/us/feed',
     flag: '🇺🇸', handle: 'Epoch Times', role: 'News Outlet',
     sourceName: 'Epoch Times', category: 'conservative', tags: ['Conservative', 'China'],
   },
@@ -186,7 +187,7 @@ const FEED_SOURCES: FeedSource[] = [
     sourceName: 'CGTN', category: 'state_media', tags: ['China', 'State Media'],
   },
   {
-    url: 'https://www.presstv.ir/RSS',
+    url: 'https://www.presstv.ir/rss.xml',
     flag: '🇮🇷', handle: 'PressTV', role: 'Iranian State TV',
     sourceName: 'PressTV', category: 'state_media', tags: ['Iran', 'State Media'],
   },

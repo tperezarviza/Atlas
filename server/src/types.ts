@@ -11,7 +11,16 @@ export type EOStatus = 'active' | 'revoked' | 'challenged';
 export type PollingTrend = 'improving' | 'stable' | 'declining';
 export type FlightCategory = 'fighter' | 'bomber' | 'transport' | 'tanker' | 'surveillance' | 'command' | 'helicopter' | 'unknown';
 export type UkraineFrontSource = 'deepstatemap' | 'isw' | 'acled_static';
+export type TweetPriority = 'flash' | 'urgent' | 'priority' | 'routine';
+export type TweetCategory = 'crisis' | 'military' | 'geopolitical' | 'border' | 'osint' | 'trump';
+export type CyberSeverity = 'critical' | 'high' | 'medium' | 'low';
+export type EventSeverity = 'minor' | 'moderate' | 'severe' | 'extreme';
+export type EconImpact = 'high' | 'medium' | 'low';
+export type WatchpointCategory = 'nuclear' | 'military_base' | 'conflict_zone' | 'border' | 'infrastructure';
 export type ChokepointStatus = 'normal' | 'elevated' | 'disrupted' | 'critical';
+export type AlertPriority = 'flash' | 'urgent' | 'priority' | 'routine';
+export type AlertSource = 'gdelt' | 'acled' | 'acled_spike' | 'ooni' | 'markets' | 'executive_orders';
+export type CDSRiskLevel = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
 export type NewsBullet = 'critical' | 'high' | 'medium' | 'accent';
 export type CalendarUrgency = 'today' | 'soon' | 'future';
 export type SessionRegion = 'americas' | 'europe' | 'asia_pacific' | 'middle_east_africa';
@@ -121,12 +130,14 @@ export interface BriefResponse {
   sources: string[];
 }
 
+export interface TopBarKPI {
+  label: string;
+  value: string;
+  colorClass: string;
+}
+
 export interface TopBarData {
-  activeConflicts: number;
-  criticalConflicts: number;
-  btcPrice: string;
-  oilPrice: string;
-  borderEncounters: string;
+  kpis: TopBarKPI[];
   threatLevel: string;
 }
 
@@ -184,10 +195,16 @@ export interface CountryProfile {
   alliances: string[];
   sanctioned: boolean;
   sanctionPrograms: string[];
+  fsiScore?: number;
+  fsiCategory?: string;
+  corruptionIndex?: number;
+  pressFreedom?: number;
+  usRelationship?: string;
   recentEvents?: number;
   sentiment?: number;
   cdsSpread?: number;
   activeConflicts?: number;
+  armedGroupCount?: number;
 }
 
 export interface SanctionEntry {
@@ -391,4 +408,131 @@ export interface UkraineFrontData {
   recent_events: { id: string; date: string; location: string; type: string; fatalities: number; lat: number; lng: number }[];
   territory_summary?: string;
   last_updated: string;
+}
+
+export interface TwitterIntelItem {
+  id: string;
+  text: string;
+  author: { username: string; name: string; verified: boolean; followers_count: number };
+  created_at: string;
+  metrics: { retweet_count: number; reply_count: number; like_count: number; impression_count: number };
+  category: TweetCategory;
+  priority: TweetPriority;
+  query_matched: string;
+  url: string;
+}
+
+export interface CyberThreatPulse {
+  id: string;
+  name: string;
+  description: string;
+  adversary?: string;
+  targeted_countries: string[];
+  tags: string[];
+  malware_families: string[];
+  indicators_count: number;
+  tlp: string;
+  created: string;
+  modified: string;
+  severity: CyberSeverity;
+}
+
+export interface ShodanIntelligence {
+  query: string;
+  label: string;
+  category: string;
+  total_results: number;
+  top_ports: { port: number; count: number }[];
+  last_checked: string;
+}
+
+export interface CyberIntelligence {
+  active_threats: CyberThreatPulse[];
+  infrastructure_exposure: ShodanIntelligence[];
+  summary: { total_active_threats: number; critical_threats: number; most_targeted_countries: string[]; most_active_adversaries: string[] };
+}
+
+export interface SatelliteWatchpoint {
+  id: string;
+  name: string;
+  description: string;
+  lat: number;
+  lng: number;
+  bbox: [number, number, number, number];
+  category: WatchpointCategory;
+  country: string;
+  monitoring_reason: string;
+  check_frequency_hours: number;
+}
+
+export interface SatelliteImage {
+  watchpoint_id: string;
+  watchpoint_name: string;
+  date: string;
+  image_url: string;
+  cloud_coverage_pct: number;
+  source: string;
+}
+
+export interface SatelliteData {
+  watchpoints: (SatelliteWatchpoint & { latest_images: SatelliteImage[]; last_checked: string })[];
+}
+
+export interface NaturalEvent {
+  id: string;
+  title: string;
+  category: string;
+  source: string;
+  lat: number;
+  lng: number;
+  date: string;
+  magnitude?: number;
+  severity: EventSeverity;
+  link: string;
+}
+
+export interface Alert {
+  id: string;
+  priority: AlertPriority;
+  source: AlertSource;
+  title: string;
+  detail?: string;
+  timestamp: string;
+  read: boolean;
+}
+
+export interface EconomicEvent {
+  date: string;
+  time: string;
+  currency: string;
+  impact: EconImpact;
+  event_name: string;
+  actual?: string;
+  forecast?: string;
+  previous?: string;
+}
+
+export type VesselType = 'tanker' | 'cargo' | 'container' | 'military' | 'other';
+
+export interface Vessel {
+  id: string;
+  name: string;
+  mmsi: string;
+  type: VesselType;
+  flag: string;
+  lat: number;
+  lng: number;
+  heading: number;
+  speed_knots: number;
+  destination?: string;
+  near_chokepoint?: string;
+}
+
+export interface OFACSanction {
+  id: string;
+  title: string;
+  date: string;
+  program: string;
+  url: string;
+  summary: string;
 }

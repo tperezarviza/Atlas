@@ -1,0 +1,16 @@
+node_modules
+server/node_modules
+dist
+server/dist
+.env
+.env.*
+!.env.example
+!.env.production.example
+.git
+.claude
+.vscode
+.idea
+*.log
+nul
+REFERENCE-MOCK.html
+REFERENCE-PLAN.md

@@ -1,4 +1,4 @@
-import { TWELVE_DATA_API_KEY, EIA_API_KEY, FETCH_TIMEOUT_API, TTL } from '../config.js';
+import { EIA_API_KEY, FETCH_TIMEOUT_API, TTL } from '../config.js';
 import { cache } from '../cache.js';
 import { mockMarketSections } from '../mock/markets.js';
 import { mockRegionalIndices, mockForexSections } from '../mock/globalMarkets.js';
@@ -48,14 +48,6 @@ function formatDelta(change: number): { delta: string; direction: 'up' | 'down' 
   return { delta: `▼ ${change.toFixed(1)}%`, direction: 'down' };
 }
 
-function chunk<T>(arr: T[], size: number): T[][] {
-  const chunks: T[][] = [];
-  for (let i = 0; i < arr.length; i += size) {
-    chunks.push(arr.slice(i, i + size));
-  }
-  return chunks;
-}
-
 // ── Data Source Fetchers ───────────────────────────────────────
 
 async function fetchCoinGecko(): Promise<MarketItem[]> {
@@ -89,68 +81,12 @@ async function fetchCoinGecko(): Promise<MarketItem[]> {
   return items;
 }
 
-// ── TwelveData Batch Fetcher ───────────────────────────────────
-
-const BATCH_SIZE = 8;
-
-async function fetchTwelveDataBatch(symbolDefs: SymbolDef[]): Promise<Record<string, MarketItem>> {
-  if (!TWELVE_DATA_API_KEY || symbolDefs.length === 0) return {};
-
-  const results: Record<string, MarketItem> = {};
-  const batches = chunk(symbolDefs.map((s) => s.symbol), BATCH_SIZE);
-
-  for (const batch of batches) {
-    try {
-      const symbolStr = batch.map((s) => encodeURIComponent(s)).join(',');
-      const url = `https://api.twelvedata.com/time_series?symbol=${symbolStr}&interval=1day&outputsize=20&apikey=${encodeURIComponent(TWELVE_DATA_API_KEY)}`;
-      const res = await fetch(url, { signal: AbortSignal.timeout(FETCH_TIMEOUT_API) });
-      if (!res.ok) continue;
-      const data = await res.json();
-
-      // Single symbol → { meta, values }, multi → { "SYM": { meta, values }, ... }
-      const entries: Record<string, { values?: Array<{ close: string }>; code?: number }> =
-        batch.length === 1 ? { [batch[0]]: data } : data;
-
-      for (const symbol of batch) {
-        const series = entries[symbol];
-        if (!series || series.code || !series.values?.length) continue;
-
-        const values = series.values;
-        const price = parseFloat(values[0].close);
-        const prevPrice = values.length > 1 ? parseFloat(values[1].close) : price;
-        const change = prevPrice > 0 ? ((price - prevPrice) / prevPrice) * 100 : 0;
-        const { delta, direction } = formatDelta(change);
-
-        const symDef = symbolDefs.find((s) => s.symbol === symbol);
-        const rawSpark = values.map((v) => parseFloat(v.close)).reverse();
-
-        const item: MarketItem = {
-          name: symDef?.name ?? symbol,
-          price: formatPrice(price, symDef?.pricePrefix ?? ''),
-          delta,
-          direction,
-          sparkData: normalizeSparkData(rawSpark),
-          color: symDef?.color,
-        };
-
-        results[symbol] = item;
-        // Cache individual symbol
-        cache.set(`mkt:${symbol}`, item, 30 * 60 * 1000);
-      }
-    } catch (err) {
-      console.warn('[MARKETS] TwelveData batch failed:', err instanceof Error ? err.message : err);
-    }
-  }
-
-  return results;
-}
-
 // ── Smart Refresh: Determine which symbols need updating ──────
 
 const ACTIVE_REFRESH_MS = 5 * 60 * 1000;   // 5 min for open sessions
 const STALE_REFRESH_MS = 30 * 60 * 1000;   // 30 min for closed sessions
 
-function getSymbolsToFetch(): { twelvedata: SymbolDef[]; yahoo: SymbolDef[] } {
+function getSymbolsToFetch(): SymbolDef[] {
   const activeRegions = getActiveRegions();
   const allSymbols = [...INDEX_SYMBOLS, ...FOREX_SYMBOLS];
 
@@ -172,10 +108,7 @@ function getSymbolsToFetch(): { twelvedata: SymbolDef[]; yahoo: SymbolDef[] } {
     }
   }
 
-  return {
-    twelvedata: toFetch.filter((s) => s.source === 'twelvedata'),
-    yahoo: toFetch.filter((s) => s.source === 'yahoo'),
-  };
+  return toFetch;
 }
 
 // ── Oil & Metals (unchanged logic, normalized spark) ──────────
@@ -286,14 +219,13 @@ export async function fetchMarkets(): Promise<void> {
 
   try {
     // 1. Determine which symbols need refresh (session-aware)
-    const { twelvedata: tdSymbols, yahoo: yahooSymbols } = getSymbolsToFetch();
-    console.log(`[MARKETS] Refreshing ${tdSymbols.length} TwelveData + ${yahooSymbols.length} Yahoo symbols`);
+    const symbolsToFetch = getSymbolsToFetch();
+    console.log(`[MARKETS] Refreshing ${symbolsToFetch.length} Yahoo symbols`);
 
     // 2. Fetch all sources in parallel
-    const [crypto, tdResults, yahooResults, oil, metals] = await Promise.allSettled([
+    const [crypto, yahooResults, oil, metals] = await Promise.allSettled([
       fetchCoinGecko(),
-      fetchTwelveDataBatch(tdSymbols),
-      fetchYahooBatch(yahooSymbols.map((s) => s.symbol)),
+      fetchYahooBatch(symbolsToFetch.map((s) => s.symbol)),
       fetchOilPrices(),
       fetchMetals(),
     ]);
@@ -305,12 +237,6 @@ export async function fetchMarkets(): Promise<void> {
     for (const sym of [...INDEX_SYMBOLS, ...FOREX_SYMBOLS]) {
       const cached = cache.get<MarketItem>(`mkt:${sym.symbol}`);
       if (cached) allItems[sym.symbol] = cached;
-    }
-
-    // Override with fresh TwelveData
-    if (tdResults.status === 'fulfilled') {
-      Object.assign(allItems, tdResults.value);
-      console.log(`[MARKETS] TwelveData: ${Object.keys(tdResults.value).length} items`);
     }
 
     // Override with fresh Yahoo

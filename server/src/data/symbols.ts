@@ -7,7 +7,7 @@ export interface SymbolDef {
   section: string;
   color?: string;
   pricePrefix?: string;
-  source: 'twelvedata' | 'yahoo';
+  source: 'yahoo';
 }
 
 // ── Index Symbols ──────────────────────────────────────────────
@@ -16,10 +16,10 @@ export interface SymbolDef {
 
 export const INDEX_SYMBOLS: SymbolDef[] = [
   // Americas — US via TwelveData, LatAm via Yahoo
-  { symbol: 'SPX',  name: 'S&P 500',  region: 'americas', section: 'Americas', color: '#28b35a', pricePrefix: '', source: 'twelvedata' },
-  { symbol: 'DJI',  name: 'DOW',      region: 'americas', section: 'Americas', color: '#28b35a', pricePrefix: '', source: 'twelvedata' },
-  { symbol: 'IXIC', name: 'NASDAQ',   region: 'americas', section: 'Americas', color: '#28b35a', pricePrefix: '', source: 'twelvedata' },
-  { symbol: 'RUT',  name: 'RUSSELL',  region: 'americas', section: 'Americas', pricePrefix: '', source: 'twelvedata' },
+  { symbol: 'SPX',  name: 'S&P 500',  region: 'americas', section: 'Americas', color: '#28b35a', pricePrefix: '', source: 'yahoo' },
+  { symbol: 'DJI',  name: 'DOW',      region: 'americas', section: 'Americas', color: '#28b35a', pricePrefix: '', source: 'yahoo' },
+  { symbol: 'IXIC', name: 'NASDAQ',   region: 'americas', section: 'Americas', color: '#28b35a', pricePrefix: '', source: 'yahoo' },
+  { symbol: 'RUT',  name: 'RUSSELL',  region: 'americas', section: 'Americas', pricePrefix: '', source: 'yahoo' },
   { symbol: 'IBOV', name: 'BOVESPA',  region: 'americas', section: 'Americas', pricePrefix: '', source: 'yahoo' },
   { symbol: 'MERV', name: 'MERVAL',   region: 'americas', section: 'Americas', pricePrefix: '', source: 'yahoo' },
   { symbol: 'MXX',  name: 'BMV IPC',  region: 'americas', section: 'Americas', pricePrefix: '', source: 'yahoo' },

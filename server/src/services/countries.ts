@@ -1,7 +1,7 @@
 import { TTL } from '../config.js';
 import { cache } from '../cache.js';
 import { COUNTRY_PROFILES } from '../data/countries.js';
-import type { CountryProfile, Conflict, CDSSpread } from '../types.js';
+import type { CountryProfile, Conflict, CDSSpread, ArmedGroup } from '../types.js';
 
 export async function fetchCountries(): Promise<void> {
   console.log('[COUNTRIES] Enriching country profiles from cache...');
@@ -49,12 +49,24 @@ export async function fetchCountries(): Promise<void> {
       }
     }
 
+    // Count armed groups per country
+    const armedGroups = cache.get<ArmedGroup[]>('armed_groups');
+    const armedGroupsByCountry = new Map<string, number>();
+    if (armedGroups) {
+      for (const group of armedGroups) {
+        for (const code of group.countries) {
+          armedGroupsByCountry.set(code, (armedGroupsByCountry.get(code) ?? 0) + 1);
+        }
+      }
+    }
+
     // Enrich profiles
     const enriched: CountryProfile[] = COUNTRY_PROFILES.map((profile) => ({
       ...profile,
       activeConflicts: conflictsByCountry.get(profile.name) ?? 0,
       cdsSpread: cdsByCode.get(profile.code) ?? undefined,
       recentEvents: eventsByCountry.get(profile.code) ?? 0,
+      armedGroupCount: armedGroupsByCountry.get(profile.code) ?? 0,
     }));
 
     cache.set('countries', enriched, TTL.COUNTRIES);

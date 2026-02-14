@@ -1,105 +1,83 @@
-import { parse } from 'csv-parse';
-import { Readable } from 'node:stream';
-import { TTL } from '../config.js';
 import { cache } from '../cache.js';
-import type { SanctionEntry, SanctionsResponse } from '../types.js';
+import { TTL } from '../config.js';
 
-const SDN_URL = 'https://www.treasury.gov/ofac/downloads/sdn.csv';
-
-const TARGET_PROGRAMS = new Set([
-  'IRAN', 'SYRIA', 'RUSSIA', 'UKRAINE', 'DPRK', 'CUBA',
-  'VENEZUELA', 'CHINA', 'BELARUS', 'YEMEN', 'SDGT',
-]);
-
-function matchesTargetProgram(programs: string): string[] {
-  const matched: string[] = [];
-  for (const prog of TARGET_PROGRAMS) {
-    if (programs.toUpperCase().includes(prog)) {
-      matched.push(prog);
-    }
-  }
-  return matched;
+export interface OFACSanction {
+  id: string;
+  title: string;
+  date: string;
+  program: string;
+  url: string;
+  summary: string;
 }
 
 export async function fetchSanctions(): Promise<void> {
-  console.log('[SANCTIONS] Fetching OFAC SDN list...');
-
+  console.log('[OFAC] Fetching sanctions data...');
   try {
-    const res = await fetch(SDN_URL, {
-      signal: AbortSignal.timeout(30_000),
-      headers: { 'User-Agent': 'ATLAS/1.0 (Geopolitical Dashboard)' },
-    });
-
-    if (!res.ok) throw new Error(`OFAC CSV ${res.status}`);
-
-    const entries: SanctionEntry[] = [];
-    const byProgram: Record<string, number> = {};
-    const byCountry: Record<string, number> = {};
-    let totalEntries = 0;
-
-    // Stream-parse the CSV to avoid loading full ~25MB into a single string
-    const nodeStream = res.body
-      ? Readable.fromWeb(res.body as import('node:stream/web').ReadableStream)
-      : Readable.from([]);
-
-    const records: string[][] = await new Promise((resolve, reject) => {
-      const rows: string[][] = [];
-      const parser = nodeStream.pipe(parse({
-        relax_column_count: true,
-        skip_empty_lines: true,
-      }));
-      parser.on('data', (row: string[]) => rows.push(row));
-      parser.on('end', () => resolve(rows));
-      parser.on('error', reject);
-    });
-
-    for (const row of records) {
-      if (row.length < 12) continue;
-
-      const [id, name, type, programs, , , , , , , , remarks] = row;
-      if (!programs) continue;
-
-      const matchedPrograms = matchesTargetProgram(programs);
-      if (matchedPrograms.length === 0) continue;
-
-      totalEntries++;
-
-      // Aggregate by program
-      for (const prog of matchedPrograms) {
-        byProgram[prog] = (byProgram[prog] ?? 0) + 1;
+    // OFAC retired their RSS feed Jan 2025. Scrape HTML page instead.
+    const res = await fetch(
+      'https://ofac.treasury.gov/recent-actions',
+      {
+        signal: AbortSignal.timeout(15000),
+        headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36' }
       }
+    );
 
-      // Extract country from remarks or programs
-      const countryMatch = remarks?.match(/\b(?:Iran|Russia|Syria|North Korea|Cuba|Venezuela|China|Belarus|Yemen|Myanmar|Libya|Sudan|Iraq|Afghanistan)\b/i);
-      if (countryMatch) {
-        const country = countryMatch[0];
-        byCountry[country] = (byCountry[country] ?? 0) + 1;
-      }
+    if (!res.ok) throw new Error(`OFAC HTTP ${res.status}`);
+    const html = await res.text();
 
-      // Keep recent/notable entries (limit to last ~100 for sample)
-      if (entries.length < 100) {
-        entries.push({
-          id: `sdn-${id ?? totalEntries}`,
-          name: name ?? 'Unknown',
-          type: type ?? 'Unknown',
-          programs: matchedPrograms,
-          country: countryMatch?.[0] ?? 'Unknown',
-          remarks: remarks ?? '',
-        });
-      }
+    const items: OFACSanction[] = [];
+    const entryRegex = /<a\s+href="(\/recent-actions\/\d{8}[^"]*)"[^>]*>\s*([\s\S]*?)\s*<\/a>/g;
+
+    let match;
+    let idx = 0;
+    while ((match = entryRegex.exec(html)) !== null && idx < 50) {
+      const path = match[1];
+      const rawTitle = match[2].replace(/<[^>]*>/g, '').trim();
+      if (!rawTitle || rawTitle.length < 5) continue;
+
+      // Extract date from path (format: /recent-actions/YYYYMMDD)
+      const dateMatch = path.match(/\/(\d{4})(\d{2})(\d{2})/);
+      const isoDate = dateMatch
+        ? `${dateMatch[1]}-${dateMatch[2]}-${dateMatch[3]}`
+        : new Date().toISOString().split('T')[0];
+
+      items.push({
+        id: `ofac-${idx}`,
+        title: decodeHtmlEntities(rawTitle),
+        date: new Date(isoDate).toISOString(),
+        program: extractProgram(rawTitle),
+        url: `https://ofac.treasury.gov${path}`,
+        summary: '',
+      });
+      idx++;
     }
 
-    const response: SanctionsResponse = {
-      totalEntries,
-      byProgram,
-      byCountry,
-      recentEntries: entries.slice(0, 50),
-      lastUpdated: new Date().toISOString(),
-    };
-
-    cache.set('sanctions', response, TTL.SANCTIONS);
-    console.log(`[SANCTIONS] ${totalEntries} OFAC entries cached (${Object.keys(byProgram).length} programs)`);
+    if (items.length > 0) {
+      cache.set('ofac_sanctions', items, TTL.CALENDAR);
+      console.log(`[OFAC] ${items.length} recent sanctions cached`);
+    } else {
+      console.warn('[OFAC] No items parsed from HTML page');
+    }
   } catch (err) {
-    console.error('[SANCTIONS] Fetch failed:', err instanceof Error ? err.message : err);
+    console.error('[OFAC] Fetch failed:', err);
   }
+}
+
+function decodeHtmlEntities(text: string): string {
+  return text
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/<[^>]*>/g, '');
+}
+
+function extractProgram(title: string): string {
+  const programs = ['SDGT', 'SDN', 'IRAN', 'RUSSIA', 'CUBA', 'DPRK', 'SYRIA', 'VENEZUELA', 'CYBER', 'YEMEN', 'BALKANS', 'NICARAGUA', 'MALI', 'SOMALIA', 'LIBYA'];
+  const upper = title.toUpperCase();
+  for (const p of programs) {
+    if (upper.includes(p)) return p;
+  }
+  return 'GENERAL';
 }

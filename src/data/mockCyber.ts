@@ -1,0 +1,17 @@
+import type { CyberIntelligence } from '../types';
+
+export const mockCyber: CyberIntelligence = {
+  active_threats: [
+    { id: 'pulse-1', name: 'APT29 targets European diplomatic entities', description: 'Cozy Bear deploys new backdoor variant targeting EU foreign ministries via spear-phishing campaigns.', adversary: 'APT29', targeted_countries: ['Germany', 'France', 'Poland'], tags: ['apt', 'nation-state', 'backdoor'], malware_families: ['CozyDuke'], indicators_count: 145, tlp: 'amber', created: '2025-02-10T08:00:00Z', modified: '2025-02-11T12:00:00Z', severity: 'critical' },
+    { id: 'pulse-2', name: 'Volt Typhoon pre-positions in US critical infrastructure', description: 'Chinese state-sponsored actor maintains persistent access to US water and energy utilities.', adversary: 'Volt Typhoon', targeted_countries: ['United States'], tags: ['apt', 'critical-infrastructure', 'living-off-the-land'], malware_families: [], indicators_count: 89, tlp: 'red', created: '2025-02-09T15:00:00Z', modified: '2025-02-11T10:00:00Z', severity: 'critical' },
+    { id: 'pulse-3', name: 'Lazarus Group cryptocurrency exchange heist', description: 'DPRK-affiliated group steals $120M from DeFi protocol via smart contract exploit.', adversary: 'Lazarus', targeted_countries: ['Global'], tags: ['cryptocurrency', 'nation-state', 'financial'], malware_families: ['AppleJeus'], indicators_count: 67, tlp: 'white', created: '2025-02-08T20:00:00Z', modified: '2025-02-10T14:00:00Z', severity: 'high' },
+    { id: 'pulse-4', name: 'MuddyWater phishing campaign targeting Gulf states', description: 'Iranian APT targets Saudi and UAE government systems with new PowerShell-based malware.', adversary: 'MuddyWater', targeted_countries: ['Saudi Arabia', 'UAE'], tags: ['apt', 'phishing', 'government'], malware_families: ['POWERSTATS'], indicators_count: 112, tlp: 'amber', created: '2025-02-07T11:00:00Z', modified: '2025-02-09T09:00:00Z', severity: 'high' },
+    { id: 'pulse-5', name: 'LockBit 4.0 ransomware targeting healthcare', description: 'New LockBit variant with improved encryption targets hospital systems across Europe.', adversary: 'LockBit', targeted_countries: ['United Kingdom', 'Germany', 'France'], tags: ['ransomware', 'healthcare'], malware_families: ['LockBit'], indicators_count: 234, tlp: 'white', created: '2025-02-06T16:00:00Z', modified: '2025-02-10T08:00:00Z', severity: 'high' },
+  ],
+  infrastructure_exposure: [
+    { query: 'country:IR port:502,102,47808', label: 'Iran SCADA/ICS exposed', category: 'infrastructure', total_results: 1247, top_ports: [{ port: 502, count: 890 }, { port: 102, count: 234 }, { port: 47808, count: 123 }], last_checked: '2025-02-11T06:00:00Z' },
+    { query: 'country:RU port:502,102', label: 'Russia SCADA/ICS exposed', category: 'infrastructure', total_results: 3456, top_ports: [{ port: 502, count: 2100 }, { port: 102, count: 1356 }], last_checked: '2025-02-11T06:00:00Z' },
+    { query: 'tag:ics country:US', label: 'US ICS exposed', category: 'critical_infra', total_results: 12890, top_ports: [{ port: 502, count: 5600 }, { port: 102, count: 3400 }, { port: 47808, count: 2100 }], last_checked: '2025-02-11T06:00:00Z' },
+  ],
+  summary: { total_active_threats: 5, critical_threats: 2, most_targeted_countries: ['United States', 'Germany', 'France', 'United Kingdom', 'Saudi Arabia'], most_active_adversaries: ['APT29', 'Volt Typhoon', 'Lazarus', 'MuddyWater'] },
+};

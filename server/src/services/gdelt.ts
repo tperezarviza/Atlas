@@ -1,7 +1,6 @@
-import { FETCH_TIMEOUT_API, TTL } from '../config.js';
+import Anthropic from '@anthropic-ai/sdk';
+import { ANTHROPIC_API_KEY, FETCH_TIMEOUT_API, TTL } from '../config.js';
 import { cache } from '../cache.js';
-import { mockNews } from '../mock/news.js';
-import { mockNewsWire } from '../mock/newsWire.js';
 import type { NewsPoint, NewsWireItem, NewsBullet } from '../types.js';
 
 interface GdeltFeature {
@@ -35,6 +34,109 @@ const GDELT_QUERIES = [
   { query: 'crisis OR disaster OR emergency', category: 'crisis', timespan: '60m', maxpoints: 300 },
 ];
 
+/** Extract the first article title from GDELT html field (contains <a> tags). */
+function extractHeadline(html: string | undefined): string | undefined {
+  if (!html) return undefined;
+  // Try to extract text from the first <a> tag: <a ...>Title Here</a>
+  const match = html.match(/<a[^>]*>([^<]+)<\/a>/);
+  if (match?.[1]) {
+    const text = match[1].trim();
+    if (text && text !== 'No Title') return text;
+  }
+  // Fallback: strip all tags
+  const plain = html.replace(/<[^>]*>/g, '').trim();
+  return (plain && plain !== 'No Title') ? plain : undefined;
+}
+
+/** Check if text is primarily Latin-script (English/European). */
+function isLatinText(text: string): boolean {
+  const letters = text.replace(/[\s\d\p{P}\p{S}]/gu, '');
+  if (letters.length === 0) return true;
+  const latinChars = letters.replace(/[^\u0000-\u024F\u1E00-\u1EFF]/g, '');
+  return latinChars.length / letters.length > 0.7;
+}
+
+/** Translate a single batch of up to 50 headlines. */
+async function translateBatch(
+  client: Anthropic,
+  points: NewsPoint[],
+  batch: { idx: number; text: string }[],
+): Promise<number> {
+  const numbered = batch.map((item, i) => `${i + 1}. ${item.text}`).join('\n');
+
+  const message = await client.messages.create({
+    model: 'claude-haiku-4-5-20251001',
+    max_tokens: 2000,
+    system: 'You are a headline translator. Translate each numbered headline to English. Keep it concise (news headline style). Output ONLY the numbered translations, one per line, matching the input numbering. Do not add commentary.',
+    messages: [{
+      role: 'user',
+      content: `Translate these headlines to English:\n\n${numbered}`,
+    }],
+  });
+
+  const responseText = message.content[0]?.type === 'text' ? message.content[0].text : '';
+  const lines = responseText.split('\n').filter(l => l.trim());
+  let count = 0;
+
+  for (const line of lines) {
+    const m = line.match(/^(\d+)[.)]\s*(.+)/);
+    if (m) {
+      const lineIdx = parseInt(m[1], 10) - 1;
+      const translated = m[2].trim();
+      if (lineIdx >= 0 && lineIdx < batch.length && translated) {
+        points[batch[lineIdx].idx].headline = translated;
+        count++;
+      }
+    }
+  }
+  return count;
+}
+
+/** Batch-translate ALL non-English headlines to English using Anthropic Haiku. */
+async function translateHeadlines(points: NewsPoint[]): Promise<void> {
+  if (!ANTHROPIC_API_KEY) return;
+
+  const toTranslate: { idx: number; text: string }[] = [];
+  for (let i = 0; i < points.length; i++) {
+    if (!isLatinText(points[i].headline)) {
+      toTranslate.push({ idx: i, text: points[i].headline });
+    }
+  }
+
+  if (toTranslate.length === 0) return;
+
+  console.log(`[GDELT] Translating ${toTranslate.length} non-English headlines in batches of 50...`);
+
+  try {
+    const client = new Anthropic({ apiKey: ANTHROPIC_API_KEY });
+    let totalTranslated = 0;
+
+    // Process in batches of 50
+    for (let start = 0; start < toTranslate.length; start += 50) {
+      const batch = toTranslate.slice(start, start + 50);
+      const count = await translateBatch(client, points, batch);
+      totalTranslated += count;
+    }
+
+    console.log(`[GDELT] Translated ${totalTranslated}/${toTranslate.length} headlines`);
+  } catch (err) {
+    console.warn('[GDELT] Translation failed, keeping original headlines:', err);
+  }
+}
+
+/** Convert a raw domain like "reuters.com" to a readable name like "Reuters". */
+function formatDomain(domain: string | undefined): string {
+  if (!domain) return 'GDELT';
+  let name = domain.replace(/^www\./, '');
+  name = name.replace(/\.(com|org|net|gov|int|edu|mil|io|info)(\.\w{2})?$/i, '');
+  name = name.replace(/\.co(\.\w{2})?$/i, '');
+  name = name
+    .split(/[\.\-]/)
+    .map((seg) => seg.charAt(0).toUpperCase() + seg.slice(1))
+    .join(' ');
+  return name || 'GDELT';
+}
+
 async function fetchGdeltQuery(
   query: string,
   category: string,
@@ -43,27 +145,33 @@ async function fetchGdeltQuery(
 ): Promise<NewsPoint[]> {
   const url = `https://api.gdeltproject.org/api/v2/geo/geo?query=${encodeURIComponent(query)}&format=GeoJSON&timespan=${timespan}&maxpoints=${maxpoints}`;
 
-  const res = await fetch(url, { signal: AbortSignal.timeout(FETCH_TIMEOUT_API) });
+  const res = await fetch(url, { signal: AbortSignal.timeout(30_000) });
   if (!res.ok) return [];
 
   const data: GdeltGeoJSON = await res.json();
   if (!data.features) return [];
 
-  return data.features.map((f, i) => ({
-    id: `gdelt-${category}-${i}`,
-    lat: f.geometry.coordinates[1],
-    lng: f.geometry.coordinates[0],
-    tone: f.properties.urltone ?? 0,
-    headline: f.properties.name ?? 'Unknown',
-    source: f.properties.domain ?? 'GDELT',
-    category,
-  }));
+  const points: NewsPoint[] = [];
+  for (let i = 0; i < data.features.length; i++) {
+    const f = data.features[i];
+    const headline = extractHeadline(f.properties.html) ?? (f.properties.name !== 'No Title' ? f.properties.name : undefined) ?? 'Unknown';
+    if (headline === 'Unknown' || headline.length < 10) continue;
+    points.push({
+      id: `gdelt-${category}-${i}`,
+      lat: f.geometry.coordinates[1],
+      lng: f.geometry.coordinates[0],
+      tone: f.properties.urltone ?? 0,
+      headline,
+      source: formatDomain(f.properties.domain),
+      category,
+    });
+  }
+  return points;
 }
 
 function deduplicateNews(points: NewsPoint[]): NewsPoint[] {
   const seen = new Set<string>();
   return points.filter((p) => {
-    // Dedupe by approximate location + headline similarity
     const key = `${p.lat.toFixed(1)}_${p.lng.toFixed(1)}_${p.headline.substring(0, 40).toLowerCase()}`;
     if (seen.has(key)) return false;
     seen.add(key);
@@ -72,21 +180,20 @@ function deduplicateNews(points: NewsPoint[]): NewsPoint[] {
 }
 
 function newsToWire(news: NewsPoint[], fetchedAt: number): NewsWireItem[] {
-  const sorted = [...news].sort((a, b) => a.tone - b.tone); // most negative first
+  const sorted = [...news].sort((a, b) => a.tone - b.tone);
   return sorted.slice(0, 20).map((n, i) => {
     let bullet: NewsBullet = 'medium';
     if (n.tone < -7) bullet = 'critical';
     else if (n.tone < -4) bullet = 'high';
     else if (n.tone > 0) bullet = 'accent';
 
-    // Approximate time since fetch (items are from the GDELT timespan window)
     const elapsedMin = Math.floor((Date.now() - fetchedAt) / 60_000);
     const time = elapsedMin < 1 ? 'now' : `${elapsedMin}m`;
 
     return {
       id: `nw-${i}`,
       bullet,
-      source: n.source.replace(/\.(com|org|net|gov)$/i, ''),
+      source: n.source,
       time,
       headline: n.headline,
       tone: n.tone,
@@ -116,11 +223,14 @@ export async function fetchGdeltNews(): Promise<void> {
 
     if (allPoints.length > 0) {
       const deduped = deduplicateNews(allPoints);
+
+      // Translate non-English headlines before caching
+      await translateHeadlines(deduped);
+
       const fetchedAt = Date.now();
       cache.set('news', deduped, TTL.NEWS);
       console.log(`[GDELT] Total: ${deduped.length} unique news points cached`);
 
-      // Also generate newswire from news
       const wire = newsToWire(deduped, fetchedAt);
       cache.set('newswire', wire, TTL.NEWS);
     } else {

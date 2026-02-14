@@ -9,8 +9,13 @@ export function registerCountriesRoutes(app: FastifyInstance) {
   });
 
   app.get<{ Params: { code: string } }>('/api/countries/:code', async (req, reply) => {
+    const code = req.params.code;
+    if (code.length > 3 || !/^[A-Za-z]+$/.test(code)) {
+      reply.status(400);
+      return { error: 'Invalid country code format' };
+    }
     const countries = cache.get<CountryProfile[]>('countries') ?? mockCountries;
-    const country = countries.find((c) => c.code.toUpperCase() === req.params.code.toUpperCase());
+    const country = countries.find((c) => c.code.toUpperCase() === code.toUpperCase());
     if (!country) {
       reply.status(404);
       return { error: 'Country not found' };

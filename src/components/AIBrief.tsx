@@ -1,8 +1,11 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import DOMPurify from 'dompurify';
-import { useAutoRefresh } from '../hooks/useAutoRefresh';
+import { useApiData } from '../hooks/useApiData';
+import { useTypingEffect } from '../hooks/useTypingEffect';
 import { api } from '../services/api';
 import type { BriefResponse } from '../services/api';
+
+const REFRESH_MS = 14_400_000; // 4 hours
 
 const ALLOWED_TAGS = ['h1', 'h2', 'h3', 'h4', 'p', 'ul', 'ol', 'li', 'b', 'strong', 'em', 'i', 'br', 'span'];
 const ALLOWED_ATTR = ['class'];
@@ -15,8 +18,20 @@ function sanitizeBriefHTML(html: string): string {
   });
 }
 
-export default function AIBrief() {
-  const { data, error, refresh } = useAutoRefresh<BriefResponse>(api.brief, 240_000);
+interface AIBriefProps {
+  focus?: string;
+}
+
+const FOCUS_LABELS: Record<string, string> = {
+  mideast: 'MIDEAST',
+  ukraine: 'UKRAINE',
+  domestic: 'DOMESTIC',
+  intel: 'INTEL',
+};
+
+export default function AIBrief({ focus }: AIBriefProps) {
+  const fetchBrief = useMemo(() => () => api.brief(focus), [focus]);
+  const { data, error, refetch } = useApiData<BriefResponse>(fetchBrief, REFRESH_MS);
   const [regenerating, setRegenerating] = useState(false);
   const [regenError, setRegenError] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
@@ -27,10 +42,16 @@ export default function AIBrief() {
     };
   }, []);
 
+  // Refetch when focus changes
+  useEffect(() => {
+    refetch();
+  }, [focus, refetch]);
+
   const brief = data;
 
-  async function handleRegenerate() {
-    // Abort any in-flight regeneration
+  const [typingActive, setTypingActive] = useState(false);
+
+  const handleRegenerate = useCallback(async () => {
     abortRef.current?.abort();
     const controller = new AbortController();
     abortRef.current = controller;
@@ -38,30 +59,40 @@ export default function AIBrief() {
     setRegenerating(true);
     setRegenError(null);
     try {
-      const result = await api.regenBrief();
+      const result = await api.regenBrief(focus);
       if (controller.signal.aborted) return;
       if ('error' in result) {
         setRegenError(String((result as { error: string }).error));
         return;
       }
-      await refresh(controller.signal);
+      await refetch(controller.signal);
+      if (!controller.signal.aborted) setTypingActive(true);
     } catch (err) {
       if (controller.signal.aborted) return;
       setRegenError(err instanceof Error ? err.message : 'Regeneration failed');
     } finally {
       if (!controller.signal.aborted) setRegenerating(false);
     }
-  }
+  }, [focus, refetch]);
+
+  const sanitizedHtml = brief ? sanitizeBriefHTML(brief.html) : '';
+  const displayHtml = useTypingEffect(sanitizedHtml, typingActive, {
+    onComplete: () => setTypingActive(false),
+  });
+
+  const headerLabel = focus && FOCUS_LABELS[focus]
+    ? `🤖 AI Brief: ${FOCUS_LABELS[focus]}`
+    : '🤖 AI Intelligence Brief';
 
   return (
-    <div className="h-full flex flex-col rounded-[3px] overflow-hidden" style={{ background: '#0b1224', border: '1px solid #14233f' }}>
+    <div className="h-full flex flex-col rounded-[14px] overflow-hidden panel-glow" style={{ background: 'rgba(255,200,50,0.025)', border: '1px solid rgba(255,200,50,0.10)', backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)' }}>
       {/* Header */}
       <div
-        className="flex items-center justify-between px-3 py-2 shrink-0"
-        style={{ borderBottom: '1px solid #14233f', background: 'rgba(255,255,255,.01)', minHeight: 32 }}
+        className="flex items-center justify-between shrink-0"
+        style={{ borderBottom: '1px solid rgba(255,200,50,0.10)', background: 'rgba(255,200,50,0.025)', minHeight: 32, padding: '14px 18px 10px 18px' }}
       >
         <div className="font-title text-[12px] font-semibold tracking-[2px] uppercase text-text-secondary">
-          🤖 AI Intelligence Brief
+          {headerLabel}
         </div>
         <StatusBadge brief={brief} error={error} />
       </div>
@@ -69,20 +100,21 @@ export default function AIBrief() {
       {/* Content */}
       <div className="flex-1 overflow-y-auto">
         {error && !brief ? (
-          <div className="px-3 py-[10px] text-[12px] text-critical">
-            Failed to load brief: {error.message}
+          <div style={{ padding: '10px 18px' }} className="text-[12px] text-critical">
+            Failed to load brief. Retrying...
           </div>
         ) : brief ? (
           <div
-            className="px-3 py-[10px] text-[12px] leading-[1.55] brief-content"
-            dangerouslySetInnerHTML={{ __html: sanitizeBriefHTML(brief.html) }}
+            className="text-[12px] leading-[1.65] brief-content"
+            style={{ padding: '10px 18px 14px 18px' }}
+            dangerouslySetInnerHTML={{ __html: displayHtml }}
           />
         ) : (
-          <div className="px-3 py-[10px] text-[12px] text-text-muted">Loading brief...</div>
+          <div style={{ padding: '10px 18px' }} className="text-[12px] text-text-muted">Loading brief...</div>
         )}
 
         {/* Regen footer */}
-        <div className="flex flex-col gap-1 mx-3 mb-2 pt-2" style={{ borderTop: '1px solid #14233f' }}>
+        <div className="flex flex-col gap-1 mb-2 pt-2" style={{ borderTop: '1px solid rgba(255,200,50,0.10)', margin: '0 18px 8px 18px' }}>
           {regenError && (
             <div className="font-data text-[9px] text-critical">{regenError}</div>
           )}
@@ -92,9 +124,9 @@ export default function AIBrief() {
               disabled={regenerating}
               className="font-data text-[9px] px-[10px] py-[3px] rounded-[2px] tracking-[0.5px] cursor-pointer disabled:opacity-50"
               style={{
-                border: '1px solid #14233f',
-                background: 'rgba(45,122,237,.08)',
-                color: '#2d7aed',
+                border: '1px solid rgba(255,200,50,0.10)',
+                background: 'rgba(255,200,50,.08)',
+                color: '#ffc832',
               }}
             >
               {regenerating ? '⏳ Generating...' : '🔄 Regenerate Brief'}
@@ -116,7 +148,7 @@ function StatusBadge({ brief, error }: { brief: BriefResponse | null; error: Err
     return (
       <div
         className="font-data text-[9px] px-[6px] py-[1px] rounded-[2px] tracking-[0.5px]"
-        style={{ background: 'rgba(232,59,59,.1)', color: '#e83b3b', border: '1px solid rgba(232,59,59,.2)' }}
+        style={{ background: 'rgba(255,59,59,.1)', color: '#ff3b3b', border: '1px solid rgba(255,59,59,.2)' }}
       >
         ERROR
       </div>
@@ -126,7 +158,7 @@ function StatusBadge({ brief, error }: { brief: BriefResponse | null; error: Err
     return (
       <div
         className="font-data text-[9px] px-[6px] py-[1px] rounded-[2px] tracking-[0.5px]"
-        style={{ background: 'rgba(212,167,44,.1)', color: '#d4a72c', border: '1px solid rgba(212,167,44,.2)' }}
+        style={{ background: 'rgba(255,140,0,.1)', color: '#ff8c00', border: '1px solid rgba(255,140,0,.2)' }}
       >
         STALE
       </div>
@@ -136,7 +168,7 @@ function StatusBadge({ brief, error }: { brief: BriefResponse | null; error: Err
   return (
     <div
       className="font-data text-[9px] px-[6px] py-[1px] rounded-[2px] tracking-[0.5px]"
-      style={{ background: 'rgba(155,89,232,.1)', color: '#9b59e8', border: '1px solid rgba(155,89,232,.2)' }}
+      style={{ background: 'rgba(168,85,247,.1)', color: '#a855f7', border: '1px solid rgba(168,85,247,.2)' }}
     >
       {label}
     </div>

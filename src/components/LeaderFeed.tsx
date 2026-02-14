@@ -1,105 +1,223 @@
-import { useAutoRefresh } from '../hooks/useAutoRefresh';
+import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useApiData } from '../hooks/useApiData';
 import { api } from '../services/api';
 import { mockLeaderFeed } from '../data/mockLeaderFeed';
+import { mockTwitter } from '../data/mockTwitter';
+import MaybeFadeIn from './MaybeFadeIn';
 import DataBadge from './DataBadge';
-import type { FeedItem } from '../types';
+import Skeleton from './Skeleton';
+import type { FeedItem, TwitterIntelItem } from '../types';
+
+const REFRESH_MS = 120_000; // 2 min
 
 const borderColors: Record<string, string> = {
-  trump: '#e83b3b',
-  musk: '#9b59e8',
-  military: '#e8842b',
-  leader: '#2d7aed',
+  trump: '#ff3b3b',
+  musk: '#a855f7',
+  military: '#ff8c00',
+  leader: '#ffc832',
+  twitter: '#1d9bf0',
 };
 
-export default function LeaderFeed() {
-  const { data, error } = useAutoRefresh<FeedItem[]>(api.leaders, 60_000);
-  const feed = data ?? mockLeaderFeed;
+function tweetToFeedItem(t: TwitterIntelItem): FeedItem {
+  return {
+    id: `tw-${t.id}`,
+    flag: '🐦',
+    handle: `@${t.author.username}`,
+    role: `${t.author.name} · ${t.author.followers_count.toLocaleString()} followers`,
+    source: 'X/Twitter',
+    time: new Date(t.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    category: t.category === 'trump' ? 'trump' : t.category === 'military' ? 'military' : 'leader',
+    text: t.text,
+    engagement: `♻️ ${t.metrics.retweet_count.toLocaleString()} · ❤️ ${t.metrics.like_count.toLocaleString()} · 👁 ${t.metrics.impression_count.toLocaleString()}`,
+    tags: [t.priority.toUpperCase(), t.category.toUpperCase()],
+  };
+}
+
+interface LeaderFeedProps {
+  filter?: (item: FeedItem) => boolean;
+  title?: string;
+}
+
+export default function LeaderFeed({ filter, title }: LeaderFeedProps = {}) {
+  const { data, loading, error, lastUpdate } = useApiData<FeedItem[]>(api.leaders, REFRESH_MS);
+  const { data: twitterData } = useApiData<TwitterIntelItem[]>(
+    api.twitterIntel,
+    REFRESH_MS,
+    { enabled: !filter },
+  );
+
+  const allItems = data ?? mockLeaderFeed;
+  const tweets = twitterData ?? mockTwitter;
+
+  const feed = useMemo(() => {
+    if (filter) return allItems.filter(filter);
+
+    // Unified feed: flash/urgent tweets + all items
+    const flashTweets = tweets
+      .filter(t => t.priority === 'flash' || t.priority === 'urgent')
+      .map(tweetToFeedItem);
+    return [...flashTweets, ...allItems];
+  }, [filter, allItems, tweets]);
+
+  const hasShownData = useRef(false);
+  useEffect(() => { if (data) hasShownData.current = true; }, [data]);
 
   return (
-    <div className="h-full flex flex-col rounded-[3px] overflow-hidden" style={{ background: '#0b1224', border: '1px solid #14233f' }}>
+    <div className="h-full flex flex-col rounded-[14px] overflow-hidden panel-glow" style={{ background: 'rgba(255,200,50,0.025)', border: '1px solid rgba(255,200,50,0.10)', backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)' }}>
       {/* Header */}
       <div
-        className="flex items-center justify-between px-3 py-2 shrink-0"
-        style={{ borderBottom: '1px solid #14233f', background: 'rgba(255,255,255,.01)', minHeight: 32 }}
+        className="flex items-center justify-between shrink-0"
+        style={{ borderBottom: '1px solid rgba(255,200,50,0.10)', background: 'rgba(255,200,50,0.025)', minHeight: 32, padding: '14px 18px 10px 18px' }}
       >
         <div className="font-title text-[12px] font-semibold tracking-[2px] uppercase text-text-secondary">
-          📡 Leader Feed
+          {title ? `📡 ${title}` : '📡 Leader Feed'}
         </div>
-        <DataBadge data={data} error={error} />
+        <DataBadge data={data} error={error} loading={loading} lastUpdate={lastUpdate} intervalMs={REFRESH_MS} />
       </div>
 
       {/* Error message */}
       {error && !data && (
-        <div className="px-3 py-2 text-[10px] text-critical font-data" style={{ background: 'rgba(232,59,59,.04)' }}>
-          Failed to load feed: {error.message}
+        <div style={{ padding: '8px 18px' }} className="text-[10px] text-critical font-data">
+          Failed to load feed. Retrying...
         </div>
       )}
 
-      {/* Feed items */}
-      <div className="flex-1 overflow-y-auto">
-        {feed.map((item) => (
-          <div
-            key={item.id}
-            className="px-3 py-[10px] cursor-pointer transition-colors duration-200 hover:bg-bg-card-hover"
-            style={{
-              borderBottom: '1px solid #14233f',
-              borderLeft: `3px solid ${borderColors[item.category] || '#2d7aed'}`,
-            }}
-          >
-            {/* Meta row */}
-            <div className="flex items-center gap-[6px] mb-1">
-              <span className="text-[14px]">{item.flag}</span>
-              <span className="font-data text-[10px] text-accent font-medium">{item.handle}</span>
-              <span className="font-data text-[9px] text-text-muted ml-auto tracking-[0.3px]">{item.source}</span>
-              <span className="font-data text-[9px] text-text-muted">{item.time}</span>
-            </div>
-
-            {/* Role */}
-            <div className="text-[9px] text-text-muted font-data mb-1">{item.role}</div>
-
-            {/* Text */}
-            <div className="text-[13px] leading-[1.45] text-text-primary">
-              <FeedText text={item.text} />
-            </div>
-
-            {/* Engagement */}
-            {item.engagement && (
-              <div className="flex gap-3 mt-[6px] font-data text-[9px] text-text-muted">
-                {item.engagement}
-              </div>
-            )}
-
-            {/* Tags */}
-            <div className="flex gap-1 mt-[5px]">
-              {item.tags.map((tag) => (
-                <span
-                  key={tag}
-                  className="font-data text-[8px] px-[5px] py-[1px] rounded-[2px]"
-                  style={{
-                    background: 'rgba(45,122,237,.1)',
-                    color: '#2d7aed',
-                    border: '1px solid rgba(45,122,237,.2)',
-                  }}
-                >
-                  {tag}
-                </span>
-              ))}
-            </div>
-          </div>
-        ))}
-      </div>
+      {/* Loading skeleton */}
+      {loading && !data ? (
+        <Skeleton lines={6} />
+      ) : (
+        /* Feed items */
+        <div className="flex-1 overflow-y-auto">
+          <MaybeFadeIn show={hasShownData.current}>
+            <AnimatePresence initial={false}>
+            {feed.map((item) => (
+              <FeedItemRow key={item.id} item={item} />
+            ))}
+            </AnimatePresence>
+          </MaybeFadeIn>
+        </div>
+      )}
     </div>
   );
 }
 
-/** Renders text safely — supports **bold** markers without innerHTML */
+function FeedItemRow({ item }: { item: FeedItem }) {
+  const [expanded, setExpanded] = useState(false);
+  const textRef = useRef<HTMLDivElement>(null);
+  const [isTruncated, setIsTruncated] = useState(false);
+
+  useEffect(() => {
+    const el = textRef.current;
+    if (el) {
+      setIsTruncated(el.scrollHeight > el.clientHeight);
+    }
+  }, [item.text]);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, height: 0 }}
+      animate={{ opacity: 1, height: 'auto' }}
+      transition={{ duration: 0.25 }}
+      className="cursor-pointer transition-colors duration-200 hover:bg-bg-card-hover"
+      style={{
+        overflow: 'hidden',
+        borderBottom: '1px solid rgba(255,200,50,0.10)',
+        borderLeft: `3px solid ${borderColors[item.category] || '#ffc832'}`,
+        padding: '10px 18px 10px 14px',
+      }}
+    >
+      {/* Flash tweet badge */}
+      {item.id.startsWith('tw-') && (
+        <div className="font-data text-[8px] text-[#1d9bf0] font-bold mb-1 tracking-[0.5px]">
+          🐦 X ALERT
+        </div>
+      )}
+
+      {/* Meta row */}
+      <div className="flex items-center gap-[6px] mb-1">
+        <span className="text-[14px]">{item.flag}</span>
+        <span className="font-data text-[10px] text-accent font-medium">{item.handle}</span>
+        <span className="font-data text-[9px] text-text-muted ml-auto tracking-[0.3px]">{item.source}</span>
+        <span className="font-data text-[9px] text-text-muted">{item.time}</span>
+      </div>
+
+      {/* Role */}
+      <div className="text-[9px] text-text-muted font-data mb-1">{item.role}</div>
+
+      {/* Text — truncated to 4 lines */}
+      <div
+        ref={textRef}
+        className="text-[13px] leading-[1.45] text-text-primary relative"
+        style={!expanded ? {
+          display: '-webkit-box',
+          WebkitLineClamp: 4,
+          WebkitBoxOrient: 'vertical' as const,
+          overflow: 'hidden',
+          maxHeight: `calc(13px * 1.45 * 4)`,
+        } : undefined}
+      >
+        <FeedText text={item.text} />
+      </div>
+
+      {/* Read more */}
+      {isTruncated && !expanded && (
+        <div
+          className="font-data text-[9px] cursor-pointer mt-[4px] transition-colors duration-150"
+          style={{ color: 'rgba(255,200,50,0.5)' }}
+          onClick={(e) => { e.stopPropagation(); setExpanded(true); }}
+          onMouseEnter={(e) => { (e.target as HTMLElement).style.color = '#ffc832'; }}
+          onMouseLeave={(e) => { (e.target as HTMLElement).style.color = 'rgba(255,200,50,0.5)'; }}
+        >
+          Read more...
+        </div>
+      )}
+      {expanded && (
+        <div
+          className="font-data text-[9px] cursor-pointer mt-[4px] transition-colors duration-150"
+          style={{ color: 'rgba(255,200,50,0.5)' }}
+          onClick={(e) => { e.stopPropagation(); setExpanded(false); }}
+          onMouseEnter={(e) => { (e.target as HTMLElement).style.color = '#ffc832'; }}
+          onMouseLeave={(e) => { (e.target as HTMLElement).style.color = 'rgba(255,200,50,0.5)'; }}
+        >
+          Show less
+        </div>
+      )}
+
+      {/* Engagement */}
+      {item.engagement && (
+        <div className="flex gap-3 mt-[6px] font-data text-[9px] text-text-muted">
+          {item.engagement}
+        </div>
+      )}
+
+      {/* Tags — gap 4px */}
+      <div className="flex flex-wrap gap-[4px] mt-[6px]">
+        {item.tags.map((tag) => (
+          <span
+            key={tag}
+            className="font-data text-[8px] px-[5px] py-[1px] rounded-[2px]"
+            style={{
+              background: 'rgba(255,200,50,.12)',
+              color: '#ffc832',
+              border: '1px solid rgba(255,200,50,.28)',
+            }}
+          >
+            {tag}
+          </span>
+        ))}
+      </div>
+    </motion.div>
+  );
+}
+
 function FeedText({ text }: { text: string }) {
   const parts = text.split(/\*\*(.+?)\*\*/g);
   return (
     <>
       {parts.map((part, i) =>
         i % 2 === 1 ? (
-          <strong key={i} className="font-semibold" style={{ color: '#d4a72c' }}>
+          <strong key={i} className="font-semibold" style={{ color: '#ffe082' }}>
             {part}
           </strong>
         ) : (

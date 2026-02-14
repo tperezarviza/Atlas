@@ -2,6 +2,11 @@ import { FETCH_TIMEOUT_API } from '../config.js';
 import type { MarketItem } from '../types.js';
 
 const YAHOO_MAP: Record<string, string> = {
+  // US Majors
+  'SPX':        '^GSPC',
+  'DJI':        '^DJI',
+  'IXIC':       '^IXIC',
+  'RUT':        '^RUT',
   // LatAm
   'IBOV':       '^BVSP',
   'MERV':       '^MERV',

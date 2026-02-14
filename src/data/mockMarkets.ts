@@ -19,16 +19,16 @@ export const mockMarketSections: MarketSection[] = [
   {
     title: 'Crypto', icon: '₿',
     items: [
-      { name: 'BITCOIN', price: '$97,234', delta: '▼ -2.1%', direction: 'down', sparkData: [85,82,78,75,72,68,65,70,74,78,82,80,76,73,70,68,72,75,78,74], color: '#e8842b' },
-      { name: 'ETHEREUM', price: '$2,645', delta: '▼ -3.4%', direction: 'down', sparkData: [70,68,65,62,58,55,52,56,60,64,68,66,62,58,55,52,56,60,64,60], color: '#9b59e8' },
+      { name: 'BITCOIN', price: '$97,234', delta: '▼ -2.1%', direction: 'down', sparkData: [85,82,78,75,72,68,65,70,74,78,82,80,76,73,70,68,72,75,78,74], color: '#ff8c00' },
+      { name: 'ETHEREUM', price: '$2,645', delta: '▼ -3.4%', direction: 'down', sparkData: [70,68,65,62,58,55,52,56,60,64,68,66,62,58,55,52,56,60,64,60], color: '#a855f7' },
     ],
   },
   {
     title: 'Indices', icon: '📈',
     items: [
-      { name: 'S&P 500', price: '6,127', delta: '▲ +0.4%', direction: 'up', sparkData: [60,62,65,68,70,72,75,73,76,78,80,82,78,80,83,85,82,84,86,84], color: '#28b35a' },
-      { name: 'DOW', price: '44,892', delta: '▲ +0.3%', direction: 'up', sparkData: [58,60,63,66,68,70,73,71,74,76,78,80,76,78,81,83,80,82,84,82], color: '#28b35a' },
-      { name: 'VIX', price: '14.2', delta: '▼ -3.1%', direction: 'down', sparkData: [40,45,42,38,35,32,30,34,36,32,28,25,28,32,30,26,24,22,20,18], color: '#e83b3b' },
+      { name: 'S&P 500', price: '6,127', delta: '▲ +0.4%', direction: 'up', sparkData: [60,62,65,68,70,72,75,73,76,78,80,82,78,80,83,85,82,84,86,84], color: '#00ff88' },
+      { name: 'DOW', price: '44,892', delta: '▲ +0.3%', direction: 'up', sparkData: [58,60,63,66,68,70,73,71,74,76,78,80,76,78,81,83,80,82,84,82], color: '#00ff88' },
+      { name: 'VIX', price: '14.2', delta: '▼ -3.1%', direction: 'down', sparkData: [40,45,42,38,35,32,30,34,36,32,28,25,28,32,30,26,24,22,20,18], color: '#ff3b3b' },
       { name: 'DXY', price: '108.3', delta: '▲ +0.2%', direction: 'up', sparkData: [65,68,70,72,75,73,76,78,80,82,84,82,85,83,86,84,87,85,88,86] },
       { name: '10Y YIELD', price: '4.52%', delta: '▬ 0.0%', direction: 'flat', sparkData: [60,62,64,66,68,65,63,66,68,70,72,70,68,66,64,62,60,62,64,62] },
     ],
@@ -43,19 +43,19 @@ export const mockMarketSections: MarketSection[] = [
 ];
 
 export const mockMacro: MacroItem[] = [
-  { label: 'National Debt', value: '$36.42 T', color: '#e83b3b' },
-  { label: 'DOGE Savings', value: '$172B claimed', color: '#28b35a' },
+  { label: 'National Debt', value: '$36.42 T', color: '#ff3b3b' },
+  { label: 'DOGE Savings', value: '$172B claimed', color: '#00ff88' },
   { label: 'Fed Rate', value: '4.25-4.50%' },
   { label: 'CPI (YoY)', value: '2.9%' },
   { label: 'Unemployment', value: '4.0%' },
 ];
 
 export const mockBorderStats: BorderStat[] = [
-  { label: 'SW Encounters/mo', value: '30,561', delta: '▼ -95% vs Biden', color: '#28b35a' },
-  { label: 'USBP Releases', value: 'ZERO (6 mo streak)', color: '#28b35a' },
+  { label: 'SW Encounters/mo', value: '30,561', delta: '▼ -95% vs Biden', color: '#00ff88' },
+  { label: 'USBP Releases', value: 'ZERO (6 mo streak)', color: '#00ff88' },
   { label: 'Fentanyl Seized', value: '12,400 lbs' },
   { label: 'ICE Arrests', value: '48,290' },
-  { label: 'Daily SW Apprehensions', value: '258/day', delta: '▼ from 5,110', color: '#28b35a' },
+  { label: 'Daily SW Apprehensions', value: '258/day', delta: '▼ from 5,110', color: '#00ff88' },
 ];
 
 export const mockForexSections: MarketSection[] = [

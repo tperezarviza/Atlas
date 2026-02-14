@@ -1,4 +1,5 @@
 import cron from 'node-cron';
+import { sanitizeError } from './config.js';
 import { fetchMarkets } from './services/markets.js';
 import { fetchFeeds } from './services/feeds.js';
 import { fetchGdeltNews } from './services/gdelt.js';
@@ -22,13 +23,20 @@ import { fetchExecutiveOrders } from './services/executive-orders.js';
 import { fetchPolling } from './services/polling.js';
 import { fetchFlights } from './services/flights.js';
 import { fetchUkraineFront } from './services/ukraine-front.js';
+import { fetchTwitterPrimary } from './services/twitter.js';
+import { fetchCyberThreats } from './services/cyber.js';
+import { fetchNaturalEvents } from './services/eonet.js';
+import { fetchEconomicCalendar } from './services/economic-calendar.js';
+import { analyzeAlerts } from './services/alerts.js';
+import { fetchEarthquakes } from './services/earthquakes.js';
+import { fetchUNSC } from './services/unsc.js';
 
 function safeRun(name: string, fn: () => Promise<void> | void) {
   return async () => {
     try {
       await fn();
     } catch (err) {
-      console.error(`[CRON] ${name} failed:`, err);
+      console.error(`[CRON] ${name} failed:`, sanitizeError(err));
     }
   };
 }
@@ -62,6 +70,9 @@ export function startCronJobs() {
 
   // 0 */12 * * * -> Calendar
   cron.schedule('0 */12 * * *', safeRun('calendar', fetchCalendar));
+
+  // 30 */6 * * * -> UNSC Security Council calendar (every 6h)
+  cron.schedule('30 */6 * * *', safeRun('unsc', fetchUNSC));
 
   // 0 6 * * * -> Border stats (1x/day)
   cron.schedule('0 6 * * *', safeRun('border', fetchBorderStats));
@@ -102,6 +113,24 @@ export function startCronJobs() {
 
   // 50 */12 * * * -> Executive orders (every 12h)
   cron.schedule('50 */12 * * *', safeRun('executive-orders', fetchExecutiveOrders));
+
+  // */15 * * * * -> Twitter account monitoring (every 15 min, rotated)
+  cron.schedule('*/15 * * * *', safeRun('twitter', fetchTwitterPrimary));
+
+  // 25 * * * * -> Cyber threats OTX (every hour, offset 25)
+  cron.schedule('25 * * * *', safeRun('cyber-threats', fetchCyberThreats));
+
+  // */30 * * * * -> NASA EONET natural events (every 30 min)
+  cron.schedule('10,40 * * * *', safeRun('eonet', fetchNaturalEvents));
+
+  // 0 */4 * * * -> Economic calendar (every 4h)
+  cron.schedule('45 */4 * * *', safeRun('econ-calendar', fetchEconomicCalendar));
+
+  // 0,30 * * * * -> USGS Earthquakes (every 30 min)
+  cron.schedule('0,30 * * * *', safeRun('earthquakes', fetchEarthquakes));
+
+  // * * * * * -> Alerts analysis (every minute)
+  cron.schedule('* * * * *', safeRun('alerts', analyzeAlerts));
 
   console.log('[CRON] All jobs scheduled');
 }

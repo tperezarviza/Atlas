@@ -4,6 +4,12 @@ import type { CongressBill, SenateNomination, BillRelevance, BillStatus } from '
 
 const BASE = 'https://api.congress.gov/v3';
 
+/** Compute current Congress number from date (117th started Jan 2021) */
+function currentCongress(): number {
+  const year = new Date().getFullYear();
+  return 118 + Math.floor((year - 2023) / 2);
+}
+
 function classifyRelevance(title: string): BillRelevance {
   const t = title.toLowerCase();
   if (/defense|military|armed|pentagon|dod|veteran/.test(t)) return 'defense';
@@ -34,7 +40,7 @@ async function fetchBills(): Promise<void> {
 
   console.log('[CONGRESS] Fetching bills...');
   try {
-    const url = `${BASE}/bill?api_key=${CONGRESS_API_KEY}&sort=updateDate+desc&limit=50&format=json`;
+    const url = `${BASE}/bill?api_key=${encodeURIComponent(CONGRESS_API_KEY)}&sort=updateDate+desc&limit=50&format=json`;
     const res = await fetch(url, { signal: AbortSignal.timeout(FETCH_TIMEOUT_API) });
     if (!res.ok) throw new Error(`Congress API ${res.status}`);
 
@@ -63,7 +69,9 @@ async function fetchBills(): Promise<void> {
     cache.set('congress_bills', bills, TTL.CONGRESS);
     console.log(`[CONGRESS] Cached ${bills.length} relevant bills`);
   } catch (err) {
-    console.error('[CONGRESS] Bills fetch failed:', err instanceof Error ? err.message : err);
+    // Sanitize error to avoid leaking API key from URL
+    const msg = err instanceof Error ? err.message.replace(CONGRESS_API_KEY, '[REDACTED]') : String(err);
+    console.error('[CONGRESS] Bills fetch failed:', msg);
   }
 }
 
@@ -77,7 +85,7 @@ async function fetchNominations(): Promise<void> {
 
   console.log('[CONGRESS] Fetching nominations...');
   try {
-    const url = `${BASE}/nomination/119?api_key=${CONGRESS_API_KEY}&limit=20&format=json`;
+    const url = `${BASE}/nomination/${currentCongress()}?api_key=${encodeURIComponent(CONGRESS_API_KEY)}&limit=20&format=json`;
     const res = await fetch(url, { signal: AbortSignal.timeout(FETCH_TIMEOUT_API) });
     if (!res.ok) throw new Error(`Congress API nominations ${res.status}`);
 
@@ -102,7 +110,8 @@ async function fetchNominations(): Promise<void> {
     cache.set('congress_nominations', nominations, TTL.CONGRESS);
     console.log(`[CONGRESS] Cached ${nominations.length} nominations`);
   } catch (err) {
-    console.error('[CONGRESS] Nominations fetch failed:', err instanceof Error ? err.message : err);
+    const msg = err instanceof Error ? err.message.replace(CONGRESS_API_KEY, '[REDACTED]') : String(err);
+    console.error('[CONGRESS] Nominations fetch failed:', msg);
   }
 }
 

@@ -1,6 +1,6 @@
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
-import { PORT } from './config.js';
+import { PORT, sanitizeError } from './config.js';
 import { registerHealthRoutes } from './routes/health.js';
 import { registerConflictsRoutes } from './routes/conflicts.js';
 import { registerNewsRoutes } from './routes/news.js';
@@ -28,6 +28,14 @@ import { registerExecutiveOrdersRoutes } from './routes/executive-orders.js';
 import { registerPollingRoutes } from './routes/polling.js';
 import { registerFlightsRoutes } from './routes/flights.js';
 import { registerUkraineFrontRoutes } from './routes/ukraine-front.js';
+import { registerTwitterRoutes } from './routes/twitter.js';
+import { registerCyberRoutes } from './routes/cyber.js';
+import { registerSatelliteRoutes } from './routes/satellite.js';
+import { registerEonetRoutes } from './routes/eonet.js';
+import { registerEconomicCalendarRoutes } from './routes/economic-calendar.js';
+import { registerAlertsRoutes } from './routes/alerts.js';
+import { registerVesselsRoutes } from './routes/vessels.js';
+import { registerEarthquakeRoutes } from './routes/earthquakes.js';
 import { startCronJobs } from './cron.js';
 import { warmUpCache } from './services/warmup.js';
 
@@ -38,6 +46,25 @@ const CORS_ORIGINS = process.env.CORS_ORIGINS
   : ['http://localhost:5173', 'http://localhost:4173'];
 
 await app.register(cors, { origin: CORS_ORIGINS });
+
+// Security response headers
+app.addHook('onSend', async (_request, reply) => {
+  reply.header('X-Content-Type-Options', 'nosniff');
+  reply.header('X-Frame-Options', 'DENY');
+  reply.header('X-XSS-Protection', '1; mode=block');
+  reply.header('Referrer-Policy', 'strict-origin-when-cross-origin');
+  reply.header('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+  reply.header('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+});
+
+// Global error handler — never leak internals to clients
+app.setErrorHandler((error: { statusCode?: number; code?: string; message?: string }, _request, reply) => {
+  const status = error.statusCode ?? 500;
+  if (status >= 500) {
+    console.error(`[SERVER] ${error.code ?? 'ERR'}:`, sanitizeError(error));
+  }
+  reply.status(status).send({ error: status >= 500 ? 'Internal server error' : (error.message ?? 'Error') });
+});
 
 // Register all routes
 registerHealthRoutes(app);
@@ -67,6 +94,14 @@ registerExecutiveOrdersRoutes(app);
 registerPollingRoutes(app);
 registerFlightsRoutes(app);
 registerUkraineFrontRoutes(app);
+registerTwitterRoutes(app);
+registerCyberRoutes(app);
+registerSatelliteRoutes(app);
+registerEonetRoutes(app);
+registerEconomicCalendarRoutes(app);
+registerAlertsRoutes(app);
+registerVesselsRoutes(app);
+registerEarthquakeRoutes(app);
 
 // Start server
 try {
@@ -75,7 +110,7 @@ try {
 
   // Warm up caches in background (don't block startup)
   warmUpCache().catch((err) => {
-    console.error('Cache warmup error:', err);
+    console.error('Cache warmup error:', sanitizeError(err));
   });
 
   // Start cron jobs

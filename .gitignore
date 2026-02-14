@@ -12,6 +12,11 @@ dist
 dist-ssr
 *.local
 .env
+.env.*
+!.env.example
+!.env.production.example
+server/.env
+server/.env.*
 .claude
 
 # Editor directories and files

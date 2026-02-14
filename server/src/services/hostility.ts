@@ -1,6 +1,5 @@
 import { FETCH_TIMEOUT_API, TTL } from '../config.js';
 import { cache } from '../cache.js';
-import { safeJson } from '../utils.js';
 import type { HostilityPair, Severity } from '../types.js';
 
 const HOSTILITY_PAIRS = [
@@ -40,7 +39,7 @@ export async function fetchHostilityIndex(): Promise<void> {
 
     for (const pair of HOSTILITY_PAIRS) {
       try {
-        const query = encodeURIComponent(`(${pair.countryA} AND ${pair.countryB})`);
+        const query = encodeURIComponent(`"${pair.countryA}" "${pair.countryB}"`);
         const url = `https://api.gdeltproject.org/api/v2/doc/doc?query=${query}&mode=tonechart&format=json&timespan=7d`;
 
         const res = await fetch(url, {
@@ -54,17 +53,23 @@ export async function fetchHostilityIndex(): Promise<void> {
           continue;
         }
 
-        const json = await safeJson<Record<string, unknown>>(res);
-        const toneData: { date: string; tone: number; count?: number }[] = (json.tonechart ?? []) as { date: string; tone: number; count?: number }[];
+        const text = await res.text();
+        if (!text.startsWith('{') && !text.startsWith('[')) {
+          console.warn(`[HOSTILITY] GDELT ${pair.id}: non-JSON response: ${text.substring(0, 80)}`);
+          await delay(1500);
+          continue;
+        }
+        const json = JSON.parse(text) as Record<string, unknown>;
+        const toneData = (json.tonechart ?? []) as { bin: number; count: number }[];
 
         if (toneData.length === 0) {
           await delay(1500);
           continue;
         }
 
-        const totalTone = toneData.reduce((sum, d) => sum + d.tone, 0);
-        const totalCount = toneData.reduce((sum, d) => sum + (d.count ?? 1), 0);
-        const avgTone = totalTone / toneData.length;
+        const totalWeightedTone = toneData.reduce((sum, d) => sum + d.bin * d.count, 0);
+        const totalCount = toneData.reduce((sum, d) => sum + d.count, 0);
+        const avgTone = totalCount > 0 ? totalWeightedTone / totalCount : 0;
 
         // Rate limit between GDELT requests
         await delay(1500);
@@ -79,7 +84,9 @@ export async function fetchHostilityIndex(): Promise<void> {
             headers: { 'User-Agent': 'ATLAS/1.0' },
           });
           if (hRes.ok) {
-            const hJson = await safeJson<Record<string, unknown>>(hRes);
+            const hText = await hRes.text();
+            if (!hText.startsWith('{') && !hText.startsWith('[')) throw new Error('non-JSON');
+            const hJson = JSON.parse(hText) as Record<string, unknown>;
             topHeadlines = ((hJson.articles ?? []) as { title?: string }[])
               .slice(0, 3)
               .map((a: { title?: string }) => a.title ?? '')

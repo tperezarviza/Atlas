@@ -9,8 +9,13 @@ export function registerHostilityRoutes(app: FastifyInstance) {
   });
 
   app.get<{ Params: { pair: string } }>('/api/hostility/:pair', async (req, reply) => {
+    const pairId = req.params.pair;
+    if (pairId.length > 64 || !/^[a-zA-Z0-9_-]+$/.test(pairId)) {
+      reply.status(400);
+      return { error: 'Invalid pair ID format' };
+    }
     const pairs = cache.get<HostilityPair[]>('hostility') ?? mockHostility;
-    const pair = pairs.find((p) => p.id === req.params.pair);
+    const pair = pairs.find((p) => p.id === pairId);
     if (!pair) {
       reply.status(404);
       return { error: 'Hostility pair not found' };

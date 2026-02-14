@@ -1,27 +1,31 @@
-import { useAutoRefresh } from '../hooks/useAutoRefresh';
+import { useApiData } from '../hooks/useApiData';
 import { api } from '../services/api';
 import { mockTicker } from '../data/mockTicker';
 import type { TickerItem } from '../types';
 
+const REFRESH_MS = 300_000; // 5 min
+
 export default function Ticker() {
-  const { data, error } = useAutoRefresh<TickerItem[]>(api.ticker, 60_000);
+  const { data, error } = useApiData<TickerItem[]>(api.ticker, REFRESH_MS);
   const items = data ?? mockTicker;
 
   const label = error && !data ? 'ERR' : data ? 'LIVE' : 'MOCK';
-  const labelColor = error && !data ? '#e83b3b' : data && error ? '#d4a72c' : '#e83b3b';
+  const labelColor = error && !data ? '#ff3b3b' : data && error ? '#d4a72c' : data ? '#00ff88' : '#ff3b3b';
 
   return (
     <div
       className="h-full flex items-center overflow-hidden relative"
       style={{
-        background: '#070d1a',
-        borderTop: '1px solid #14233f',
+        background: '#000000',
+        borderTop: '1px solid rgba(255,200,50,0.10)',
+        boxShadow: '0 -1px 8px rgba(255,200,50,0.05)',
+        marginTop: 4,
       }}
     >
       {/* Status label */}
       <div
         className="font-data text-[8px] font-bold tracking-[1px] px-[10px] shrink-0"
-        style={{ borderRight: '1px solid #14233f', color: labelColor }}
+        style={{ borderRight: '1px solid rgba(255,200,50,0.10)', color: labelColor }}
       >
         {label}
       </div>

@@ -64,13 +64,17 @@ const MILITARY_CALLSIGN_PREFIXES = [
   'WOLF', 'COBRA', 'TEAL', 'IRON',
 ];
 
-// Known military ICAO24 prefixes by country
+// Known military ICAO24 prefixes by country (narrowed to avoid civilian overlap)
 const MILITARY_ICAO_PREFIXES = [
-  'ae', // US military (AE0000-AFFFFF)
-  'af', // US military
-  '43c', // UK military
-  '3b',  // France military
-  '3f',  // Germany military
+  'ae',   // US military (AE0000-AEFFFF — dedicated DoD block)
+  'adf',  // US government upper range
+  '43c',  // UK military (RAF/RN)
+  '43d',  // UK military
+  '3a8',  // France military (Armée de l'Air)
+  '3a9',  // France military
+  '3f8',  // Germany military (Luftwaffe)
+  '3f9',  // Germany military
+  '3fc',  // Germany military
 ];
 
 function isMilitaryCallsign(callsign: string): boolean {
@@ -85,12 +89,12 @@ function isMilitaryIcao(icao24: string): boolean {
 
 function classifyAircraft(callsign: string): FlightCategory {
   const cs = callsign.trim().toUpperCase();
-  if (/^(FORTE|HOMER|JAKE|NCHO)/.test(cs)) return 'surveillance';
-  if (/^(RCH|REACH|CASA)/.test(cs)) return 'transport';
-  if (/^(LAGR|PACK|MIDAS)/.test(cs)) return 'tanker';
+  if (/^(FORTE|HOMER|JAKE|NCHO|RECON|NAVY\d)/.test(cs)) return 'surveillance';
+  if (/^(RCH|REACH|CASA|ASCOT|RRR)/.test(cs)) return 'transport';
+  if (/^(LAGR|PACK|MIDAS|TEAL)/.test(cs)) return 'tanker';
   if (/^(DOOM|EVIL)/.test(cs)) return 'bomber';
-  if (/^(SAM|EXEC|SPAR|VENUS|ATOM|ORDER)/.test(cs)) return 'command';
-  if (/^(VIPER|HAWK|BOLT|COLT|DUKE|WOLF|COBRA|SHARK|IRON)/.test(cs)) return 'fighter';
+  if (/^(SAM|EXEC|SPAR|VENUS|ATOM|ORDER|NATO|KING|TOPCAT)/.test(cs)) return 'command';
+  if (/^(VIPER|HAWK|BOLT|COLT|DUKE|WOLF|COBRA|SHARK|IRON|BISON|YANK)/.test(cs)) return 'fighter';
   return 'unknown';
 }
 

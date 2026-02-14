@@ -4,12 +4,48 @@ export type ConnectionType = 'proxy_war' | 'arms_flow' | 'alliance' | 'spillover
 export type FeedCategory = 'trump' | 'leader' | 'musk' | 'military' | 'think_tank' | 'conservative' | 'state_media';
 export type NuclearStatus = 'declared' | 'undeclared' | 'pursuing' | 'threshold' | 'none' | 'nato_sharing';
 export type ArmedGroupType = 'jihadist' | 'separatist' | 'militia' | 'cartel' | 'insurgent' | 'state_proxy';
+export type BillStatus = 'introduced' | 'committee' | 'passed_house' | 'passed_senate' | 'signed' | 'vetoed';
+export type BillRelevance = 'defense' | 'immigration' | 'foreign_affairs' | 'intelligence' | 'trade' | 'other';
+export type NominationStatus = 'pending' | 'confirmed' | 'rejected' | 'withdrawn';
+export type EOStatus = 'active' | 'revoked' | 'challenged';
+export type PollingTrend = 'improving' | 'stable' | 'declining';
+export type FlightCategory = 'fighter' | 'bomber' | 'transport' | 'tanker' | 'surveillance' | 'command' | 'helicopter' | 'unknown';
+export type UkraineFrontSource = 'deepstatemap' | 'isw' | 'acled_static';
+export type TweetPriority = 'flash' | 'urgent' | 'priority' | 'routine';
+export type TweetCategory = 'crisis' | 'military' | 'geopolitical' | 'border' | 'osint' | 'trump';
+export type CyberSeverity = 'critical' | 'high' | 'medium' | 'low';
+export type EventSeverity = 'minor' | 'moderate' | 'severe' | 'extreme';
+export type EconImpact = 'high' | 'medium' | 'low';
+export type WatchpointCategory = 'nuclear' | 'military_base' | 'conflict_zone' | 'border' | 'infrastructure';
 export type ChokepointStatus = 'normal' | 'elevated' | 'disrupted' | 'critical';
+export type AlertPriority = 'flash' | 'urgent' | 'priority' | 'routine';
+export type AlertSource = 'gdelt' | 'acled' | 'acled_spike' | 'ooni' | 'markets' | 'executive_orders';
+export type CDSRiskLevel = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
 export type NewsBullet = 'critical' | 'high' | 'medium' | 'accent';
 export type CalendarUrgency = 'today' | 'soon' | 'future';
 export type SessionRegion = 'americas' | 'europe' | 'asia_pacific' | 'middle_east_africa';
 export type SessionStatus = 'open' | 'closed' | 'pre_market' | 'after_hours';
 export type SupplyRisk = 'critical' | 'high' | 'medium' | 'low';
+export type MapLayerId = 'flights' | 'shipping' | 'internet' | 'nuclear' | 'armedGroups' | 'vessels' | 'naturalEvents' | 'earthquakes';
+
+export interface NuclearFacility {
+  id: string;
+  name: string;
+  country: string;
+  lat: number;
+  lng: number;
+  type: string;
+  status: string;
+}
+
+export interface SensitiveDate {
+  month: number;
+  day: number;
+  title: string;
+  detail: string;
+  region: string;
+  urgencyBoost: boolean;
+}
 
 export interface Conflict {
   id: string;
@@ -155,10 +191,16 @@ export interface CountryProfile {
   alliances: string[];
   sanctioned: boolean;
   sanctionPrograms: string[];
+  fsiScore?: number;
+  fsiCategory?: string;
+  corruptionIndex?: number;
+  pressFreedom?: number;
+  usRelationship?: string;
   recentEvents?: number;
   sentiment?: number;
   cdsSpread?: number;
   activeConflicts?: number;
+  armedGroupCount?: number;
 }
 
 export interface SanctionEntry {
@@ -280,4 +322,226 @@ export interface GTDSummary {
   primaryRegions: string[];
   primaryTactics: string[];
   yearlyData: { year: number; incidents: number; killed: number }[];
+}
+
+export interface CongressBill {
+  number: string;
+  title: string;
+  sponsor: string;
+  party: string;
+  introduced_date: string;
+  latest_action: string;
+  latest_action_date: string;
+  status: BillStatus;
+  subjects: string[];
+  committee: string;
+  relevance: BillRelevance;
+}
+
+export interface SenateNomination {
+  name: string;
+  position: string;
+  agency: string;
+  status: NominationStatus;
+  committee_vote_date?: string;
+  floor_vote_date?: string;
+}
+
+export interface ExecutiveOrder {
+  number: number;
+  title: string;
+  signing_date: string;
+  publication_date: string;
+  summary: string;
+  topics: string[];
+  federal_register_url: string;
+  status: EOStatus;
+}
+
+export interface PollEntry {
+  pollster: string;
+  date: string;
+  approve: number;
+  disapprove: number;
+}
+
+export interface PollingData {
+  presidential_approval: {
+    rcp_average: { approve: number; disapprove: number; spread: number };
+    recent_polls: PollEntry[];
+    trend: PollingTrend;
+  };
+  generic_ballot: {
+    rcp_average: { republican: number; democrat: number; spread: number };
+  };
+  direction: {
+    right_direction: number;
+    wrong_track: number;
+  };
+}
+
+export interface MilitaryFlight {
+  icao24: string;
+  callsign: string;
+  origin_country: string;
+  aircraft_type?: string;
+  category: FlightCategory;
+  lat: number;
+  lng: number;
+  altitude_m: number;
+  velocity_ms: number;
+  heading: number;
+  on_ground: boolean;
+  last_seen: number;
+  region?: string;
+}
+
+export interface UkraineFrontData {
+  source: UkraineFrontSource;
+  front_line_geojson?: unknown;
+  isw_map_image_url?: string;
+  isw_assessment_text?: string;
+  recent_events: { id: string; date: string; location: string; type: string; fatalities: number; lat: number; lng: number }[];
+  territory_summary?: string;
+  last_updated: string;
+}
+
+export interface TwitterIntelItem {
+  id: string;
+  text: string;
+  author: { username: string; name: string; verified: boolean; followers_count: number };
+  created_at: string;
+  metrics: { retweet_count: number; reply_count: number; like_count: number; impression_count: number };
+  category: TweetCategory;
+  priority: TweetPriority;
+  query_matched: string;
+  url: string;
+}
+
+export interface CyberThreatPulse {
+  id: string;
+  name: string;
+  description: string;
+  adversary?: string;
+  targeted_countries: string[];
+  tags: string[];
+  malware_families: string[];
+  indicators_count: number;
+  tlp: string;
+  created: string;
+  modified: string;
+  severity: CyberSeverity;
+}
+
+export interface ShodanIntelligence {
+  query: string;
+  label: string;
+  category: string;
+  total_results: number;
+  top_ports: { port: number; count: number }[];
+  last_checked: string;
+}
+
+export interface CyberIntelligence {
+  active_threats: CyberThreatPulse[];
+  infrastructure_exposure: ShodanIntelligence[];
+  summary: { total_active_threats: number; critical_threats: number; most_targeted_countries: string[]; most_active_adversaries: string[] };
+}
+
+export interface SatelliteWatchpoint {
+  id: string;
+  name: string;
+  description: string;
+  lat: number;
+  lng: number;
+  bbox: [number, number, number, number];
+  category: WatchpointCategory;
+  country: string;
+  monitoring_reason: string;
+  check_frequency_hours: number;
+}
+
+export interface SatelliteImage {
+  watchpoint_id: string;
+  watchpoint_name: string;
+  date: string;
+  image_url: string;
+  cloud_coverage_pct: number;
+  source: string;
+}
+
+export interface SatelliteData {
+  watchpoints: (SatelliteWatchpoint & { latest_images: SatelliteImage[]; last_checked: string })[];
+}
+
+export interface NaturalEvent {
+  id: string;
+  title: string;
+  category: string;
+  source: string;
+  lat: number;
+  lng: number;
+  date: string;
+  magnitude?: number;
+  severity: EventSeverity;
+  link: string;
+}
+
+export interface Alert {
+  id: string;
+  priority: AlertPriority;
+  source: AlertSource;
+  title: string;
+  detail?: string;
+  timestamp: string;
+  read: boolean;
+}
+
+export interface EconomicEvent {
+  date: string;
+  time: string;
+  currency: string;
+  impact: EconImpact;
+  event_name: string;
+  actual?: string;
+  forecast?: string;
+  previous?: string;
+}
+
+export type VesselType = 'tanker' | 'cargo' | 'container' | 'military' | 'other';
+
+export interface Vessel {
+  id: string;
+  name: string;
+  mmsi: string;
+  type: VesselType;
+  flag: string;
+  lat: number;
+  lng: number;
+  heading: number;
+  speed_knots: number;
+  destination?: string;
+  near_chokepoint?: string;
+}
+
+export interface Earthquake {
+  id: string;
+  magnitude: number;
+  place: string;
+  time: string;
+  lat: number;
+  lng: number;
+  depth: number;
+  url: string;
+  alert: string | null;
+  tsunami: boolean;
+}
+
+export interface OFACSanction {
+  id: string;
+  title: string;
+  date: string;
+  program: string;
+  url: string;
+  summary: string;
 }
