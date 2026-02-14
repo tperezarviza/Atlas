@@ -1,6 +1,6 @@
 import { ALIENVAULT_API_KEY, FETCH_TIMEOUT_API, TTL } from '../config.js';
 import { cache } from '../cache.js';
-import type { CyberThreatPulse, ShodanIntelligence, CyberIntelligence, CyberSeverity } from '../types.js';
+import type { CyberThreatPulse, CyberIntelligence, CyberSeverity } from '../types.js';
 
 // ── AlienVault OTX ──
 
@@ -68,17 +68,10 @@ export async function fetchCyberThreats(): Promise<void> {
   }
 }
 
-// Shodan removed — no API key needed
-
-export async function fetchCyberInfra(): Promise<void> {
-  // No-op: Shodan removed
-}
-
 // ── Combined endpoint builder ──
 
 export function buildCyberIntelligence(): CyberIntelligence {
   const threats = cache.get<CyberThreatPulse[]>('cyber_threats') || [];
-  const infra = cache.get<ShodanIntelligence[]>('cyber_infra') || [];
 
   const countryFreq = new Map<string, number>();
   const adversaryFreq = new Map<string, number>();
@@ -89,7 +82,6 @@ export function buildCyberIntelligence(): CyberIntelligence {
 
   return {
     active_threats: threats,
-    infrastructure_exposure: infra,
     summary: {
       total_active_threats: threats.length,
       critical_threats: threats.filter(t => t.severity === 'critical').length,

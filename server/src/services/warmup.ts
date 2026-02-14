@@ -18,7 +18,6 @@ import { fetchHostilityIndex } from './hostility.js';
 import { fetchPropaganda } from './propaganda.js';
 import { fetchCongress } from './congress.js';
 import { fetchExecutiveOrders } from './executive-orders.js';
-import { fetchPolling } from './polling.js';
 import { fetchFlights } from './flights.js';
 import { fetchUkraineFront } from './ukraine-front.js';
 import { fetchTwitterPrimary } from './twitter.js';
@@ -50,7 +49,6 @@ export async function warmUpCache(): Promise<void> {
     safeRun('CDS', fetchCDS),
     safeRun('OONI', fetchOoniIncidents),
     safeRun('Executive Orders', fetchExecutiveOrders),
-    safeRun('Polling', fetchPolling),
     safeRun('EONET', fetchNaturalEvents),
     safeRun('Econ Calendar', fetchEconomicCalendar),
     safeRun('Earthquakes', fetchEarthquakes),

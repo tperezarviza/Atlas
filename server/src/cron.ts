@@ -20,7 +20,6 @@ import { fetchPropaganda } from './services/propaganda.js';
 import { fetchSanctions } from './services/sanctions.js';
 import { fetchCongress } from './services/congress.js';
 import { fetchExecutiveOrders } from './services/executive-orders.js';
-import { fetchPolling } from './services/polling.js';
 import { fetchFlights } from './services/flights.js';
 import { fetchUkraineFront } from './services/ukraine-front.js';
 import { fetchTwitterPrimary } from './services/twitter.js';
@@ -107,9 +106,6 @@ export function startCronJobs() {
 
   // 20 */2 * * * -> Congress bills + nominations (every 2h)
   cron.schedule('20 */2 * * *', safeRun('congress', fetchCongress));
-
-  // 40 */6 * * * -> Polling data (every 6h)
-  cron.schedule('40 */6 * * *', safeRun('polling', fetchPolling));
 
   // 50 */12 * * * -> Executive orders (every 12h)
   cron.schedule('50 */12 * * *', safeRun('executive-orders', fetchExecutiveOrders));

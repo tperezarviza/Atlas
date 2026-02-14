@@ -77,8 +77,9 @@ export async function fetchPropaganda(): Promise<void> {
 
     for (const media of STATE_MEDIA) {
       try {
-        const domainQuery = media.outlets.map((o) => o.domain).join(' OR ');
-        const query = encodeURIComponent(`domain:(${domainQuery})`);
+        // Use sourceurl: filter (GDELT rejects domain:() queries with short domain names)
+        const domainQuery = media.outlets.map((o) => `sourceurl:${o.domain}`).join(' OR ');
+        const query = encodeURIComponent(domainQuery);
         const url = `https://api.gdeltproject.org/api/v2/doc/doc?query=${query}&mode=artlist&maxrecords=20&format=json&timespan=24h`;
 
         const res = await fetch(url, {

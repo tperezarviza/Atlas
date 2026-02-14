@@ -118,18 +118,14 @@ vi.mock('../services/api', () => ({
     executiveOrders: vi.fn(),
     congressBills: vi.fn(),
     congressNominations: vi.fn(),
-    polling: vi.fn(),
     propaganda: vi.fn(),
     hostility: vi.fn(),
-    satellite: vi.fn(),
-    satelliteWatchpoint: vi.fn(),
     internetIncidents: vi.fn(),
     dependencies: vi.fn(),
     twitterIntel: vi.fn(),
     twitterTrending: vi.fn(),
     cyberIntel: vi.fn(),
     cyberThreats: vi.fn(),
-    cyberInfra: vi.fn(),
     naturalEvents: vi.fn(),
     economicCalendar: vi.fn(),
     vessels: vi.fn(),
@@ -152,7 +148,6 @@ import ErrorBoundary from '../components/ErrorBoundary';
 import AlertBanner from '../components/AlertBanner';
 import TabPanel from '../components/tabs/TabPanel';
 import NatoResponse from '../components/tabs/NatoResponse';
-import PollingDashboard from '../components/tabs/PollingDashboard';
 import ExecutiveOrdersList from '../components/tabs/ExecutiveOrdersList';
 import CongressTracker from '../components/tabs/CongressTracker';
 import IntelMonitor from '../components/IntelMonitor';
@@ -681,13 +676,6 @@ describe('NatoResponse', () => {
     render(<NatoResponse />);
     expect(screen.getByText(/NATO Response/)).toBeInTheDocument();
     expect(screen.getByText(/Poland/)).toBeInTheDocument();
-  });
-});
-
-describe('PollingDashboard', () => {
-  it('renders header and approval data', () => {
-    render(<PollingDashboard />);
-    expect(screen.getByText(/Polling Dashboard/)).toBeInTheDocument();
   });
 });
 

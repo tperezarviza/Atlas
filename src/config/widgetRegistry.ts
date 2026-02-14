@@ -33,7 +33,6 @@ export const WIDGETS: WidgetDef[] = [
   { id: 'trump-feed', label: 'Trump Feed', icon: '🇺🇸' },
   { id: 'executive-orders', label: 'Executive Orders', icon: '📜' },
   { id: 'congress-tracker', label: 'Congress Tracker', icon: '🏛️' },
-  { id: 'polling', label: 'Polling Dashboard', icon: '📊' },
   { id: 'internet-freedom', label: 'Internet Freedom', icon: '🌐' },
   { id: 'newswire-domestic', label: 'Breaking: Domestic', icon: '📰' },
 ];

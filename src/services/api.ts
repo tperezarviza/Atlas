@@ -56,16 +56,11 @@ import type {
   CongressBill,
   SenateNomination,
   ExecutiveOrder,
-  PollingData,
   MilitaryFlight,
   UkraineFrontData,
   TwitterIntelItem,
   CyberIntelligence,
   CyberThreatPulse,
-  ShodanIntelligence,
-  SatelliteData,
-  SatelliteWatchpoint,
-  SatelliteImage,
   NaturalEvent,
   EconomicEvent,
   Alert,
@@ -163,7 +158,6 @@ export const api = {
   congressBills:       () => fetchJSON<CongressBill[]>('/api/congress/bills'),
   congressNominations: () => fetchJSON<SenateNomination[]>('/api/congress/nominations'),
   executiveOrders:     () => fetchJSON<ExecutiveOrder[]>('/api/executive-orders'),
-  polling:             () => fetchJSON<PollingData>('/api/polling'),
   militaryFlights:     (region?: string) => {
     const params = region ? `?region=${encodeURIComponent(region)}` : '';
     return fetchJSON<MilitaryFlight[]>(`/api/flights${params}`);
@@ -177,9 +171,6 @@ export const api = {
   twitterTrending:     () => fetchJSON<{ keyword: string; count: number }[]>('/api/twitter/trending'),
   cyberIntel:          () => fetchJSON<CyberIntelligence>('/api/cyber'),
   cyberThreats:        () => fetchJSON<CyberThreatPulse[]>('/api/cyber/threats'),
-  cyberInfra:          () => fetchJSON<ShodanIntelligence[]>('/api/cyber/infrastructure'),
-  satellite:           () => fetchJSON<SatelliteData>('/api/satellite'),
-  satelliteWatchpoint: (id: string) => fetchJSON<SatelliteWatchpoint & { latest_images: SatelliteImage[]; last_checked: string }>(`/api/satellite/${encodeURIComponent(id)}`),
   naturalEvents:       (category?: string) => {
     const params = category ? `?category=${encodeURIComponent(category)}` : '';
     return fetchJSON<NaturalEvent[]>(`/api/natural-events${params}`);

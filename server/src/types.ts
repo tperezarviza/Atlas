@@ -8,7 +8,6 @@ export type BillStatus = 'introduced' | 'committee' | 'passed_house' | 'passed_s
 export type BillRelevance = 'defense' | 'immigration' | 'foreign_affairs' | 'intelligence' | 'trade' | 'other';
 export type NominationStatus = 'pending' | 'confirmed' | 'rejected' | 'withdrawn';
 export type EOStatus = 'active' | 'revoked' | 'challenged';
-export type PollingTrend = 'improving' | 'stable' | 'declining';
 export type FlightCategory = 'fighter' | 'bomber' | 'transport' | 'tanker' | 'surveillance' | 'command' | 'helicopter' | 'unknown';
 export type UkraineFrontSource = 'deepstatemap' | 'isw' | 'acled_static';
 export type TweetPriority = 'flash' | 'urgent' | 'priority' | 'routine';
@@ -16,7 +15,6 @@ export type TweetCategory = 'crisis' | 'military' | 'geopolitical' | 'border' | 
 export type CyberSeverity = 'critical' | 'high' | 'medium' | 'low';
 export type EventSeverity = 'minor' | 'moderate' | 'severe' | 'extreme';
 export type EconImpact = 'high' | 'medium' | 'low';
-export type WatchpointCategory = 'nuclear' | 'military_base' | 'conflict_zone' | 'border' | 'infrastructure';
 export type ChokepointStatus = 'normal' | 'elevated' | 'disrupted' | 'critical';
 export type AlertPriority = 'flash' | 'urgent' | 'priority' | 'routine';
 export type AlertSource = 'gdelt' | 'acled' | 'acled_spike' | 'ooni' | 'markets' | 'executive_orders';
@@ -362,28 +360,6 @@ export interface ExecutiveOrder {
   status: EOStatus;
 }
 
-export interface PollEntry {
-  pollster: string;
-  date: string;
-  approve: number;
-  disapprove: number;
-}
-
-export interface PollingData {
-  presidential_approval: {
-    rcp_average: { approve: number; disapprove: number; spread: number };
-    recent_polls: PollEntry[];
-    trend: PollingTrend;
-  };
-  generic_ballot: {
-    rcp_average: { republican: number; democrat: number; spread: number };
-  };
-  direction: {
-    right_direction: number;
-    wrong_track: number;
-  };
-}
-
 export interface MilitaryFlight {
   icao24: string;
   callsign: string;
@@ -437,45 +413,9 @@ export interface CyberThreatPulse {
   severity: CyberSeverity;
 }
 
-export interface ShodanIntelligence {
-  query: string;
-  label: string;
-  category: string;
-  total_results: number;
-  top_ports: { port: number; count: number }[];
-  last_checked: string;
-}
-
 export interface CyberIntelligence {
   active_threats: CyberThreatPulse[];
-  infrastructure_exposure: ShodanIntelligence[];
   summary: { total_active_threats: number; critical_threats: number; most_targeted_countries: string[]; most_active_adversaries: string[] };
-}
-
-export interface SatelliteWatchpoint {
-  id: string;
-  name: string;
-  description: string;
-  lat: number;
-  lng: number;
-  bbox: [number, number, number, number];
-  category: WatchpointCategory;
-  country: string;
-  monitoring_reason: string;
-  check_frequency_hours: number;
-}
-
-export interface SatelliteImage {
-  watchpoint_id: string;
-  watchpoint_name: string;
-  date: string;
-  image_url: string;
-  cloud_coverage_pct: number;
-  source: string;
-}
-
-export interface SatelliteData {
-  watchpoints: (SatelliteWatchpoint & { latest_images: SatelliteImage[]; last_checked: string })[];
 }
 
 export interface NaturalEvent {

@@ -159,11 +159,13 @@ export async function fetchConflicts(): Promise<void> {
   try {
     const accessToken = await getAccessToken();
 
-    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
-      .toISOString().split('T')[0];
-    const today = new Date().toISOString().split('T')[0];
+    // ACLED publishes data with a delay (weeks/months). Query the current
+    // and previous year to capture whatever data is available, then filter
+    // to the most recent events client-side.
+    const currentYear = new Date().getFullYear();
+    const previousYear = currentYear - 1;
 
-    const url = `https://acleddata.com/api/acled/read?event_date=${thirtyDaysAgo}|${today}&event_date_where=BETWEEN&limit=5000&fields=event_id_cnty|event_date|event_type|sub_event_type|actor1|actor2|country|latitude|longitude|fatalities|notes`;
+    const url = `https://acleddata.com/api/acled/read?year=${previousYear}|${currentYear}&year_where=BETWEEN&limit=5000&fields=event_id_cnty|event_date|event_type|sub_event_type|actor1|actor2|country|latitude|longitude|fatalities|notes`;
 
     const res = await fetch(url, {
       signal: AbortSignal.timeout(FETCH_TIMEOUT_API),
@@ -172,7 +174,16 @@ export async function fetchConflicts(): Promise<void> {
     if (!res.ok) throw new Error(`ACLED API ${res.status}`);
 
     const json = await res.json();
-    const events: AcledEvent[] = json.data ?? [];
+    let events: AcledEvent[] = json.data ?? [];
+
+    // Filter to the most recent 90 days of available data
+    if (events.length > 0) {
+      const dates = events.map(e => new Date(e.event_date).getTime()).filter(t => !isNaN(t));
+      const maxDate = Math.max(...dates);
+      const cutoff = maxDate - 90 * 24 * 60 * 60 * 1000;
+      events = events.filter(e => new Date(e.event_date).getTime() >= cutoff);
+      console.log(`[ACLED] Filtered to ${events.length} events from last 90 days of available data (latest: ${new Date(maxDate).toISOString().split('T')[0]})`);
+    }
 
     if (events.length === 0) {
       console.warn('[ACLED] No events returned');

@@ -2,7 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import { cache } from '../cache.js';
 import { mockConflicts } from '../mock/conflicts.js';
 import { mockMarketSections, mockBorderStats, mockMacro } from '../mock/markets.js';
-import type { Conflict, MarketSection, BorderStat, MacroItem, TopBarData, TopBarKPI, CDSSpread, MarketItem, PollingData, CyberThreatPulse, ShodanIntelligence } from '../types.js';
+import type { Conflict, MarketSection, BorderStat, MacroItem, TopBarData, TopBarKPI, CDSSpread, CyberThreatPulse } from '../types.js';
 
 function findMarketPrice(sections: MarketSection[], sectionTitle: string, itemName: string, fallback: string): string {
   const section = sections.find(s => s.title === sectionTitle);
@@ -25,8 +25,6 @@ function computeTopbar(tab?: string): TopBarData {
   const border = cache.get<BorderStat[]>('border') ?? mockBorderStats;
   const macro = cache.get<MacroItem[]>('macro') ?? mockMacro;
   const cds = cache.get<CDSSpread[]>('cds') ?? [];
-  const polling = cache.get<PollingData>('polling');
-
   const criticalConflicts = conflicts.filter(c => c.severity === 'critical').length;
   const threatLevel = criticalConflicts >= 3 ? 'HIGH' : criticalConflicts >= 2 ? 'ELEVATED' : 'GUARDED';
 
@@ -62,14 +60,11 @@ function computeTopbar(tab?: string): TopBarData {
       break;
     }
     case 'domestic': {
-      const approval = polling?.presidential_approval?.rcp_average?.approve;
-      const approvalStr = approval ? `${approval}%` : '—';
       const encounterStat = border.find(b => b.label.includes('Encounters'));
       const encounters = encounterStat?.value ?? '—';
       const sp500 = findMarketPrice(sections, 'Indices', 'S&P 500', '—');
       const dogeSavings = macro.find(m => m.label.includes('DOGE'))?.value ?? '—';
       kpis = [
-        { label: 'Approval', value: approvalStr, colorClass: 'text-accent' },
         { label: 'Border', value: encounters, colorClass: 'text-high' },
         { label: 'S&P 500', value: sp500, colorClass: 'text-positive' },
         { label: 'DOGE Savings', value: dogeSavings, colorClass: 'text-medium' },
@@ -78,7 +73,6 @@ function computeTopbar(tab?: string): TopBarData {
     }
     case 'cyber': {
       const cyberThreats = cache.get<CyberThreatPulse[]>('cyber_threats');
-      const cyberInfra = cache.get<ShodanIntelligence[]>('cyber_infra');
 
       const activeThreats = cyberThreats ? cyberThreats.length.toString() : '—';
       const criticalThreats = cyberThreats
@@ -87,15 +81,11 @@ function computeTopbar(tab?: string): TopBarData {
       const aptGroups = cyberThreats
         ? new Set(cyberThreats.map(t => t.adversary).filter(Boolean)).size.toString()
         : '—';
-      const exposedInfra = cyberInfra
-        ? cyberInfra.reduce((sum, i) => sum + i.total_results, 0).toLocaleString()
-        : '—';
 
       kpis = [
         { label: 'Active Threats', value: activeThreats, colorClass: 'text-critical' },
         { label: 'Critical', value: criticalThreats, colorClass: 'text-high' },
         { label: 'APT Groups', value: aptGroups, colorClass: 'text-medium' },
-        { label: 'Exposed Infra', value: exposedInfra, colorClass: 'text-accent' },
       ];
       break;
     }

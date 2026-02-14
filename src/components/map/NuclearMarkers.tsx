@@ -2,12 +2,10 @@ import { useMemo } from 'react';
 import { Marker, Tooltip } from 'react-leaflet';
 import L from 'leaflet';
 import { nuclearFacilities } from '../../data/nuclearFacilities';
-import type { SatelliteData, NuclearFacility } from '../../types';
+import type { NuclearFacility } from '../../types';
 
 interface NuclearMarkersProps {
-  satelliteData: SatelliteData | null;
   visible: boolean;
-  onOpenSatellite?: (id: string) => void;
 }
 
 const iconCache = new Map<string, L.DivIcon>();
@@ -41,47 +39,28 @@ function dedup(facilities: { lat: number; lng: number; id: string }[], threshold
   return skip;
 }
 
-export default function NuclearMarkers({ satelliteData, visible, onOpenSatellite }: NuclearMarkersProps) {
+export default function NuclearMarkers({ visible }: NuclearMarkersProps) {
   const markers = useMemo(() => {
     if (!visible) return null;
 
-    const fromSatellite: NuclearFacility[] = (satelliteData?.watchpoints ?? [])
-      .filter(wp => wp.category === 'nuclear')
-      .map(wp => ({
-        id: `sat-${wp.id}`,
-        name: wp.name,
-        country: wp.country,
-        lat: wp.lat,
-        lng: wp.lng,
-        type: 'monitored',
-        status: 'active',
-      }));
+    const skipIds = dedup(nuclearFacilities);
+    const filtered = nuclearFacilities.filter(f => !skipIds.has(f.id));
 
-    const all = [...fromSatellite, ...nuclearFacilities];
-    const skipIds = dedup(all);
-    const filtered = all.filter(f => !skipIds.has(f.id));
-
-    return filtered.map(fac => {
-      const satId = fac.id.startsWith('sat-') ? fac.id.replace('sat-', '') : null;
-      return (
-        <Marker
-          key={fac.id}
-          position={[fac.lat, fac.lng]}
-          icon={getNuclearIcon(fac.status)}
-          zIndexOffset={580}
-          eventHandlers={satId && onOpenSatellite ? {
-            click: () => onOpenSatellite(satId),
-          } : undefined}
-        >
-          <Tooltip direction="top" offset={[0, -6]} className="map-tooltip">
-            <div className="tt-title">☢ {fac.name}</div>
-            <div className="tt-meta">{fac.country} · {fac.type.toUpperCase()}</div>
-            <div className="tt-headline">Status: {fac.status.replace('_', ' ').toUpperCase()}{satId ? ' · Click for satellite view' : ''}</div>
-          </Tooltip>
-        </Marker>
-      );
-    });
-  }, [satelliteData, visible, onOpenSatellite]);
+    return filtered.map(fac => (
+      <Marker
+        key={fac.id}
+        position={[fac.lat, fac.lng]}
+        icon={getNuclearIcon(fac.status)}
+        zIndexOffset={580}
+      >
+        <Tooltip direction="top" offset={[0, -6]} className="map-tooltip">
+          <div className="tt-title">☢ {fac.name}</div>
+          <div className="tt-meta">{fac.country} · {fac.type.toUpperCase()}</div>
+          <div className="tt-headline">Status: {fac.status.replace('_', ' ').toUpperCase()}</div>
+        </Tooltip>
+      </Marker>
+    ));
+  }, [visible]);
 
   return <>{markers}</>;
 }

@@ -19,7 +19,7 @@ import ArmedGroupMarkers from './map/ArmedGroupMarkers';
 import VesselMarkers from './map/VesselMarkers';
 import NaturalEventMarkers from './map/NaturalEventMarkers';
 import EarthquakeMarkers from './map/EarthquakeMarkers';
-import type { Conflict, NewsPoint, Connection, MapLayerId, MilitaryFlight, Chokepoint, InternetIncident, SatelliteData, ArmedGroup, Vessel, NaturalEvent, Earthquake } from '../types';
+import type { Conflict, NewsPoint, Connection, MapLayerId, MilitaryFlight, Chokepoint, InternetIncident, ArmedGroup, Vessel, NaturalEvent, Earthquake } from '../types';
 
 const NEWS_INTERVAL = 900_000;        // 15 min
 const CONNECTIONS_INTERVAL = 21_600_000; // 6 hours
@@ -28,7 +28,6 @@ interface WorldMapProps {
   selectedConflictId: string | null;
   onSelectConflict: (id: string) => void;
   onCountryClick?: (code: string) => void;
-  onOpenSatellite?: (id: string) => void;
   conflicts: Conflict[] | null;
   conflictsLoading: boolean;
   conflictsError: Error | null;
@@ -163,7 +162,7 @@ const GEOJSON_HOVER_STYLE: L.PathOptions = {
   color: 'rgba(255,200,50,0.15)',
 };
 
-export default function WorldMap({ selectedConflictId, onSelectConflict, onCountryClick, onOpenSatellite, conflicts, conflictsError, viewCenter, viewZoom, activeTab }: WorldMapProps) {
+export default function WorldMap({ selectedConflictId, onSelectConflict, onCountryClick, conflicts, conflictsError, viewCenter, viewZoom, activeTab }: WorldMapProps) {
   const { data: news, error: newsError } = useApiData<NewsPoint[]>(api.news, NEWS_INTERVAL);
   const { data: connections, error: connectionsError } = useApiData<Connection[]>(api.connections, CONNECTIONS_INTERVAL);
   const [geoData, setGeoData] = useState<GeoJSON.FeatureCollection | null>(null);
@@ -211,7 +210,6 @@ export default function WorldMap({ selectedConflictId, onSelectConflict, onCount
   const { data: flights } = useApiData<MilitaryFlight[]>(() => api.militaryFlights(), 60_000, { enabled: layers.flights });
   const { data: chokepoints } = useApiData<Chokepoint[]>(api.shipping, 300_000, { enabled: layers.shipping });
   const { data: shutdowns } = useApiData<InternetIncident[]>(api.internetIncidents, 900_000, { enabled: layers.internet });
-  const { data: satelliteData } = useApiData<SatelliteData>(api.satellite, 3_600_000, { enabled: layers.nuclear });
   const { data: armedGroupsData } = useApiData<ArmedGroup[]>(api.armedGroups, 3_600_000, { enabled: layers.armedGroups });
   const { data: vesselsData } = useApiData<Vessel[]>(api.vessels, 120_000, { enabled: layers.vessels });
   const { data: naturalEventsData } = useApiData<NaturalEvent[]>(api.naturalEvents, 900_000, { enabled: layers.naturalEvents });
@@ -387,7 +385,7 @@ export default function WorldMap({ selectedConflictId, onSelectConflict, onCount
         <FlightMarkers data={flights} visible={layers.flights} />
         <ChokepointMarkers data={chokepoints} visible={layers.shipping} />
         <InternetShutdownMarkers data={shutdowns} visible={layers.internet} />
-        <NuclearMarkers satelliteData={satelliteData} visible={layers.nuclear} onOpenSatellite={onOpenSatellite} />
+        <NuclearMarkers visible={layers.nuclear} />
         <ArmedGroupMarkers data={armedGroupsData} visible={layers.armedGroups} />
         <VesselMarkers data={vesselsData} visible={layers.vessels} zoomLevel={zoomLevel} />
         <NaturalEventMarkers data={naturalEventsData} visible={layers.naturalEvents} />
@@ -418,7 +416,7 @@ export default function WorldMap({ selectedConflictId, onSelectConflict, onCount
           flights: flights?.filter(f => !f.on_ground).length ?? 0,
           shipping: chokepoints?.length ?? 0,
           internet: shutdowns?.length ?? 0,
-          nuclear: (satelliteData?.watchpoints?.filter(w => w.category === 'nuclear').length ?? 0) + nuclearFacilities.length,
+          nuclear: nuclearFacilities.length,
           armedGroups: armedGroupsData?.length ?? 0,
           vessels: vesselsData?.length ?? 0,
           naturalEvents: naturalEventsData?.length ?? 0,

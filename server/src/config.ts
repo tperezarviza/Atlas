@@ -59,12 +59,10 @@ export const TTL = {
   PROPAGANDA: 12 * 60 * 60 * 1000, // 12 h
   CONGRESS:        2 * 60 * 60 * 1000,  // 2 h
   EXECUTIVE_ORDERS:12 * 60 * 60 * 1000, // 12 h
-  POLLING:         6 * 60 * 60 * 1000,  // 6 h
   FLIGHTS:         2 * 60 * 1000,       // 2 min
   UKRAINE_FRONT:   60 * 60 * 1000,      // 1 h
   TWITTER:         5 * 60 * 1000,       // 5 min
   CYBER_THREATS:   60 * 60 * 1000,      // 1 h
-  SATELLITE:       6 * 60 * 60 * 1000,  // 6 h
   EONET:          30 * 60 * 1000,       // 30 min
   ECON_CALENDAR:   4 * 60 * 60 * 1000,  // 4 h
   ALERTS:     30_000,                   // 30 s

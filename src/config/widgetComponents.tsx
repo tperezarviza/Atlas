@@ -13,7 +13,6 @@ import RussianMilitaryActivity from '../components/tabs/RussianMilitaryActivity'
 import NatoResponse from '../components/tabs/NatoResponse';
 import ExecutiveOrdersList from '../components/tabs/ExecutiveOrdersList';
 import CongressTracker from '../components/tabs/CongressTracker';
-import PollingDashboard from '../components/tabs/PollingDashboard';
 import InternetFreedomPanel from '../components/tabs/InternetFreedomPanel';
 
 // ── Filter functions ──
@@ -72,7 +71,6 @@ const WIDGET_MAP: Record<string, WidgetEntry> = {
   'trump-feed': LeaderFeed,
   'executive-orders': ExecutiveOrdersList,
   'congress-tracker': CongressTracker,
-  'polling': PollingDashboard,
   'internet-freedom': InternetFreedomPanel,
   'newswire-me': NewsWire,
   'newswire-ua': NewsWire,

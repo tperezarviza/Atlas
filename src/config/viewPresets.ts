@@ -47,7 +47,7 @@ export const VIEW_LAYOUT_PRESETS: Record<ViewId, LayoutPreset> = {
     icon: '🇺🇸',
     slots: {
       'r2c1': 'trump-feed',
-      'r2c3': 'polling',
+      'r2c3': 'ai-brief',
       'r3c1': 'newswire-domestic',
       'r3c2-left': 'executive-orders',
       'r3c2-right': 'congress-tracker',
