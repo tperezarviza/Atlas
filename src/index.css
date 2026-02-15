@@ -250,6 +250,27 @@ will-change: box-shadow;
   will-change: box-shadow;
 }
 
+/* Cluster markers */
+.cluster-marker {
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border: 2px solid rgba(255, 200, 50, 0.3);
+  opacity: 0.85;
+  font-weight: 700;
+  color: #fff;
+  font-family: 'JetBrains Mono', monospace;
+  transition: transform 0.2s, opacity 0.2s;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+}
+
+.cluster-marker:hover {
+  transform: scale(1.15);
+  opacity: 1;
+}
+
 /* Map tooltip */
 .map-tooltip {
   background: rgba(0, 0, 0, 0.90) !important;

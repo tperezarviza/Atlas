@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback, useRef, Fragment } from 'react';
 import { MapContainer, TileLayer, Marker, Tooltip, Polyline, GeoJSON, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import { useApiData } from '../hooks/useApiData';
+import { useCluster, type MapBounds } from '../hooks/useCluster';
 import { api } from '../services/api';
 import { conflictMarkerSize, newsMarkerSize } from '../utils/formatters';
 import { connectionColors, connectionDash } from '../utils/colors';
@@ -151,15 +152,46 @@ function MapClickHandler({ onMapClick }: { onMapClick: () => void }) {
   return null;
 }
 
-function ZoomTracker({ onZoomChange }: { onZoomChange: (zoom: number) => void }) {
+function ViewTracker({ onViewChange }: { onViewChange: (zoom: number, bounds: MapBounds) => void }) {
   const map = useMap();
   useEffect(() => {
-    const handler = () => onZoomChange(map.getZoom());
-    map.on('zoomend', handler);
-    handler(); // initial zoom
-    return () => { map.off('zoomend', handler); };
-  }, [map, onZoomChange]);
+    const handler = () => {
+      const b = map.getBounds();
+      onViewChange(map.getZoom(), [b.getWest(), b.getSouth(), b.getEast(), b.getNorth()]);
+    };
+    map.on('moveend', handler);
+    handler(); // initial
+    return () => { map.off('moveend', handler); };
+  }, [map, onViewChange]);
   return null;
+}
+
+// Cluster icon cache: keyed by count bucket + tone bucket
+const clusterIconCache = new Map<string, L.DivIcon>();
+function getClusterIcon(count: number, worstTone: number): L.DivIcon {
+  const countBucket = count < 10 ? count : count < 50 ? Math.round(count / 5) * 5 : Math.round(count / 20) * 20;
+  const toneBucket = worstTone < -5 ? -6 : worstTone < -2 ? -3 : worstTone < 0 ? -1 : 0;
+  const key = `c${countBucket}_${toneBucket}`;
+
+  let icon = clusterIconCache.get(key);
+  if (!icon) {
+    const size = Math.max(24, Math.min(60, 20 + Math.sqrt(count) * 6));
+    const color = toneBucket <= -6 ? '#ff3b3b'
+      : toneBucket <= -3 ? '#ff8c00'
+      : toneBucket <= -1 ? '#ffc832'
+      : '#7a6418';
+    const label = count > 999 ? `${Math.round(count / 1000)}K` : String(count);
+    const fontSize = size > 40 ? 14 : 11;
+
+    icon = L.divIcon({
+      className: '',
+      html: `<div class="cluster-marker" style="width:${size}px;height:${size}px;background:${color};font-size:${fontSize}px">${label}</div>`,
+      iconSize: [size, size],
+      iconAnchor: [size / 2, size / 2],
+    });
+    clusterIconCache.set(key, icon);
+  }
+  return icon;
 }
 
 const GEOJSON_STYLE: L.PathOptions = {
@@ -183,6 +215,7 @@ export default function WorldMap({ selectedConflictId, onSelectConflict, onCount
   const onCountryClickRef = useRef(onCountryClick);
   onCountryClickRef.current = onCountryClick;
   const [zoomLevel, setZoomLevel] = useState(2.5);
+  const [mapBounds, setMapBounds] = useState<MapBounds | null>(null);
   const [focusedConflict, setFocusedConflict] = useState<{ center: [number, number]; zoom: number } | null>(null);
 
   // Reset focused conflict when view changes
@@ -218,7 +251,10 @@ export default function WorldMap({ selectedConflictId, onSelectConflict, onCount
     setLayers(prev => ({ ...prev, [id]: !prev[id] }));
   }, []);
 
-  const handleZoomChange = useCallback((z: number) => setZoomLevel(z), []);
+  const handleViewChange = useCallback((z: number, b: MapBounds) => {
+    setZoomLevel(z);
+    setMapBounds(b);
+  }, []);
 
   // Conditional data fetching
   const { data: flights } = useApiData<MilitaryFlight[]>(() => api.militaryFlights(), 60_000, { enabled: layers.flights });
@@ -245,6 +281,9 @@ export default function WorldMap({ selectedConflictId, onSelectConflict, onCount
       .catch(err => { if (!controller.signal.aborted) console.warn('[MAP] GeoJSON load failed:', err); });
     return () => controller.abort();
   }, []);
+
+  // Cluster GDELT news points — NOT conflicts, earthquakes, flights
+  const newsClusters = useCluster(news ?? [], mapBounds, zoomLevel);
 
   const c = conflicts ?? [];
   const n = news ?? [];
@@ -285,7 +324,7 @@ export default function WorldMap({ selectedConflictId, onSelectConflict, onCount
         style={{ width: '100%', height: '100%' }}
       >
         <MapController />
-        <ZoomTracker onZoomChange={handleZoomChange} />
+        <ViewTracker onViewChange={handleViewChange} />
         <MapClickHandler onMapClick={handleMapClick} />
         {focusedConflict && <MapFlyTo center={focusedConflict.center} zoom={focusedConflict.zoom} />}
         {viewCenter && viewZoom != null && !focusedConflict && <MapFlyTo center={viewCenter} zoom={viewZoom} />}
@@ -383,21 +422,41 @@ export default function WorldMap({ selectedConflictId, onSelectConflict, onCount
           </Marker>
         ))}
 
-        {/* News markers — color by age, size by tone */}
-        {n.map((item) => (
-          <Marker
-            key={item.id}
-            position={[item.lat, item.lng]}
-            icon={getNewsIcon(item.tone, item.fetchedAt, item.lat, item.lng)}
-            zIndexOffset={item.tone < -5 ? 500 : 0}
-          >
-            <Tooltip direction="top" offset={[0, -6]} className="map-tooltip">
-              <div className="tt-title">📍 {item.source}</div>
-              <div className="tt-meta">Tone: {item.tone} · {item.category.toUpperCase()}</div>
-              <div className="tt-headline">{item.headline}</div>
-            </Tooltip>
-          </Marker>
-        ))}
+        {/* News markers — clustered at low zoom, individual at high zoom */}
+        {newsClusters.map((item) =>
+          item.isCluster ? (
+            <Marker
+              key={`cluster-${item.id}`}
+              position={[item.lat, item.lng]}
+              icon={getClusterIcon(item.count, item.worstTone)}
+              zIndexOffset={item.worstTone < -5 ? 600 : 100}
+              eventHandlers={{
+                click: () => setFocusedConflict({
+                  center: [item.lat, item.lng],
+                  zoom: item.expansionZoom ?? Math.floor(zoomLevel) + 2,
+                }),
+              }}
+            >
+              <Tooltip direction="top" offset={[0, -10]} className="map-tooltip">
+                <div className="tt-title">{item.count} events</div>
+                <div className="tt-meta">Worst tone: {item.worstTone.toFixed(1)}</div>
+              </Tooltip>
+            </Marker>
+          ) : item.point ? (
+            <Marker
+              key={`pt-${item.id}`}
+              position={[item.lat, item.lng]}
+              icon={getNewsIcon(item.point.tone, item.point.fetchedAt, item.lat, item.lng)}
+              zIndexOffset={item.point.tone < -5 ? 500 : 0}
+            >
+              <Tooltip direction="top" offset={[0, -6]} className="map-tooltip">
+                <div className="tt-title">📍 {item.point.source}</div>
+                <div className="tt-meta">Tone: {item.point.tone} · {item.point.category.toUpperCase()}</div>
+                <div className="tt-headline">{item.point.headline}</div>
+              </Tooltip>
+            </Marker>
+          ) : null
+        )}
 
         {/* Toggle layers */}
         <FlightMarkers data={flights} visible={layers.flights} />
