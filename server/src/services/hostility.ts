@@ -38,9 +38,11 @@ export async function fetchHostilityIndex(): Promise<void> {
   try {
     const pairs: HostilityPair[] = [];
 
+    const wrapIfNeeded = (name: string) => name.includes(' ') ? `"${name}"` : name;
+
     for (const pair of HOSTILITY_PAIRS) {
       try {
-        const query = encodeURIComponent(`"${pair.countryA}" "${pair.countryB}"`);
+        const query = encodeURIComponent(`${wrapIfNeeded(pair.countryA)} ${wrapIfNeeded(pair.countryB)}`);
         const url = `https://api.gdeltproject.org/api/v2/doc/doc?query=${query}&mode=tonechart&format=json&timespan=7d`;
 
         const res = await fetch(url, {
@@ -54,12 +56,26 @@ export async function fetchHostilityIndex(): Promise<void> {
           continue;
         }
 
-        const text = await res.text();
+        let text = await res.text();
+
+        // Fallback: if GDELT rejects the query (e.g. "phrase too short"), retry without any quotes
         if (!text.startsWith('{') && !text.startsWith('[')) {
-          console.warn(`[HOSTILITY] GDELT ${pair.id}: non-JSON response: ${text.substring(0, 80)}`);
-          await delay(1500);
-          continue;
+          const fallbackQuery = encodeURIComponent(`${pair.countryA} ${pair.countryB}`);
+          const fallbackUrl = `https://api.gdeltproject.org/api/v2/doc/doc?query=${fallbackQuery}&mode=tonechart&format=json&timespan=7d`;
+          const fallbackRes = await fetch(fallbackUrl, {
+            signal: AbortSignal.timeout(FETCH_TIMEOUT_API),
+            headers: { 'User-Agent': 'ATLAS/1.0' },
+          });
+          if (fallbackRes.ok) {
+            text = await fallbackRes.text();
+          }
+          if (!text.startsWith('{') && !text.startsWith('[')) {
+            console.warn(`[HOSTILITY] GDELT ${pair.id}: non-JSON even after retry`);
+            await delay(1500);
+            continue;
+          }
         }
+
         const json = JSON.parse(text) as Record<string, unknown>;
         const toneData = (json.tonechart ?? []) as { bin: number; count: number }[];
 
@@ -76,7 +92,8 @@ export async function fetchHostilityIndex(): Promise<void> {
         await delay(1500);
 
         // Get top headlines
-        const headlineUrl = `https://api.gdeltproject.org/api/v2/doc/doc?query=${query}&mode=artlist&maxrecords=5&format=json&timespan=7d`;
+        let headlineQuery = encodeURIComponent(`${wrapIfNeeded(pair.countryA)} ${wrapIfNeeded(pair.countryB)}`);
+        const headlineUrl = `https://api.gdeltproject.org/api/v2/doc/doc?query=${headlineQuery}&mode=artlist&maxrecords=5&format=json&timespan=7d`;
         let topHeadlines: string[] = [];
 
         try {
@@ -85,7 +102,17 @@ export async function fetchHostilityIndex(): Promise<void> {
             headers: { 'User-Agent': 'ATLAS/1.0' },
           });
           if (hRes.ok) {
-            const hText = await hRes.text();
+            let hText = await hRes.text();
+            // Fallback for headlines too
+            if (!hText.startsWith('{') && !hText.startsWith('[')) {
+              const hFallbackQuery = encodeURIComponent(`${pair.countryA} ${pair.countryB}`);
+              const hFallbackUrl = `https://api.gdeltproject.org/api/v2/doc/doc?query=${hFallbackQuery}&mode=artlist&maxrecords=5&format=json&timespan=7d`;
+              const hFallbackRes = await fetch(hFallbackUrl, {
+                signal: AbortSignal.timeout(FETCH_TIMEOUT_API),
+                headers: { 'User-Agent': 'ATLAS/1.0' },
+              });
+              if (hFallbackRes.ok) hText = await hFallbackRes.text();
+            }
             if (!hText.startsWith('{') && !hText.startsWith('[')) throw new Error('non-JSON');
             const hJson = JSON.parse(hText) as Record<string, unknown>;
             topHeadlines = ((hJson.articles ?? []) as { title?: string }[])
