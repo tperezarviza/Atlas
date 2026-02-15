@@ -33,33 +33,33 @@ const GEO_KEYWORDS = [
 const COUNTRY_LIST_SQL = MONITORED_COUNTRIES.map(c => `'${c}'`).join(',');
 
 const RISING_QUERY = `
-SELECT
-  term,
-  country_name,
-  country_code,
-  rank,
-  score,
-  refresh_date
-FROM \`bigquery-public-data.google_trends.international_top_rising_terms\`
-WHERE refresh_date = DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY)
-  AND country_code IN (${COUNTRY_LIST_SQL})
-ORDER BY score DESC
-LIMIT 300
+WITH latest AS (
+  SELECT country_code, MAX(refresh_date) as max_date
+  FROM \`bigquery-public-data.google_trends.international_top_rising_terms\`
+  WHERE refresh_date >= DATE_SUB(CURRENT_DATE(), INTERVAL 3 DAY)
+    AND country_code IN (${COUNTRY_LIST_SQL})
+  GROUP BY country_code
+)
+SELECT t.term, t.country_name, t.country_code, t.rank, t.score, t.refresh_date
+FROM \`bigquery-public-data.google_trends.international_top_rising_terms\` t
+JOIN latest l ON t.country_code = l.country_code AND t.refresh_date = l.max_date
+ORDER BY t.score DESC
+LIMIT 500
 `;
 
 const TOP_QUERY = `
-SELECT
-  term,
-  country_name,
-  country_code,
-  rank,
-  score,
-  refresh_date
-FROM \`bigquery-public-data.google_trends.international_top_terms\`
-WHERE refresh_date = DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY)
-  AND country_code IN (${COUNTRY_LIST_SQL})
-ORDER BY rank ASC
-LIMIT 300
+WITH latest AS (
+  SELECT country_code, MAX(refresh_date) as max_date
+  FROM \`bigquery-public-data.google_trends.international_top_terms\`
+  WHERE refresh_date >= DATE_SUB(CURRENT_DATE(), INTERVAL 3 DAY)
+    AND country_code IN (${COUNTRY_LIST_SQL})
+  GROUP BY country_code
+)
+SELECT t.term, t.country_name, t.country_code, t.rank, t.score, t.refresh_date
+FROM \`bigquery-public-data.google_trends.international_top_terms\` t
+JOIN latest l ON t.country_code = l.country_code AND t.refresh_date = l.max_date
+ORDER BY t.rank ASC
+LIMIT 500
 `;
 
 export interface TrendSignal {
@@ -89,9 +89,13 @@ interface TrendRow {
   refresh_date: { value: string } | string;
 }
 
+// Pre-compiled regex patterns for word-boundary matching
+const GEO_PATTERNS = GEO_KEYWORDS.map(kw =>
+  new RegExp(`\\b${kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i')
+);
+
 function isGeopoliticalTerm(term: string): boolean {
-  const lower = term.toLowerCase();
-  return GEO_KEYWORDS.some(kw => lower.includes(kw));
+  return GEO_PATTERNS.some(pattern => pattern.test(term));
 }
 
 export async function fetchGoogleTrends(): Promise<void> {
