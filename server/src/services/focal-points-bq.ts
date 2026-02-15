@@ -58,9 +58,9 @@ countries AS (
     ARRAY_AGG(DISTINCT REGEXP_EXTRACT(DocumentIdentifier, r'https?://(?:www\\.)?([^/]+)') IGNORE NULLS LIMIT 5) as source_domains,
     ARRAY_AGG(DISTINCT SPLIT(V2Themes, ';')[SAFE_OFFSET(0)] IGNORE NULLS LIMIT 3) as themes
   FROM \`gdelt-bq.gdeltv2.gkg\`,
-    UNNEST(SPLIT(V2EnhancedLocations, ';')) AS loc
+    UNNEST(SPLIT(V2Locations, ';')) AS loc
   WHERE DATE >= CAST(FORMAT_TIMESTAMP('%Y%m%d%H%M%S', TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 6 HOUR)) AS INT64)
-    AND V2EnhancedLocations != ''
+    AND V2Locations != ''
     AND SPLIT(loc, '#')[SAFE_OFFSET(0)] = '1'
   GROUP BY entity
   HAVING COUNT(*) >= 5 AND entity != ''
