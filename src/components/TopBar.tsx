@@ -66,7 +66,7 @@ export default function TopBar({ contextId, contextIndex, progress, onContextCli
           <span style={{ color: '#ffe082' }}>ATLAS</span>
         </div>
         <div
-          className="flex items-center gap-[5px] rounded-[3px] px-2 py-[2px] font-data text-[10px] font-semibold tracking-[1px]"
+          className="flex items-center gap-[5px] rounded-[3px] px-2 py-[2px] font-data text-[13px] font-semibold tracking-[1px]"
           style={{
             background: error && !data ? 'rgba(255,140,0,.12)' : 'rgba(255,59,59,.12)',
             border: error && !data ? '1px solid rgba(255,140,0,.3)' : '1px solid rgba(255,59,59,.3)',
@@ -129,7 +129,7 @@ export default function TopBar({ contextId, contextIndex, progress, onContextCli
       <div className="flex-1 flex items-center justify-center gap-[28px]" style={{ padding: '0 16px' }}>
         {filteredZones.map((z) => (
           <div key={z.label} className="flex flex-col items-center">
-            <span className="font-data text-[8px] tracking-[1px]" style={{ color: '#7a6418' }}>{z.label}</span>
+            <span className="font-data text-[12px] tracking-[1px]" style={{ color: '#7a6418' }}>{z.label}</span>
             <span className="font-data text-[15px] font-medium" style={{ color: '#ffc832' }}>{z.time}</span>
           </div>
         ))}
@@ -170,7 +170,7 @@ export default function TopBar({ contextId, contextIndex, progress, onContextCli
               <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
             </svg>
             {healthSummary && !allOk && (
-              <span className="font-data text-[8px] font-bold" style={{ color: "#ff8c00" }}>
+              <span className="font-data text-[12px] font-bold" style={{ color: "#ff8c00" }}>
                 {healthSummary.total - healthSummary.ok}
               </span>
             )}
@@ -208,7 +208,7 @@ function KPI({ label, value, colorClass }: { label: string; value: string; color
   const safeColor = colorClass && ALLOWED_COLOR_CLASSES.has(colorClass) ? colorClass : 'text-text-primary';
   return (
     <div className="flex flex-col items-center px-[4px] py-[2px]">
-      <div className="text-[8px] uppercase tracking-[1.5px] font-data font-medium" style={{ color: '#7a6418' }}>
+      <div className="text-[12px] uppercase tracking-[1.5px] font-data font-medium" style={{ color: '#7a6418' }}>
         {label}
       </div>
       <div className={`font-data text-[15px] font-semibold ${safeColor}`}>

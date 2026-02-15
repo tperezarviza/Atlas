@@ -19,16 +19,16 @@ function SimplifiedMarketRow({ item }: { item: MarketItem }) {
       className="flex items-center transition-colors duration-150 hover:bg-bg-card-hover"
       style={{ padding: '3px 18px', height: 28, gap: 6 }}
     >
-      <span className="font-data text-[10px] text-text-secondary" style={{ flex: '0 0 85px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+      <span className="font-data text-[13px] text-text-secondary" style={{ flex: '0 0 85px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
         {item.name}
       </span>
       <span style={{ flex: 1 }} />
-      <span className="font-data text-[11px] font-semibold text-text-primary" style={{ flex: '0 0 85px', textAlign: 'right', paddingRight: 4 }}>
+      <span className="font-data text-[14px] font-semibold text-text-primary" style={{ flex: '0 0 85px', textAlign: 'right', paddingRight: 4 }}>
         {item.price}
       </span>
       <span
         key={item.delta}
-        className={`font-data text-[10px] font-medium ${flashClass} ${
+        className={`font-data text-[13px] font-medium ${flashClass} ${
           item.direction === 'up'
             ? 'text-positive'
             : item.direction === 'down'
@@ -52,7 +52,7 @@ function SectionHeader({ title, icon }: { title: string; icon?: string }) {
         marginBottom: 4,
       }}
     >
-      <span className="font-data text-[8px] tracking-[1.2px] text-text-muted uppercase">
+      <span className="font-data text-[12px] tracking-[1.2px] text-text-muted uppercase">
         {icon ? `${icon} ` : ''}{title}
       </span>
     </div>
@@ -89,7 +89,7 @@ export default memo(function MarketsDashboard() {
         className="flex items-center justify-between shrink-0"
         style={{ borderBottom: '1px solid rgba(255,200,50,0.10)', background: 'rgba(255,200,50,0.025)', minHeight: 32, padding: '14px 18px 10px 18px' }}
       >
-        <div className="font-title text-[12px] font-semibold tracking-[2px] uppercase text-text-secondary">
+        <div className="font-title text-[14px] font-semibold tracking-[2px] uppercase text-text-secondary">
           💹 Markets & Indicators
         </div>
         <DataBadge data={data} error={error} loading={loading} lastUpdate={lastUpdate} intervalMs={REFRESH_MS} />
@@ -97,7 +97,7 @@ export default memo(function MarketsDashboard() {
 
       {/* Error message */}
       {error && !data && (
-        <div style={{ padding: '8px 18px' }} className="text-[10px] text-critical font-data" >
+        <div style={{ padding: '8px 18px' }} className="text-[13px] text-critical font-data" >
           Failed to load markets. Retrying...
         </div>
       )}

@@ -29,7 +29,7 @@ export default memo(function NewsWire({ filter, title }: NewsWireProps = {}) {
         className="flex items-center justify-between shrink-0"
         style={{ borderBottom: '1px solid rgba(255,200,50,0.10)', background: 'rgba(255,200,50,0.025)', minHeight: 32, padding: '14px 18px 10px 18px' }}
       >
-        <div className="font-title text-[12px] font-semibold tracking-[2px] uppercase text-text-secondary">
+        <div className="font-title text-[14px] font-semibold tracking-[2px] uppercase text-text-secondary">
           {title ? `📰 ${title}` : '📰 Breaking Wire'}
         </div>
         <DataBadge data={data} error={error} loading={loading} lastUpdate={lastUpdate} intervalMs={REFRESH_MS} liveLabel="GDELT Live" mockLabel="Mock" />
@@ -37,7 +37,7 @@ export default memo(function NewsWire({ filter, title }: NewsWireProps = {}) {
 
       {/* Error message */}
       {error && !data && (
-        <div className="px-3 py-2 text-[10px] text-critical font-data" style={{ background: 'rgba(255,59,59,.04)' }}>
+        <div className="px-3 py-2 text-[13px] text-critical font-data" style={{ background: 'rgba(255,59,59,.04)' }}>
           Failed to load wire. Retrying...
         </div>
       )}
@@ -51,7 +51,7 @@ export default memo(function NewsWire({ filter, title }: NewsWireProps = {}) {
           <MaybeFadeIn show={hasShownData.current}>
             {wire.length === 0 && data ? (
               <div className="flex items-center justify-center h-full py-8">
-                <span className="font-data text-[10px] text-text-muted tracking-[0.5px]">No matching items</span>
+                <span className="font-data text-[13px] text-text-muted tracking-[0.5px]">No matching items</span>
               </div>
             ) : wire.map((item) => {
               const tColor = toneToColor(item.tone);
@@ -67,11 +67,11 @@ export default memo(function NewsWire({ filter, title }: NewsWireProps = {}) {
                       className="w-[5px] h-[5px] rounded-full shrink-0"
                       style={{ background: bulletColors[item.bullet], marginTop: 1 }}
                     />
-                    <span className="font-data text-[9px] text-text-muted">{item.source}</span>
-                    <span className="font-data text-[9px] text-text-muted ml-auto">{item.time}</span>
+                    <span className="font-data text-[12px] text-text-muted">{item.source}</span>
+                    <span className="font-data text-[12px] text-text-muted ml-auto">{item.time}</span>
                   </div>
-                  <div className="text-[12px] leading-[1.4] text-text-primary">{item.headline}</div>
-                  <div className="font-data text-[8px] mt-[3px] flex items-center gap-1">
+                  <div className="text-[14px] leading-[1.4] text-text-primary">{item.headline}</div>
+                  <div className="font-data text-[12px] mt-[3px] flex items-center gap-1">
                     <span
                       className="inline-block h-[3px] rounded-[1px]"
                       style={{ width: toneWidth, background: tColor }}

@@ -23,7 +23,7 @@ export default function Ticker() {
     >
       {/* Status label */}
       <div
-        className="font-data text-[8px] font-bold tracking-[1px] px-[10px] shrink-0"
+        className="font-data text-[12px] font-bold tracking-[1px] px-[10px] shrink-0"
         style={{ borderRight: '1px solid rgba(255,200,50,0.10)', color: labelColor }}
       >
         {label}
@@ -36,12 +36,12 @@ export default function Ticker() {
       >
         {/* Duplicate items for seamless loop */}
         {[...items, ...items].map((item, i) => (
-          <div key={`${item.id}-${i}`} className="flex items-center gap-[6px] px-6 text-[11px] shrink-0">
+          <div key={`${item.id}-${i}`} className="flex items-center gap-[6px] px-6 text-[14px] shrink-0">
             <div
               className="w-[5px] h-[5px] rounded-full shrink-0"
               style={{ background: item.bulletColor }}
             />
-            <span className="font-data text-[9px] text-text-muted shrink-0">{item.source}</span>
+            <span className="font-data text-[12px] text-text-muted shrink-0">{item.source}</span>
             <span className="text-text-secondary">{item.text}</span>
             {i < items.length * 2 - 1 && (
               <span className="text-text-muted ml-4">│</span>

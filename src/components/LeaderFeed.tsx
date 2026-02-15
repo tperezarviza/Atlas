@@ -68,7 +68,7 @@ export default memo(function LeaderFeed({ filter, title }: LeaderFeedProps = {})
         className="flex items-center justify-between shrink-0"
         style={{ borderBottom: '1px solid rgba(255,200,50,0.10)', background: 'rgba(255,200,50,0.025)', minHeight: 32, padding: '14px 18px 10px 18px' }}
       >
-        <div className="font-title text-[12px] font-semibold tracking-[2px] uppercase text-text-secondary">
+        <div className="font-title text-[14px] font-semibold tracking-[2px] uppercase text-text-secondary">
           {title ? `📡 ${title}` : '📡 Leader Feed'}
         </div>
         <DataBadge data={data} error={error} loading={loading} lastUpdate={lastUpdate} intervalMs={REFRESH_MS} />
@@ -76,7 +76,7 @@ export default memo(function LeaderFeed({ filter, title }: LeaderFeedProps = {})
 
       {/* Error message */}
       {error && !data && (
-        <div style={{ padding: '8px 18px' }} className="text-[10px] text-critical font-data">
+        <div style={{ padding: '8px 18px' }} className="text-[13px] text-critical font-data">
           Failed to load feed. Retrying...
         </div>
       )}
@@ -90,7 +90,7 @@ export default memo(function LeaderFeed({ filter, title }: LeaderFeedProps = {})
           <MaybeFadeIn show={hasShownData.current}>
             {feed.length === 0 && data ? (
               <div className="flex items-center justify-center h-full py-8">
-                <span className="font-data text-[10px] text-text-muted tracking-[0.5px]">No matching items</span>
+                <span className="font-data text-[13px] text-text-muted tracking-[0.5px]">No matching items</span>
               </div>
             ) : (
               <AnimatePresence initial={false}>
@@ -132,7 +132,7 @@ function FeedItemRow({ item }: { item: FeedItem }) {
     >
       {/* Flash tweet badge */}
       {item.id.startsWith('tw-') && (
-        <div className="font-data text-[8px] text-[#1d9bf0] font-bold mb-1 tracking-[0.5px]">
+        <div className="font-data text-[12px] text-[#1d9bf0] font-bold mb-1 tracking-[0.5px]">
           🐦 X ALERT
         </div>
       )}
@@ -140,13 +140,13 @@ function FeedItemRow({ item }: { item: FeedItem }) {
       {/* Meta row */}
       <div className="flex items-center gap-[6px] mb-1">
         <span className="text-[14px]">{item.flag}</span>
-        <span className="font-data text-[10px] text-accent font-medium">{item.handle}</span>
-        <span className="font-data text-[9px] text-text-muted ml-auto tracking-[0.3px]">{item.source}</span>
-        <span className="font-data text-[9px] text-text-muted">{item.time}</span>
+        <span className="font-data text-[13px] text-accent font-medium">{item.handle}</span>
+        <span className="font-data text-[12px] text-text-muted ml-auto tracking-[0.3px]">{item.source}</span>
+        <span className="font-data text-[12px] text-text-muted">{item.time}</span>
       </div>
 
       {/* Role */}
-      <div className="text-[9px] text-text-muted font-data mb-1">{item.role}</div>
+      <div className="text-[12px] text-text-muted font-data mb-1">{item.role}</div>
 
       {/* Text — truncated to 4 lines */}
       <div
@@ -165,7 +165,7 @@ function FeedItemRow({ item }: { item: FeedItem }) {
       {/* Read more */}
       {isTruncated && !expanded && (
         <div
-          className="font-data text-[9px] cursor-pointer mt-[4px] transition-colors duration-150"
+          className="font-data text-[12px] cursor-pointer mt-[4px] transition-colors duration-150"
           style={{ color: 'rgba(255,200,50,0.5)' }}
           onClick={(e) => { e.stopPropagation(); setExpanded(true); }}
           onMouseEnter={(e) => { (e.target as HTMLElement).style.color = '#ffc832'; }}
@@ -176,7 +176,7 @@ function FeedItemRow({ item }: { item: FeedItem }) {
       )}
       {expanded && (
         <div
-          className="font-data text-[9px] cursor-pointer mt-[4px] transition-colors duration-150"
+          className="font-data text-[12px] cursor-pointer mt-[4px] transition-colors duration-150"
           style={{ color: 'rgba(255,200,50,0.5)' }}
           onClick={(e) => { e.stopPropagation(); setExpanded(false); }}
           onMouseEnter={(e) => { (e.target as HTMLElement).style.color = '#ffc832'; }}
@@ -188,7 +188,7 @@ function FeedItemRow({ item }: { item: FeedItem }) {
 
       {/* Engagement */}
       {item.engagement && (
-        <div className="flex gap-3 mt-[6px] font-data text-[9px] text-text-muted">
+        <div className="flex gap-3 mt-[6px] font-data text-[12px] text-text-muted">
           {item.engagement}
         </div>
       )}
@@ -198,7 +198,7 @@ function FeedItemRow({ item }: { item: FeedItem }) {
         {item.tags.map((tag) => (
           <span
             key={tag}
-            className="font-data text-[8px] px-[5px] py-[1px] rounded-[2px]"
+            className="font-data text-[12px] px-[5px] py-[1px] rounded-[2px]"
             style={{
               background: 'rgba(255,200,50,.12)',
               color: '#ffc832',

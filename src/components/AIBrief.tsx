@@ -91,7 +91,7 @@ export default function AIBrief({ focus }: AIBriefProps) {
         className="flex items-center justify-between shrink-0"
         style={{ borderBottom: '1px solid rgba(255,200,50,0.10)', background: 'rgba(255,200,50,0.025)', minHeight: 32, padding: '14px 18px 10px 18px' }}
       >
-        <div className="font-title text-[12px] font-semibold tracking-[2px] uppercase text-text-secondary">
+        <div className="font-title text-[14px] font-semibold tracking-[2px] uppercase text-text-secondary">
           {headerLabel}
         </div>
         <StatusBadge brief={brief} error={error} />
@@ -100,29 +100,29 @@ export default function AIBrief({ focus }: AIBriefProps) {
       {/* Content */}
       <div className="flex-1 overflow-y-auto">
         {error && !brief ? (
-          <div style={{ padding: '10px 18px' }} className="text-[12px] text-critical">
+          <div style={{ padding: '10px 18px' }} className="text-[14px] text-critical">
             Failed to load brief. Retrying...
           </div>
         ) : brief ? (
           <div
-            className="text-[12px] leading-[1.65] brief-content"
+            className="text-[14px] leading-[1.65] brief-content"
             style={{ padding: '10px 18px 14px 18px' }}
             dangerouslySetInnerHTML={{ __html: displayHtml }}
           />
         ) : (
-          <div style={{ padding: '10px 18px' }} className="text-[12px] text-text-muted">Loading brief...</div>
+          <div style={{ padding: '10px 18px' }} className="text-[14px] text-text-muted">Loading brief...</div>
         )}
 
         {/* Regen footer */}
         <div className="flex flex-col gap-1 mb-2 pt-2" style={{ borderTop: '1px solid rgba(255,200,50,0.10)', margin: '0 18px 8px 18px' }}>
           {regenError && (
-            <div className="font-data text-[9px] text-critical">{regenError}</div>
+            <div className="font-data text-[12px] text-critical">{regenError}</div>
           )}
           <div className="flex items-center gap-[6px]">
             <button
               onClick={handleRegenerate}
               disabled={regenerating}
-              className="font-data text-[9px] px-[10px] py-[3px] rounded-[2px] tracking-[0.5px] cursor-pointer disabled:opacity-50"
+              className="font-data text-[12px] px-[10px] py-[3px] rounded-[2px] tracking-[0.5px] cursor-pointer disabled:opacity-50"
               style={{
                 border: '1px solid rgba(255,200,50,0.10)',
                 background: 'rgba(255,200,50,.08)',
@@ -131,7 +131,7 @@ export default function AIBrief({ focus }: AIBriefProps) {
             >
               {regenerating ? '⏳ Generating...' : '🔄 Regenerate Brief'}
             </button>
-            <span className="font-data text-[8px] text-text-muted ml-auto">
+            <span className="font-data text-[12px] text-text-muted ml-auto">
               {brief
                 ? `Generated: ${brief.generatedAt?.slice(0, 16) ?? '—'} UTC · Model: ${brief.model} · Sources: ${brief.sources?.join(', ') ?? '—'}`
                 : '—'}
@@ -147,7 +147,7 @@ function StatusBadge({ brief, error }: { brief: BriefResponse | null; error: Err
   if (error && !brief) {
     return (
       <div
-        className="font-data text-[9px] px-[6px] py-[1px] rounded-[2px] tracking-[0.5px]"
+        className="font-data text-[12px] px-[6px] py-[1px] rounded-[2px] tracking-[0.5px]"
         style={{ background: 'rgba(255,59,59,.1)', color: '#ff3b3b', border: '1px solid rgba(255,59,59,.2)' }}
       >
         ERROR
@@ -157,7 +157,7 @@ function StatusBadge({ brief, error }: { brief: BriefResponse | null; error: Err
   if (brief && error) {
     return (
       <div
-        className="font-data text-[9px] px-[6px] py-[1px] rounded-[2px] tracking-[0.5px]"
+        className="font-data text-[12px] px-[6px] py-[1px] rounded-[2px] tracking-[0.5px]"
         style={{ background: 'rgba(255,140,0,.1)', color: '#ff8c00', border: '1px solid rgba(255,140,0,.2)' }}
       >
         STALE
@@ -167,7 +167,7 @@ function StatusBadge({ brief, error }: { brief: BriefResponse | null; error: Err
   const label = brief?.model === 'mock' ? 'MOCK' : 'ATLAS AI';
   return (
     <div
-      className="font-data text-[9px] px-[6px] py-[1px] rounded-[2px] tracking-[0.5px]"
+      className="font-data text-[12px] px-[6px] py-[1px] rounded-[2px] tracking-[0.5px]"
       style={{ background: 'rgba(168,85,247,.1)', color: '#a855f7', border: '1px solid rgba(168,85,247,.2)' }}
     >
       {label}
