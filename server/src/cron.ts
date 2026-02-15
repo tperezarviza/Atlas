@@ -22,7 +22,7 @@ import { fetchCongress } from './services/congress.js';
 import { fetchExecutiveOrders } from './services/executive-orders.js';
 import { fetchFlights } from './services/flights.js';
 import { fetchUkraineFront } from './services/ukraine-front.js';
-import { fetchTwitterPrimary } from './services/twitter.js';
+import { fetchTwitterTiered } from './services/twitter.js';
 import { fetchCyberThreats } from './services/cyber.js';
 import { fetchNaturalEvents } from './services/eonet.js';
 import { fetchEconomicCalendar } from './services/economic-calendar.js';
@@ -113,8 +113,8 @@ export function startCronJobs() {
   // 50 */12 * * * -> Executive orders (every 12h)
   cron.schedule('50 */12 * * *', safeRun('executive-orders', fetchExecutiveOrders));
 
-  // */15 * * * * -> Twitter account monitoring (every 15 min, rotated)
-  cron.schedule('*/15 * * * *', safeRun('twitter', fetchTwitterPrimary));
+  // */5 * * * * -> Twitter tiered monitoring (A=every 5m, B=every 10m, C=every 20m)
+  cron.schedule('*/5 * * * *', safeRun('twitter', fetchTwitterTiered));
 
   // 25 * * * * -> Cyber threats OTX (every hour, offset 25)
   cron.schedule('25 * * * *', safeRun('cyber-threats', fetchCyberThreats));

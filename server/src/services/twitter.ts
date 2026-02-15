@@ -8,86 +8,101 @@ const API_BASE = 'https://api.x.com/2';
 
 // ── Account-based monitoring (no keyword searches) ──
 
+// TIER A — Checked every cycle (most frequent)
+// TIER B — Checked every 2nd cycle
+// TIER C — Checked every 4th cycle
+
 interface AccountGroup {
   label: string;
   accounts: string[];
   category: TweetCategory;
   priority: TweetPriority;
+  tier: 'A' | 'B' | 'C';
 }
 
 const ACCOUNT_GROUPS: AccountGroup[] = [
-  // POTUS & Trump
+  // ── TIER A: Flash/Urgent — every cycle ──
   {
     label: 'POTUS & Trump',
     accounts: ['realDonaldTrump', 'POTUS', 'WhiteHouse'],
-    category: 'trump', priority: 'flash',
+    category: 'trump', priority: 'flash', tier: 'A',
   },
-  // US Intelligence & Defense
   {
     label: 'US Intel & Defense',
-    accounts: ['ODNIgov', 'CIA', 'NSAGov', 'FBI', 'DefenseIntel', 'DeptofDefense', 'NGA_GEOINT', 'CISAgov'],
-    category: 'military', priority: 'urgent',
+    accounts: ['ODNIgov', 'CIA', 'NSAGov', 'FBI', 'DefenseIntel', 'DeptofDefense', 'CISAgov'],
+    category: 'military', priority: 'urgent', tier: 'A',
   },
-  // US Combatant Commands
-  {
-    label: 'US Commands',
-    accounts: ['CENTCOM', 'US_EUCOM', 'INDOPACOM', 'USSOCOM', 'USNorthernCmd', 'US_Stratcom', 'US_CYBERCOM', 'US_SpaceCom', 'nro_gov'],
-    category: 'military', priority: 'priority',
-  },
-  // US Government & Foreign Policy
-  {
-    label: 'US Gov & Diplomacy',
-    accounts: ['StateDept', 'USTreasury', 'USTradeRep', 'DHSgov', 'CBP'],
-    category: 'geopolitical', priority: 'priority',
-  },
-  // US Congress (key committees)
-  {
-    label: 'US Congress',
-    accounts: ['SenateGOP', 'HouseGOP', 'SenForeign', 'HouseForeign', 'SenateBanking'],
-    category: 'geopolitical', priority: 'routine',
-  },
-  // US Key Officials
-  {
-    label: 'US Officials',
-    accounts: ['JDVance', 'SecRubio', 'SecWar', 'TulsiGabbard', 'CIADirector', 'FBIDirectorKash', 'CYBERCOM_DIRNSA', 'KeithKellogg'],
-    category: 'geopolitical', priority: 'priority',
-  },
-  // Israel
   {
     label: 'Israel',
     accounts: ['IsraeliPM', 'Israel_MOD', 'IDF', 'IsraelMFA', 'FaborDIonline'],
-    category: 'crisis', priority: 'urgent',
+    category: 'crisis', priority: 'urgent', tier: 'A',
   },
-  // Middle East Actors
   {
-    label: 'Middle East',
-    accounts: ['KSAmofaEN', 'MoFAICUAE', 'ABORAIMFA_EN'],
-    category: 'geopolitical', priority: 'priority',
+    label: 'US Key Officials',
+    accounts: ['JDVance', 'SecRubio', 'SecWar', 'TulsiGabbard', 'CIADirector', 'FBIDirectorKash', 'CYBERCOM_DIRNSA', 'KeithKellogg'],
+    category: 'geopolitical', priority: 'priority', tier: 'A',
   },
-  // UK
+
+  // ── TIER B: Priority — every 2nd cycle ──
+  {
+    label: 'US Combatant Commands',
+    accounts: ['CENTCOM', 'US_EUCOM', 'INDOPACOM', 'USSOCOM', 'US_Stratcom', 'US_CYBERCOM'],
+    category: 'military', priority: 'priority', tier: 'B',
+  },
+  {
+    label: 'US Gov & Diplomacy',
+    accounts: ['StateDept', 'USTreasury', 'USTradeRep', 'DHSgov', 'CBP'],
+    category: 'geopolitical', priority: 'priority', tier: 'B',
+  },
+  {
+    label: 'Middle East & Iran',
+    accounts: [
+      'KSAmofaEN',    // Saudi MFA
+      'MoFAICUAE',    // UAE MFA
+      'IRIMFA_EN',    // Iran MFA (English)
+      'Iran_GOV',     // Iran Government
+      'MofaQatar_EN', // Qatar MFA (key mediator)
+      'MfaEgypt',     // Egypt MFA Spokesperson
+      'MFATurkiye',   // Turkey MFA
+    ],
+    category: 'geopolitical', priority: 'priority', tier: 'B',
+  },
   {
     label: 'UK',
     accounts: ['DefenceHQ', 'GCHQ'],
-    category: 'military', priority: 'priority',
+    category: 'military', priority: 'priority', tier: 'B',
   },
-  // EU & NATO
   {
     label: 'EU & NATO',
-    accounts: ['eu_eeas', 'EU_Commission', 'EUDefenceAgency', 'NATO', 'SHAPE_NATO', 'INTERPOL_HQ'],
-    category: 'geopolitical', priority: 'priority',
+    accounts: ['eu_eeas', 'NATO', 'SHAPE_NATO'],
+    category: 'geopolitical', priority: 'priority', tier: 'B',
   },
-  // Economic / Financial
+
+  // ── TIER C: Routine — every 4th cycle ──
+  {
+    label: 'US Congress',
+    accounts: ['SenateGOP', 'HouseGOP', 'SenForeign', 'HouseForeign'],
+    category: 'geopolitical', priority: 'routine', tier: 'C',
+  },
   {
     label: 'Economic',
-    accounts: ['FederalReserve', 'IMFNews', 'WorldBank', 'BIS_org'],
-    category: 'geopolitical', priority: 'routine',
+    accounts: ['FederalReserve'],
+    category: 'geopolitical', priority: 'routine', tier: 'C',
   },
 ];
 
-// Build query strings from account groups (max ~512 chars per query for Basic plan)
-function buildQueries(): { query: string; category: TweetCategory; priority: TweetPriority; label: string }[] {
+// Build tiered query strings from account groups (max ~512 chars per query for Basic plan)
+interface TieredQuery {
+  query: string;
+  category: TweetCategory;
+  priority: TweetPriority;
+  label: string;
+  tier: 'A' | 'B' | 'C';
+}
+
+function buildTieredQueries(): TieredQuery[] {
   const MAX_QUERY_LEN = 500;
-  const queries: { query: string; category: TweetCategory; priority: TweetPriority; label: string }[] = [];
+  const queries: TieredQuery[] = [];
 
   for (const group of ACCOUNT_GROUPS) {
     let current: string[] = [];
@@ -103,6 +118,7 @@ function buildQueries(): { query: string; category: TweetCategory; priority: Twe
           category: group.category,
           priority: group.priority,
           label: group.label,
+          tier: group.tier,
         });
         current = [part];
         currentLen = part.length;
@@ -118,6 +134,7 @@ function buildQueries(): { query: string; category: TweetCategory; priority: Twe
         category: group.category,
         priority: group.priority,
         label: group.label,
+        tier: group.tier,
       });
     }
   }
@@ -125,15 +142,21 @@ function buildQueries(): { query: string; category: TweetCategory; priority: Twe
   return queries;
 }
 
-const ALL_QUERIES = buildQueries();
+const ALL_TIERED_QUERIES = buildTieredQueries();
+const TIER_A = ALL_TIERED_QUERIES.filter(q => q.tier === 'A');
+const TIER_B = ALL_TIERED_QUERIES.filter(q => q.tier === 'B');
+const TIER_C = ALL_TIERED_QUERIES.filter(q => q.tier === 'C');
 
 // Rate-limit tracking: 10,000 tweets/month read cap
 let monthlyTweetsRead = 0;
 let currentMonth = new Date().getMonth();
-let queryIndex = 0;
+let cycleCount = 0;
+let tierAIndex = 0;
+let tierBIndex = 0;
+let tierCIndex = 0;
 
 export function setMonthlyTweetsRead(count: number): void { monthlyTweetsRead = count; }
-export function setQueryIndex(idx: number): void { queryIndex = idx; }
+export function setQueryIndex(idx: number): void { cycleCount = idx; }
 
 const MONTHLY_CAP = 10_000;
 const CAP_WARNING_PCT = 0.9;
@@ -222,8 +245,8 @@ async function searchTweets(q: { query: string; category: TweetCategory; priorit
     });
 }
 
-// Single fetch function — rotates through all account groups
-export async function fetchTwitterPrimary(): Promise<void> {
+// Tiered fetch — Tier A every cycle, Tier B every 2nd, Tier C every 4th
+export async function fetchTwitterTiered(): Promise<void> {
   if (!X_BEARER_TOKEN) return;
   resetMonthlyCounter();
   if (isOverBudget()) {
@@ -231,36 +254,55 @@ export async function fetchTwitterPrimary(): Promise<void> {
     return;
   }
 
-  const q = ALL_QUERIES[queryIndex % ALL_QUERIES.length];
-  queryIndex++;
+  const queriesToRun: TieredQuery[] = [];
 
-  console.log(`[TWITTER] Fetching: ${q.label} (budget: ${monthlyTweetsRead}/${MONTHLY_CAP})`);
-  try {
-    const newTweets = await withCircuitBreaker(
-      'twitter',
-      () => searchTweets(q, 10),
-      () => [] as TwitterIntelItem[],
-    );
-    const existing = cache.get<TwitterIntelItem[]>('twitter') || [];
-    const seen = new Set(existing.map(t => t.id));
-    const merged = [...newTweets.filter(t => !seen.has(t.id)), ...existing]
-      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-      .slice(0, 200);
-
-    await cache.setWithRedis('twitter', merged, TTL.TWITTER, 3600);
-    if (newTweets.length > 0) {
-      console.log(`[TWITTER] +${newTweets.length} tweets (total: ${merged.length})`);
-    }
-
-    // Persist state to Redis for restart recovery
-    await redisSet('state:twitterMonthlyCount', monthlyTweetsRead, 35 * 86400).catch(() => {});
-    await redisSet('state:twitterQueryIndex', queryIndex, 35 * 86400).catch(() => {});
-  } catch (err) {
-    console.error('[TWITTER] Fetch failed:', err instanceof Error ? err.message : err);
+  // Always run 1 Tier A query
+  if (TIER_A.length > 0) {
+    queriesToRun.push(TIER_A[tierAIndex % TIER_A.length]);
+    tierAIndex++;
   }
+
+  // Every 2nd cycle, also run 1 Tier B
+  if (cycleCount % 2 === 0 && TIER_B.length > 0) {
+    queriesToRun.push(TIER_B[tierBIndex % TIER_B.length]);
+    tierBIndex++;
+  }
+
+  // Every 4th cycle, also run 1 Tier C
+  if (cycleCount % 4 === 0 && TIER_C.length > 0) {
+    queriesToRun.push(TIER_C[tierCIndex % TIER_C.length]);
+    tierCIndex++;
+  }
+
+  cycleCount++;
+
+  for (const q of queriesToRun) {
+    console.log(`[TWITTER] Fetching: ${q.label} [Tier ${q.tier}] (budget: ${monthlyTweetsRead}/${MONTHLY_CAP})`);
+    try {
+      const newTweets = await withCircuitBreaker(
+        'twitter',
+        () => searchTweets(q, 25),
+        () => [] as TwitterIntelItem[],
+      );
+      const existing = cache.get<TwitterIntelItem[]>('twitter') || [];
+      const seen = new Set(existing.map(t => t.id));
+      const merged = [...newTweets.filter(t => !seen.has(t.id)), ...existing]
+        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+        .slice(0, 300);
+
+      await cache.setWithRedis('twitter', merged, TTL.TWITTER, 3600);
+      if (newTweets.length > 0) {
+        console.log(`[TWITTER] +${newTweets.length} tweets (total: ${merged.length})`);
+      }
+    } catch (err) {
+      console.error(`[TWITTER] ${q.label} fetch failed:`, err instanceof Error ? err.message : err);
+    }
+  }
+
+  // Persist state to Redis for restart recovery
+  await redisSet('state:twitterMonthlyCount', monthlyTweetsRead, 35 * 86400).catch(() => {});
+  await redisSet('state:twitterQueryIndex', cycleCount, 35 * 86400).catch(() => {});
 }
 
-// Secondary is now the same rotation, just continues the index
-export async function fetchTwitterSecondary(): Promise<void> {
-  return fetchTwitterPrimary();
-}
+// Legacy alias for warmup compatibility
+export const fetchTwitterPrimary = fetchTwitterTiered;
