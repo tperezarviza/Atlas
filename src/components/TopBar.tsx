@@ -1,4 +1,4 @@
-import { useState, useRef, useMemo, useEffect } from 'react';
+import { useState, useRef, useMemo, useEffect, memo } from 'react';
 import { useClock } from '../hooks/useClock';
 import { useApiData } from '../hooks/useApiData';
 import { api } from '../services/api';
@@ -18,7 +18,7 @@ interface TopBarProps {
   onContextClick: (idx: number) => void;
 }
 
-export default function TopBar({ contextId, contextIndex, progress, onContextClick }: TopBarProps) {
+export default memo(function TopBar({ contextId, contextIndex, progress, onContextClick }: TopBarProps) {
   const clock = useClock();
   const fetchTopbar = useMemo(() => () => api.topbar(contextId), [contextId]);
   const { data, error } = useApiData<TopBarData>(fetchTopbar, REFRESH_MS);
@@ -182,10 +182,9 @@ export default function TopBar({ contextId, contextIndex, progress, onContextCli
               style={{
                 width: 380,
                 maxHeight: 480,
-                background: "#000000",
+                background: "rgba(0,0,0,0.85)",
                 border: "1px solid rgba(255,200,50,0.10)",
                 boxShadow: "0 8px 32px rgba(0,0,0,.5)",
-                backdropFilter: "blur(24px)",
               }}
             >
               <div style={{ height: 480, maxHeight: "70vh" }}>
@@ -197,7 +196,7 @@ export default function TopBar({ contextId, contextIndex, progress, onContextCli
       </div>
     </div>
   );
-}
+});
 
 const ALLOWED_COLOR_CLASSES = new Set([
   'text-critical', 'text-high', 'text-medium', 'text-positive',

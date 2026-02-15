@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, memo } from 'react';
 import type { Alert } from '../types';
 
 function timeAgo(ts: string): string {
@@ -30,7 +30,7 @@ interface AlertBannerProps {
 
 const AUTO_DISMISS_MS = 30_000;
 
-export default function AlertBanner({ alerts, dismissedIds, onDismiss }: AlertBannerProps) {
+export default memo(function AlertBanner({ alerts, dismissedIds, onDismiss }: AlertBannerProps) {
   const visible = alerts
     .filter(a => (a.priority === 'flash' || a.priority === 'urgent') && !a.read && !dismissedIds.has(a.id))
     .slice(0, 3);
@@ -42,7 +42,7 @@ export default function AlertBanner({ alerts, dismissedIds, onDismiss }: AlertBa
       ))}
     </div>
   );
-}
+});
 
 function BannerItem({ alert, onDismiss }: { alert: Alert; onDismiss: (id: string) => void }) {
   const style = PRIORITY_STYLES[alert.priority] ?? PRIORITY_STYLES.urgent;

@@ -8,7 +8,7 @@ import { composeTicker } from './services/ticker.js';
 import { fetchConflicts } from './services/acled.js';
 import { fetchMacro } from './services/macro.js';
 import { generateAllBriefs } from './services/ai-brief.js';
-import { fetchConnections } from './services/connections.js';
+
 import { fetchCalendar } from './services/calendar.js';
 import { fetchBorderStats } from './services/border.js';
 import { fetchOoniIncidents } from './services/ooni.js';
@@ -74,9 +74,6 @@ export function startCronJobs() {
 
   // 0 8,18 * * * -> AI Briefs (morning + afternoon, all 5 desks)
   cron.schedule('0 8,18 * * *', safeRun('ai-briefs', generateAllBriefs));
-
-  // 0 */12 * * * -> Connections (BQ GKG co-occurrence or Claude fallback)
-  cron.schedule('0 */12 * * *', safeRun('connections', fetchConnections));
 
   // 0 */12 * * * -> Calendar
   cron.schedule('0 */12 * * *', safeRun('calendar', fetchCalendar));

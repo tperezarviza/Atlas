@@ -86,10 +86,10 @@ async function fetchHeadlinesBQ(media: typeof STATE_MEDIA[number]): Promise<{ he
       SELECT
         DocumentIdentifier as url,
         SAFE_CAST(SPLIT(V2Tone, ',')[SAFE_OFFSET(0)] AS FLOAT64) as tone
-      FROM \`gdelt-bq.gdeltv2.gkg\`
-      WHERE _PARTITIONTIME >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 48 HOUR)
+      FROM \`gdelt-bq.gdeltv2.gkg_partitioned\`
+      WHERE DATE(_PARTITIONTIME) >= DATE_SUB(CURRENT_DATE(), INTERVAL 2 DAY)
         AND REGEXP_CONTAINS(DocumentIdentifier, r'${domainPattern}')
-      ORDER BY _PARTITIONTIME DESC
+      ORDER BY DATE(_PARTITIONTIME) DESC
       LIMIT 30
     `);
 

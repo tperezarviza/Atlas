@@ -9,7 +9,6 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: {
-          'vendor-motion': ['framer-motion'],
           'vendor-map': ['leaflet', 'react-leaflet'],
           'vendor-panels': ['react-resizable-panels'],
           'vendor-sanitize': ['dompurify'],

@@ -1,11 +1,10 @@
-import { useEffect, useState, useCallback, useRef, Fragment } from 'react';
-import { MapContainer, TileLayer, Marker, Tooltip, Popup, Polyline, GeoJSON, useMap } from 'react-leaflet';
+import { useEffect, useState, useCallback, useRef } from 'react';
+import { MapContainer, TileLayer, Marker, Tooltip, Popup, GeoJSON, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import { useApiData } from '../hooks/useApiData';
 import { useCluster, type MapBounds } from '../hooks/useCluster';
 import { api } from '../services/api';
 import { conflictMarkerSize, newsMarkerSize } from '../utils/formatters';
-import { connectionColors, connectionDash } from '../utils/colors';
 import { getAgeBucket, getEventColor, getEventOpacity, isInPermanentZone } from '../utils/permanentZones';
 import MapLegend from './MapLegend';
 import ConflictDetailOverlay from './ConflictDetailOverlay';
@@ -25,10 +24,9 @@ import ConvergenceMarkers from './map/ConvergenceMarkers';
 import SurgeMarkers from './map/SurgeMarkers';
 import NewsPopup from './map/NewsPopup';
 import type { GeoJSONCollection } from '../services/api';
-import type { Conflict, NewsPoint, Connection, MapLayerId, MilitaryFlight, Chokepoint, InternetIncident, ArmedGroup, Vessel, NaturalEvent, Earthquake, ConvergenceHotspot, SurgeAlert } from '../types';
+import type { Conflict, NewsPoint, MapLayerId, MilitaryFlight, Chokepoint, InternetIncident, ArmedGroup, Vessel, NaturalEvent, Earthquake, ConvergenceHotspot, SurgeAlert } from '../types';
 
 const NEWS_INTERVAL = 900_000;        // 15 min
-const CONNECTIONS_INTERVAL = 21_600_000; // 6 hours
 
 interface WorldMapProps {
   selectedConflictId: string | null;
@@ -213,7 +211,6 @@ const GEOJSON_HOVER_STYLE: L.PathOptions = {
 
 export default function WorldMap({ selectedConflictId, onSelectConflict, onCountryClick, conflicts, conflictsError, viewCenter, viewZoom, activeTab }: WorldMapProps) {
   const { data: news, error: newsError } = useApiData<NewsPoint[]>(api.news, NEWS_INTERVAL);
-  const { data: connections, error: connectionsError } = useApiData<Connection[]>(api.connections, CONNECTIONS_INTERVAL);
   const [geoData, setGeoData] = useState<GeoJSON.FeatureCollection | null>(null);
   const onCountryClickRef = useRef(onCountryClick);
   onCountryClickRef.current = onCountryClick;
@@ -291,9 +288,7 @@ export default function WorldMap({ selectedConflictId, onSelectConflict, onCount
 
   const c = conflicts ?? [];
   const n = news ?? [];
-  const conn = connections ?? [];
-
-  const hasErrors = !!(conflictsError || newsError || connectionsError);
+  const hasErrors = !!(conflictsError || newsError);
 
   const onEachFeature = useCallback((feature: GeoJSON.Feature, layer: L.Layer) => {
     const pathLayer = layer as L.Path;
@@ -346,52 +341,6 @@ export default function WorldMap({ selectedConflictId, onSelectConflict, onCount
             onEachFeature={onEachFeature}
           />
         )}
-
-        {/* Connection lines */}
-        {conn.map((connection) => {
-          const hasSelection = !!selectedConflictId;
-          const isSelected = selectedConflictId
-            ? c.some(
-                (conflict) =>
-                  conflict.id === selectedConflictId &&
-                  ((Math.abs(conflict.lat - connection.from[0]) < 1 && Math.abs(conflict.lng - connection.from[1]) < 1) ||
-                    (Math.abs(conflict.lat - connection.to[0]) < 1 && Math.abs(conflict.lng - connection.to[1]) < 1))
-              )
-            : false;
-
-          const lineColor = connectionColors[connection.type] || '#ffc832';
-
-          return (
-            <Fragment key={connection.id}>
-              {/* Glow line for selected connections */}
-              {isSelected && (
-                <Polyline
-                  positions={[connection.from, connection.to]}
-                  pathOptions={{
-                    color: lineColor,
-                    weight: 6,
-                    opacity: 0.15,
-                    dashArray: undefined,
-                  }}
-                />
-              )}
-              <Polyline
-                positions={[connection.from, connection.to]}
-                pathOptions={{
-                  color: lineColor,
-                  weight: isSelected ? 2.5 : 1.5,
-                  opacity: isSelected ? 0.9 : (hasSelection ? 0.1 : 0.45),
-                  dashArray: connectionDash[connection.type] || undefined,
-                }}
-              >
-                <Tooltip sticky className="map-tooltip">
-                  <div className="tt-meta">{connection.type.replace('_', ' ').toUpperCase()}</div>
-                  <div className="tt-headline">{connection.label}</div>
-                </Tooltip>
-              </Polyline>
-            </Fragment>
-          );
-        })}
 
         {/* Conflict markers */}
         {c.map((conflict) => (
@@ -488,9 +437,8 @@ export default function WorldMap({ selectedConflictId, onSelectConflict, onCount
       <div
         className="absolute top-2 left-2 z-[800] rounded-[3px] px-[10px] py-[6px] font-data"
         style={{
-          background: 'rgba(0,0,0,.85)',
+          background: 'rgba(0,0,0,0.85)',
           border: '1px solid rgba(255,200,50,0.10)',
-          backdropFilter: 'blur(24px)',
         }}
       >
         <div className="text-[8px] tracking-[1.5px] text-text-muted uppercase mb-[2px]">
@@ -525,9 +473,8 @@ export default function WorldMap({ selectedConflictId, onSelectConflict, onCount
       <div
         className="absolute bottom-2 left-2 z-[800] flex gap-3 rounded-[3px] px-[10px] py-1 font-data text-[9px] text-text-muted"
         style={{
-          background: 'rgba(0,0,0,.85)',
+          background: 'rgba(0,0,0,0.85)',
           border: '1px solid rgba(255,200,50,0.10)',
-          backdropFilter: 'blur(24px)',
         }}
       >
         <span>

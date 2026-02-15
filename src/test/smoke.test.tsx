@@ -32,17 +32,6 @@ vi.mock('../hooks/useClock', () => ({
   }),
 }));
 
-// Mock framer-motion to avoid animation issues in tests
-vi.mock('framer-motion', () => ({
-  motion: {
-    div: ({ children, ...props }: { children: React.ReactNode; [key: string]: unknown }) => {
-      const { initial: _i, animate: _a, transition: _t, exit: _e, ...rest } = props;
-      return <div {...rest}>{children}</div>;
-    },
-  },
-  AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-}));
-
 // Mock react-resizable-panels (v4 API: Group, Panel, Separator)
 vi.mock('react-resizable-panels', () => ({
   Group: ({ children, ...props }: { children: React.ReactNode; [key: string]: unknown }) => {

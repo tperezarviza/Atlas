@@ -10,7 +10,7 @@ import { registerNewswireRoutes } from './routes/newswire.js';
 import { registerCalendarRoutes } from './routes/calendar.js';
 import { registerBriefRoutes } from './routes/brief.js';
 import { registerBorderRoutes } from './routes/border.js';
-import { registerConnectionsRoutes } from './routes/connections.js';
+
 import { registerTickerRoutes } from './routes/ticker.js';
 import { registerTopbarRoutes } from './routes/topbar.js';
 import { registerDependenciesRoutes } from './routes/dependencies.js';
@@ -55,9 +55,22 @@ const app = Fastify({ logger: true });
 
 const CORS_ORIGINS = process.env.CORS_ORIGINS
   ? process.env.CORS_ORIGINS.split(',').map((s) => s.trim())
-  : ['http://localhost:5173', 'http://localhost:4173', '*'];
+  : ['http://localhost:5173', 'http://localhost:4173'];
 
 await app.register(cors, { origin: CORS_ORIGINS });
+
+// HTTP Cache-Control headers for API responses
+app.addHook('onSend', async (request, reply) => {
+  const url = request.url;
+  if (url.startsWith('/assets/')) {
+    reply.header('Cache-Control', 'public, max-age=31536000, immutable');
+  } else if (url.startsWith('/data/')) {
+    reply.header('Cache-Control', 'public, max-age=604800');
+  } else if (url.startsWith('/api/')) {
+    // Short cache for API responses — prevents thundering herd
+    reply.header('Cache-Control', 'public, max-age=30, stale-while-revalidate=60');
+  }
+});
 
 // Security response headers
 app.addHook('onSend', async (_request, reply) => {
@@ -67,6 +80,7 @@ app.addHook('onSend', async (_request, reply) => {
   reply.header('Referrer-Policy', 'strict-origin-when-cross-origin');
   reply.header('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
   reply.header('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  reply.header('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://*.tile.openstreetmap.org https://tile.openstreetmap.org https://unpkg.com; connect-src 'self' https://atlas.slowhorses.net; frame-ancestors 'none'");
 });
 
 // Global error handler — never leak internals to clients
@@ -96,7 +110,7 @@ registerNewswireRoutes(app);
 registerCalendarRoutes(app);
 registerBriefRoutes(app);
 registerBorderRoutes(app);
-registerConnectionsRoutes(app);
+
 registerTickerRoutes(app);
 registerTopbarRoutes(app);
 registerDependenciesRoutes(app);

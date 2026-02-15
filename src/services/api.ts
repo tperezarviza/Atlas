@@ -146,7 +146,6 @@ export const api = {
     const params = validFocus ? `?focus=${encodeURIComponent(validFocus)}` : '';
     return postJSON<BriefResponse>(`/api/brief/regenerate${params}`);
   },
-  connections: () => fetchJSON<Connection[]>('/api/connections'),
   ticker:      () => fetchJSON<TickerItem[]>('/api/ticker'),
   dependencies:() => fetchJSON<StrategicDependency[]>('/api/dependencies'),
   // Phase 2.5-B: Intelligence Services

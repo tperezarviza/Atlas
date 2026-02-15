@@ -51,7 +51,6 @@ export const TTL = {
   CONFLICTS:  60 * 60 * 1000,      // 1 h
   MACRO:      60 * 60 * 1000,      // 1 h
   BRIEF:     13 * 60 * 60 * 1000,  // 13 h (morning + afternoon cycle)
-  CONNECTIONS: 4 * 60 * 60 * 1000, // 4 h
   CALENDAR:  12 * 60 * 60 * 1000,  // 12 h
   BORDER:    24 * 60 * 60 * 1000,  // 24 h
   FOREX:      5 * 60 * 1000,       // 5 min

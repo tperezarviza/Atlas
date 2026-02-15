@@ -145,31 +145,20 @@ async function fetchOilPrices(): Promise<MarketItem[]> {
 }
 
 async function fetchMetals(): Promise<MarketItem[]> {
-  const items: MarketItem[] = [];
-
-  const metals: Array<{ symbol: string; name: string; color: string }> = [
-    { symbol: 'XAU', name: 'GOLD', color: '#d4a72c' },
-    { symbol: 'XAG', name: 'SILVER', color: '#94a3b8' },
+  const metalSymbols = [
+    { symbol: 'GC=F', name: 'GOLD', color: '#d4a72c' },
+    { symbol: 'SI=F', name: 'SILVER', color: '#c8a020' },
   ];
 
-  for (const metal of metals) {
-    try {
-      const url = `https://api.gold-api.com/price/${metal.symbol}`;
-      const res = await fetch(url, { signal: AbortSignal.timeout(FETCH_TIMEOUT_API) });
-      if (res.ok) {
-        const data = await res.json();
-        const price = data.price ?? 0;
-        const change = data.chp ?? 0;
-        if (price > 0) {
-          const { delta, direction } = formatDelta(change);
-          items.push({
-            name: metal.name, price: formatPrice(price), delta, direction,
-            sparkData: generateSparkData(price, change), color: metal.color,
-          });
-        }
-      }
-    } catch (err) {
-      console.warn(`[MARKETS] Gold-API ${metal.symbol} failed:`, err instanceof Error ? err.message : err);
+  const results = await fetchYahooBatch(metalSymbols.map(m => m.symbol));
+  const items: MarketItem[] = [];
+
+  for (const metal of metalSymbols) {
+    const item = results[metal.symbol];
+    if (item) {
+      item.name = metal.name;
+      item.color = metal.color;
+      items.push(item);
     }
   }
 

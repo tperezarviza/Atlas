@@ -139,8 +139,23 @@ html.kiosk ::-webkit-scrollbar {
 ::-webkit-scrollbar-thumb { background: rgba(255,200,50,0.10); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: #ffc832; }
 
+/* Boot sequence line animation */
+.boot-line-enter {
+  animation: boot-fade-in 0.15s ease-out;
+}
+@keyframes boot-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
 /* Pulse animations */
 @keyframes alert-glow-flash {  0% { box-shadow: 0 0 0 0 transparent; }  25% { box-shadow: 0 0 24px 3px rgba(255, 59, 59, 0.5); }  100% { box-shadow: 0 0 0 0 transparent; }}@keyframes alert-glow-urgent {  0% { box-shadow: 0 0 0 0 transparent; }  25% { box-shadow: 0 0 24px 3px rgba(255, 140, 0, 0.5); }  100% { box-shadow: 0 0 0 0 transparent; }}
+
+@keyframes pulse-critical {
+  0% { box-shadow: 0 0 0 0 rgba(255, 59, 59, 0.5); }
+  70% { box-shadow: 0 0 0 12px rgba(255, 59, 59, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(255, 59, 59, 0); }
+}
 
 @keyframes pulse-high {
   0% { box-shadow: 0 0 0 0 rgba(255, 140, 0, 0.4); }

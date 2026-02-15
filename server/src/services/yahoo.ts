@@ -49,6 +49,9 @@ const YAHOO_MAP: Record<string, string> = {
   'USD/ILS':    'USDILS=X',
   'USD/IRR':    'USDIRR=X',
   'EUR/CHF':    'EURCHF=X',
+  // Commodities
+  'GC=F':       'GC=F',
+  'SI=F':       'SI=F',
 };
 
 function normalizeSparkData(values: number[]): number[] {

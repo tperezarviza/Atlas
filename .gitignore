@@ -48,6 +48,11 @@ test_*.py
 check_*.py
 redeploy.py
 final_*.py
+upload_files.py
+deploy.py
 _w.js
 atlas-redesign-v4.jsx
 atlastest_*.txt
+
+# Audit documents
+ATLAS-*.md

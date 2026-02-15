@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from 'react';
-import { motion } from 'framer-motion';
 
 const BOOT_LINES = [
   '[SYS] ATLAS v4.0 — Geopolitical Intelligence Platform',
@@ -59,11 +58,9 @@ export default function BootSequence({ onComplete }: BootSequenceProps) {
         {/* Boot lines */}
         <div className="font-data text-[11px] leading-[1.8] mb-4" style={{ minHeight: 200 }}>
           {BOOT_LINES.slice(0, visibleLines).map((line, i) => (
-            <motion.div
+            <div
               key={i}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.15 }}
+              className="boot-line-enter"
               style={{
                 color: line.includes('PASS')
                   ? '#00ff88'
@@ -75,7 +72,7 @@ export default function BootSequence({ onComplete }: BootSequenceProps) {
               }}
             >
               {line}
-            </motion.div>
+            </div>
           ))}
         </div>
 

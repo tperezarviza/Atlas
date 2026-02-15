@@ -30,9 +30,8 @@ export default function MapLegend({ layers, onToggle, counts }: MapLegendProps) 
     <div
       className="absolute top-2 right-2 z-[800] px-[10px] py-2"
       style={{
-        background: 'rgba(0,0,0,.85)',
+        background: 'rgba(0,0,0,0.85)',
         border: '1px solid rgba(255,200,50,0.10)',
-        backdropFilter: 'blur(24px)',
         borderRadius: '10px',
       }}
     >

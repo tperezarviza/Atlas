@@ -91,7 +91,7 @@ export default memo(function IntelMonitor({ filter, title }: IntelMonitorProps =
   const badgeLast = calLast || econLast;
 
   return (
-    <div className="h-full flex flex-col rounded-[14px] overflow-hidden panel-glow" style={{ background: 'rgba(255,200,50,0.025)', border: '1px solid rgba(255,200,50,0.10)', backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)' }}>
+    <div className="h-full flex flex-col rounded-[14px] overflow-hidden panel-glow" style={{ background: 'rgba(0,0,0,0.85)', border: '1px solid rgba(255,200,50,0.10)' }}>
       {/* Header */}
       <div
         className="flex items-center justify-between shrink-0"

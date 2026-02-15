@@ -117,7 +117,7 @@ export default function DashboardLayout({
           <PanelHandle disabled={!canResize} />
 
           <Panel id="r3c2" defaultSize="45%" minSize="15%">
-            <div className="h-full rounded-[14px] overflow-hidden panel-glow" style={{ background: 'rgba(255,200,50,0.025)', border: '1px solid rgba(255,200,50,0.10)', backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)' }}>
+            <div className="h-full rounded-[14px] overflow-hidden panel-glow" style={{ background: 'rgba(0,0,0,0.85)', border: '1px solid rgba(255,200,50,0.10)' }}>
               <Group
                 orientation="horizontal"
                 defaultLayout={r3c2Layout.defaultLayout}

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, memo } from 'react';
 import { api } from '../services/api';
 import StrategicDepsViz from './StrategicDepsViz';
 import type { CountryProfile, Conflict, ArmedGroup, StrategicDependency } from '../types';
@@ -42,7 +42,7 @@ interface CountryProfilePanelProps {
   conflicts: Conflict[];
 }
 
-export default function CountryProfilePanel({ countryCode, onClose, conflicts }: CountryProfilePanelProps) {
+export default memo(function CountryProfilePanel({ countryCode, onClose, conflicts }: CountryProfilePanelProps) {
   const [profile, setProfile] = useState<CountryProfile | null>(null);
   const [armedGroups, setArmedGroups] = useState<ArmedGroup[]>([]);
   const [dependencies, setDependencies] = useState<StrategicDependency[]>([]);
@@ -327,7 +327,7 @@ export default function CountryProfilePanel({ countryCode, onClose, conflicts }:
       )}
     </>
   );
-}
+});
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (

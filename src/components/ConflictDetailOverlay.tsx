@@ -27,9 +27,8 @@ export default function ConflictDetailOverlay({ conflict, onClose }: ConflictDet
           className="absolute bottom-12 right-2 z-[800] overflow-hidden overlay-enter"
           style={{
             width: 280,
-            background: 'rgba(0,0,0,.90)',
+            background: 'rgba(0,0,0,0.85)',
             border: '1px solid rgba(255,200,50,0.10)',
-            backdropFilter: 'blur(24px)',
             borderRadius: '10px',
           }}
         >

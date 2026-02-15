@@ -7,7 +7,7 @@ import { fetchMacro } from './macro.js';
 import { fetchCalendar } from './calendar.js';
 import { fetchBorderStats } from './border.js';
 import { generateAllBriefs } from './ai-brief.js';
-import { fetchConnections } from './connections.js';
+
 import { fetchOoniIncidents } from './ooni.js';
 import { fetchSanctions } from './sanctions.js';
 import { fetchShippingData } from './shipping.js';
@@ -51,7 +51,7 @@ async function warmupFromRedis(): Promise<void> {
   console.log('[WARMUP] Loading Redis backups...');
   const keysToRestore = [
     'brief', 'brief:mideast', 'brief:ukraine', 'brief:domestic', 'brief:intel',
-    'twitter', 'propaganda', 'connections', 'hostility', 'focal_points',
+    'twitter', 'propaganda', 'hostility', 'focal_points',
   ];
   let restored = 0;
   for (const key of keysToRestore) {
@@ -117,7 +117,6 @@ export async function warmUpCache(): Promise<void> {
 
   await Promise.allSettled([
     safeRun('AI Briefs (all desks)', generateAllBriefs),
-    safeRun('Connections', fetchConnections),
     safeRun('Countries', fetchCountries),
     safeRun('Armed Groups', fetchArmedGroups),
     safeRun('Hostility', fetchHostilityIndex),
