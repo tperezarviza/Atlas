@@ -9,6 +9,7 @@ import type {
   NaturalEvent,
 } from '../types.js';
 import type { Earthquake } from './earthquakes.js';
+import type { GoogleTrendsData } from './google-trends-bq.js';
 
 // ── Keyword filters for regional data selection ──
 
@@ -358,12 +359,52 @@ const DATA_GATHERERS: Record<string, () => string> = {
 };
 
 const SOURCE_LABELS: Record<string, string[]> = {
-  global: ['ACLED', 'GDELT', 'Markets', 'USGS', 'EONET', 'X/Twitter', 'Alerts'],
-  mideast: ['ACLED', 'GDELT', 'X/Twitter', 'Hostility Index', 'Propaganda Monitor'],
-  ukraine: ['ACLED', 'GDELT', 'ISW', 'X/Twitter', 'Hostility Index', 'RU Propaganda'],
-  domestic: ['Executive Orders', 'Congress', 'Border Stats', 'Macro', 'Markets', 'Econ Calendar'],
-  intel: ['Cyber OTX', 'Propaganda Monitor', 'Hostility Index', 'OONI', 'X/Twitter', 'Armed Groups'],
+  global: ['ACLED', 'GDELT', 'Markets', 'USGS', 'EONET', 'X/Twitter', 'Alerts', 'Google Trends'],
+  mideast: ['ACLED', 'GDELT', 'X/Twitter', 'Hostility Index', 'Propaganda Monitor', 'Google Trends'],
+  ukraine: ['ACLED', 'GDELT', 'ISW', 'X/Twitter', 'Hostility Index', 'RU Propaganda', 'Google Trends'],
+  domestic: ['Executive Orders', 'Congress', 'Border Stats', 'Macro', 'Markets', 'Econ Calendar', 'Google Trends'],
+  intel: ['Cyber OTX', 'Propaganda Monitor', 'Hostility Index', 'OONI', 'X/Twitter', 'Armed Groups', 'Google Trends'],
 };
+
+// ── Google Trends context for briefs ──
+
+const TRENDS_COUNTRY_MAP: Record<string, string[]> = {
+  global: ['US', 'GB', 'DE', 'FR', 'RU', 'CN'],
+  mideast: ['IL', 'IR', 'SA', 'TR', 'EG', 'IQ'],
+  ukraine: ['UA', 'RU', 'PL', 'DE'],
+  domestic: ['US'],
+  intel: ['US', 'GB', 'RU', 'CN', 'IR'],
+};
+
+function gatherTrendsContext(desk: string): string {
+  const trendsData = cache.get<GoogleTrendsData>('google_trends');
+  if (!trendsData) return '';
+
+  const countries = TRENDS_COUNTRY_MAP[desk] ?? [];
+  const relevant = countries
+    .flatMap(c => (trendsData.topRisingByCountry[c] ?? []).slice(0, 3)
+      .map(t => `${c}: "${t.term}" (+${t.score}%)`))
+    .slice(0, 10);
+
+  let context = '';
+
+  if (relevant.length > 0) {
+    context = `\n\nPUBLIC SEARCH TRENDS (Google Trends rising):\n${relevant.join('\n')}`;
+  }
+
+  // Add multi-country signals if any are geopolitical
+  const geoAlerts = trendsData.geoTerms
+    .filter(t => t.signal === 'critical' || t.signal === 'strong')
+    .slice(0, 3);
+
+  if (geoAlerts.length > 0) {
+    context += `\n\nMULTI-COUNTRY TREND ALERTS:\n${geoAlerts.map(t =>
+      `"${t.term}" trending in ${t.countryCount} countries (${t.countries.map(c => c.code).join(', ')})`
+    ).join('\n')}`;
+  }
+
+  return context;
+}
 
 // ── HTML sanitizer ──
 
@@ -394,6 +435,7 @@ export async function fetchBrief(focus?: string): Promise<BriefResponse> {
   const systemPrompt = SYSTEM_PROMPTS[focusKey] ?? SYSTEM_PROMPTS.global;
   const gatherData = DATA_GATHERERS[focusKey] ?? DATA_GATHERERS.global;
   const userData = gatherData();
+  const trendsContext = gatherTrendsContext(focusKey);
 
   const client = new Anthropic({ apiKey: ANTHROPIC_API_KEY });
 
@@ -404,7 +446,7 @@ export async function fetchBrief(focus?: string): Promise<BriefResponse> {
     system: systemPrompt,
     messages: [{
       role: 'user',
-      content: `Generate intelligence brief based on this data:\n\n${userData}`,
+      content: `Generate intelligence brief based on this data:\n\n${userData}${trendsContext}`,
     }],
   });
 

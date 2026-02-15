@@ -38,6 +38,7 @@ import { runAnomalyDetection } from './services/anomaly-detector.js';
 import { fetchCountryToneBQ } from './services/cii-bq.js';
 import { detectGeoConvergence } from './services/geo-convergence.js';
 import { flushDailyBytes } from './services/bq-cost-tracker.js';
+import { fetchGoogleTrends } from './services/google-trends-bq.js';
 
 function safeRun(name: string, fn: () => Promise<void> | void) {
   return async () => {
@@ -154,6 +155,9 @@ export function startCronJobs() {
 
   // 15,45 * * * * -> Geographic convergence detection (BQ, every 30 min)
   cron.schedule('15,45 * * * *', safeRun('geo-convergence', detectGeoConvergence));
+
+  // 0 */6 * * * -> Google Trends (BQ, 4x/day — data updates daily)
+  cron.schedule('0 */6 * * *', safeRun('google-trends', fetchGoogleTrends));
 
   // 0 * * * * -> Flush BQ cost tracking bytes to Redis (hourly)
   cron.schedule('0 * * * *', safeRun('bq-cost-flush', flushDailyBytes));

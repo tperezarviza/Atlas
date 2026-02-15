@@ -25,6 +25,7 @@ const CACHE_KEYS = [
   'country_tone_bq',
   'geo_convergence',
   'entity_connections',
+  'google_trends',
 ];
 
 // Map cache keys to human-readable service names and categories
@@ -72,6 +73,7 @@ const SERVICE_META: Record<string, { name: string; category: string }> = {
   country_tone_bq: { name: 'BQ Country Tone', category: 'BigQuery' },
   geo_convergence: { name: 'Geo Convergence', category: 'BigQuery' },
   entity_connections: { name: 'BQ Entity Connections', category: 'BigQuery' },
+  google_trends: { name: 'Google Trends', category: 'BigQuery' },
 };
 
 const startTime = Date.now();

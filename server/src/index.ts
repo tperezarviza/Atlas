@@ -130,6 +130,9 @@ registerLayerRoutes(app);
 // Geo-convergence route (BQ-powered)
 app.get('/api/geo-convergence', async () => cache.get('geo_convergence') ?? []);
 
+// Google Trends route (BQ-powered)
+app.get('/api/google-trends', async () => cache.get('google_trends') ?? null);
+
 // SPA fallback — serve index.html for non-API routes
 app.setNotFoundHandler((request, reply) => {
   if (request.url.startsWith('/api/')) {

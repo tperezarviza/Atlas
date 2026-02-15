@@ -34,6 +34,7 @@ import { detectFocalPoints } from './focal-points.js';
 import { runAnomalyDetection } from './anomaly-detector.js';
 import { fetchCountryToneBQ } from './cii-bq.js';
 import { detectGeoConvergence } from './geo-convergence.js';
+import { fetchGoogleTrends } from './google-trends-bq.js';
 import { cache } from '../cache.js';
 import { redisGet } from '../redis.js';
 
@@ -125,6 +126,7 @@ export async function warmUpCache(): Promise<void> {
   // Phase 3.5: CII + Focal Points + Anomaly Detection + BQ services
   await Promise.allSettled([
     safeRun('BQ Country Tone', fetchCountryToneBQ),
+    safeRun('Google Trends', fetchGoogleTrends),
     safeRun('CII', computeCII),
     safeRun('Focal Points', detectFocalPoints),
     safeRun('Anomaly Detection', runAnomalyDetection),
