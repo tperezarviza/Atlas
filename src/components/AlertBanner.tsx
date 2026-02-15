@@ -69,12 +69,12 @@ function BannerItem({ alert, onDismiss }: { alert: Alert; onDismiss: (id: string
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
       transition={{ duration: 0.3 }}
-      className="pointer-events-auto mx-4"
+      className={`pointer-events-auto mx-4 ${alert.priority === 'flash' ? 'alert-glow-flash' : 'alert-glow-urgent'}`}
       style={{
         background: style.bg,
         borderLeft: `3px solid ${style.border}`,
         borderRadius: 3,
-        backdropFilter: 'blur(12px)', animation: 'alert-glow 0.6s ease-out', '--glow-color': style.border + '99' as any,
+        backdropFilter: 'blur(12px)',
       }}
     >
       <div className="flex items-center gap-3 px-4 py-2">
