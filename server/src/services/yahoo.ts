@@ -126,9 +126,9 @@ export async function fetchYahooBatch(symbols: string[]): Promise<Record<string,
     } catch {
       // skip failed symbol
     }
-    // Small delay to avoid throttling
+    // Delay between requests to avoid Yahoo 429 rate limiting
     if (symbols.indexOf(symbol) < symbols.length - 1) {
-      await new Promise((r) => setTimeout(r, 200));
+      await new Promise((r) => setTimeout(r, 350));
     }
   }
 

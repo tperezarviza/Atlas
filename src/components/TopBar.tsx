@@ -11,6 +11,13 @@ const REFRESH_MS = 30_000;
 const HEALTH_REFRESH_MS = 30_000;
 const CLOCK_FILTER = new Set(['BUE', 'DC']);
 
+// Extracted inline style constants (avoid object recreation on every render)
+const TOPBAR_STYLE = { background: '#000000', borderBottom: '1px solid rgba(255,200,50,0.10)', padding: '0 20px', gap: 0 };
+const DIVIDER_STYLE = { width: 1, height: 22, background: 'rgba(255,200,50,0.10)' };
+const ACCENT_LINE = { background: 'linear-gradient(90deg, transparent, #ffc832, transparent)' };
+const MUTED_COLOR = { color: '#7a6418' };
+const HEALTH_DROPDOWN = { width: 380, maxHeight: 480, background: 'rgba(0,0,0,0.85)', border: '1px solid rgba(255,200,50,0.10)', boxShadow: '0 8px 32px rgba(0,0,0,.5)' };
+
 interface TopBarProps {
   contextId: ContextId;
   contextIndex: number;
@@ -46,17 +53,12 @@ export default memo(function TopBar({ contextId, contextIndex, progress, onConte
   return (
     <div
       className="h-full flex items-center relative overflow-visible"
-      style={{
-        background: '#000000',
-        borderBottom: '1px solid rgba(255,200,50,0.10)',
-        padding: '0 20px',
-        gap: 0,
-      }}
+      style={TOPBAR_STYLE}
     >
       {/* Bottom accent line */}
       <div
         className="absolute bottom-0 left-0 right-0 h-px"
-        style={{ background: 'linear-gradient(90deg, transparent, #ffc832, transparent)' }}
+        style={ACCENT_LINE}
       />
 
       {/* ── GROUP 1: Logo + LIVE ── */}
@@ -85,7 +87,7 @@ export default memo(function TopBar({ contextId, contextIndex, progress, onConte
       </div>
 
       {/* DIVIDER */}
-      <div className="shrink-0" style={{ width: 1, height: 22, background: 'rgba(255,200,50,0.10)' }} />
+      <div className="shrink-0" style={DIVIDER_STYLE} />
 
       {/* ── GROUP 2: Context Rotation Bar ── */}
       <div className="flex items-center gap-[2px] shrink-0" style={{ padding: '0 16px' }}>
@@ -123,20 +125,20 @@ export default memo(function TopBar({ contextId, contextIndex, progress, onConte
       </div>
 
       {/* DIVIDER */}
-      <div className="shrink-0" style={{ width: 1, height: 22, background: 'rgba(255,200,50,0.10)' }} />
+      <div className="shrink-0" style={DIVIDER_STYLE} />
 
       {/* ── GROUP 3: Clocks ── */}
       <div className="flex-1 flex items-center justify-center gap-[28px]" style={{ padding: '0 16px' }}>
         {filteredZones.map((z) => (
           <div key={z.label} className="flex flex-col items-center">
-            <span className="font-data text-[12px] tracking-[1px]" style={{ color: '#7a6418' }}>{z.label}</span>
+            <span className="font-data text-[12px] tracking-[1px]" style={MUTED_COLOR}>{z.label}</span>
             <span className="font-data text-[15px] font-medium" style={{ color: '#ffc832' }}>{z.time}</span>
           </div>
         ))}
       </div>
 
       {/* DIVIDER */}
-      <div className="shrink-0" style={{ width: 1, height: 22, background: 'rgba(255,200,50,0.10)' }} />
+      <div className="shrink-0" style={DIVIDER_STYLE} />
 
       {/* ── GROUP 4: Stats ── */}
       <div className="flex items-center gap-[20px] shrink-0" style={{ padding: '0 16px' }}>
@@ -152,7 +154,7 @@ export default memo(function TopBar({ contextId, contextIndex, progress, onConte
       </div>
 
       {/* DIVIDER */}
-      <div className="shrink-0" style={{ width: 1, height: 22, background: 'rgba(255,200,50,0.10)' }} />
+      <div className="shrink-0" style={DIVIDER_STYLE} />
 
       {/* ── GROUP 5: Health btn ── */}
       <div className="flex items-center gap-[12px] shrink-0" style={{ padding: '0 0 0 16px' }}>
@@ -179,13 +181,7 @@ export default memo(function TopBar({ contextId, contextIndex, progress, onConte
           {healthOpen && (
             <div
               className="absolute top-full right-0 mt-1 z-[960] rounded-[3px] overflow-hidden"
-              style={{
-                width: 380,
-                maxHeight: 480,
-                background: "rgba(0,0,0,0.85)",
-                border: "1px solid rgba(255,200,50,0.10)",
-                boxShadow: "0 8px 32px rgba(0,0,0,.5)",
-              }}
+              style={HEALTH_DROPDOWN}
             >
               <div style={{ height: 480, maxHeight: "70vh" }}>
                 <ApiHealthPanel />
@@ -207,7 +203,7 @@ function KPI({ label, value, colorClass }: { label: string; value: string; color
   const safeColor = colorClass && ALLOWED_COLOR_CLASSES.has(colorClass) ? colorClass : 'text-text-primary';
   return (
     <div className="flex flex-col items-center px-[4px] py-[2px]">
-      <div className="text-[12px] uppercase tracking-[1.5px] font-data font-medium" style={{ color: '#7a6418' }}>
+      <div className="text-[12px] uppercase tracking-[1.5px] font-data font-medium" style={MUTED_COLOR}>
         {label}
       </div>
       <div className={`font-data text-[15px] font-semibold ${safeColor}`}>

@@ -29,6 +29,16 @@ const FOCUS_LABELS: Record<string, string> = {
   intel: 'INTEL',
 };
 
+// Extracted inline style constants (avoid object recreation on every render)
+const PANEL_STYLE = { background: 'rgba(0,0,0,0.85)', border: '1px solid rgba(255,200,50,0.10)' };
+const HEADER_STYLE = { borderBottom: '1px solid rgba(255,200,50,0.10)', background: 'rgba(255,200,50,0.025)', minHeight: 32, padding: '14px 18px 10px 18px' };
+const CONTENT_PAD = { padding: '10px 18px' };
+const CONTENT_PAD_FULL = { padding: '10px 18px 14px 18px' };
+const REGEN_BTN_STYLE = { border: '1px solid rgba(255,200,50,0.10)', background: 'rgba(255,200,50,.08)', color: '#ffc832' };
+const BADGE_ERROR = { background: 'rgba(255,59,59,.1)', color: '#ff3b3b', border: '1px solid rgba(255,59,59,.2)' };
+const BADGE_STALE = { background: 'rgba(255,140,0,.1)', color: '#ff8c00', border: '1px solid rgba(255,140,0,.2)' };
+const BADGE_AI = { background: 'rgba(168,85,247,.1)', color: '#a855f7', border: '1px solid rgba(168,85,247,.2)' };
+
 export default function AIBrief({ focus }: AIBriefProps) {
   const fetchBrief = useMemo(() => () => api.brief(focus), [focus]);
   const { data, error, refetch } = useApiData<BriefResponse>(fetchBrief, REFRESH_MS);
@@ -85,11 +95,11 @@ export default function AIBrief({ focus }: AIBriefProps) {
     : '🤖 AI Intelligence Brief';
 
   return (
-    <div className="h-full flex flex-col rounded-[14px] overflow-hidden panel-glow" style={{ background: 'rgba(0,0,0,0.85)', border: '1px solid rgba(255,200,50,0.10)' }}>
+    <div className="h-full flex flex-col rounded-[14px] overflow-hidden panel-glow" style={PANEL_STYLE}>
       {/* Header */}
       <div
         className="flex items-center justify-between shrink-0"
-        style={{ borderBottom: '1px solid rgba(255,200,50,0.10)', background: 'rgba(255,200,50,0.025)', minHeight: 32, padding: '14px 18px 10px 18px' }}
+        style={HEADER_STYLE}
       >
         <div className="font-title text-[14px] font-semibold tracking-[2px] uppercase text-text-secondary">
           {headerLabel}
@@ -100,17 +110,17 @@ export default function AIBrief({ focus }: AIBriefProps) {
       {/* Content */}
       <div className="flex-1 overflow-y-auto">
         {error && !brief ? (
-          <div style={{ padding: '10px 18px' }} className="text-[14px] text-critical">
+          <div style={CONTENT_PAD} className="text-[14px] text-critical">
             Failed to load brief. Retrying...
           </div>
         ) : brief ? (
           <div
             className="text-[14px] leading-[1.65] brief-content"
-            style={{ padding: '10px 18px 14px 18px' }}
+            style={CONTENT_PAD_FULL}
             dangerouslySetInnerHTML={{ __html: displayHtml }}
           />
         ) : (
-          <div style={{ padding: '10px 18px' }} className="text-[14px] text-text-muted">Loading brief...</div>
+          <div style={CONTENT_PAD} className="text-[14px] text-text-muted">Loading brief...</div>
         )}
 
         {/* Regen footer */}
@@ -123,11 +133,7 @@ export default function AIBrief({ focus }: AIBriefProps) {
               onClick={handleRegenerate}
               disabled={regenerating}
               className="font-data text-[12px] px-[10px] py-[3px] rounded-[2px] tracking-[0.5px] cursor-pointer disabled:opacity-50"
-              style={{
-                border: '1px solid rgba(255,200,50,0.10)',
-                background: 'rgba(255,200,50,.08)',
-                color: '#ffc832',
-              }}
+              style={REGEN_BTN_STYLE}
             >
               {regenerating ? '⏳ Generating...' : '🔄 Regenerate Brief'}
             </button>
@@ -148,7 +154,7 @@ function StatusBadge({ brief, error }: { brief: BriefResponse | null; error: Err
     return (
       <div
         className="font-data text-[12px] px-[6px] py-[1px] rounded-[2px] tracking-[0.5px]"
-        style={{ background: 'rgba(255,59,59,.1)', color: '#ff3b3b', border: '1px solid rgba(255,59,59,.2)' }}
+        style={BADGE_ERROR}
       >
         ERROR
       </div>
@@ -158,7 +164,7 @@ function StatusBadge({ brief, error }: { brief: BriefResponse | null; error: Err
     return (
       <div
         className="font-data text-[12px] px-[6px] py-[1px] rounded-[2px] tracking-[0.5px]"
-        style={{ background: 'rgba(255,140,0,.1)', color: '#ff8c00', border: '1px solid rgba(255,140,0,.2)' }}
+        style={BADGE_STALE}
       >
         STALE
       </div>
@@ -168,7 +174,7 @@ function StatusBadge({ brief, error }: { brief: BriefResponse | null; error: Err
   return (
     <div
       className="font-data text-[12px] px-[6px] py-[1px] rounded-[2px] tracking-[0.5px]"
-      style={{ background: 'rgba(168,85,247,.1)', color: '#a855f7', border: '1px solid rgba(168,85,247,.2)' }}
+      style={BADGE_AI}
     >
       {label}
     </div>

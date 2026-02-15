@@ -21,6 +21,12 @@ function filterByKeyword<T>(items: T[], kw: RegExp, getText: (item: T) => string
   return items.filter(item => kw.test(getText(item)));
 }
 
+// ── Shared analytical rules (injected into desk prompts) ──
+
+const STRATEGIC_RULES = `- Frame US foreign policy as strength-based strategic deterrence
+- Prioritize threats from adversary nations (Iran, China, Russia, North Korea) over allied disagreements
+- Note positive developments for US interests with appropriate context`;
+
 // ── System prompts per focus ──
 
 const SYSTEM_PROMPTS: Record<string, string> = {
@@ -34,9 +40,7 @@ RULES:
 - Lead with the most critical developments
 - Connect geopolitical events to market implications
 - Flag anything requiring immediate attention with "FLASH:" prefix
-- Frame US foreign policy as strength-based strategic deterrence
-- Prioritize threats from adversary nations (Iran, China, Russia, North Korea) over allied disagreements
-- Note positive developments for US interests with appropriate context
+${STRATEGIC_RULES}
 - When analyzing economic data, highlight indicators of strength and growth
 
 FORMAT (use HTML tags):
@@ -66,9 +70,7 @@ RULES:
 - Note Iranian influence operations and proxy escalation
 - Track Houthi attacks on commercial shipping with dates and vessel names when available
 - Flag nuclear program developments as CRITICAL
-- Frame US foreign policy as strength-based strategic deterrence
-- Prioritize threats from adversary nations (Iran, China, Russia, North Korea) over allied disagreements
-- Note positive developments for US interests with appropriate context
+${STRATEGIC_RULES}
 
 FORMAT (use HTML tags):
 <h2>■ REGIONAL OVERVIEW</h2>
@@ -160,9 +162,7 @@ RULES:
 - Note internet shutdowns as potential indicators of impending operations
 - Flag unusual military flight patterns
 - Cross-reference armed group activity with state sponsor patterns
-- Frame US foreign policy as strength-based strategic deterrence
-- Prioritize threats from adversary nations (Iran, China, Russia, North Korea) over allied disagreements
-- Note positive developments for US interests with appropriate context
+${STRATEGIC_RULES}
 
 FORMAT (use HTML tags):
 <h2>■ INTELLIGENCE OVERVIEW</h2>

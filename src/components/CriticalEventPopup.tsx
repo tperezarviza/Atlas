@@ -5,6 +5,13 @@ import type { Alert } from '../types'
 const POLL_INTERVAL = 30_000
 const DISMISS_MS = 45_000
 
+// Extracted style constants (avoid object recreation on render)
+const META_BADGE = {
+  fontFamily: "'JetBrains Mono', monospace", fontSize: 8, fontWeight: 600,
+  letterSpacing: 1, padding: '2px 8px', borderRadius: 2, textTransform: 'uppercase' as const,
+  background: 'rgba(255,200,50,0.05)', color: '#7a6418', border: '1px solid rgba(255,200,50,0.10)',
+};
+
 type EventType = 'military' | 'earthquake' | 'natural' | 'generic'
 
 interface EventDisplay {
@@ -257,20 +264,8 @@ export default function CriticalEventPopup() {
                   </div>
                 )}
                 <div style={{ display: 'flex', gap: 6, marginTop: 'auto', paddingTop: 12, flexWrap: 'wrap' as const }}>
-                  <span style={{
-                    fontFamily: "'JetBrains Mono', monospace", fontSize: 8, fontWeight: 600,
-                    letterSpacing: 1, padding: '2px 8px', borderRadius: 2, textTransform: 'uppercase' as const,
-                    background: 'rgba(255,200,50,0.05)', color: '#7a6418', border: '1px solid rgba(255,200,50,0.10)',
-                  }}>
-                    {alert.source.toUpperCase()}
-                  </span>
-                  <span style={{
-                    fontFamily: "'JetBrains Mono', monospace", fontSize: 8, fontWeight: 600,
-                    letterSpacing: 1, padding: '2px 8px', borderRadius: 2, textTransform: 'uppercase' as const,
-                    background: 'rgba(255,200,50,0.05)', color: '#7a6418', border: '1px solid rgba(255,200,50,0.10)',
-                  }}>
-                    {alert.priority.toUpperCase()}
-                  </span>
+                  <span style={META_BADGE}>{alert.source.toUpperCase()}</span>
+                  <span style={META_BADGE}>{alert.priority.toUpperCase()}</span>
                 </div>
               </div>
             </div>
