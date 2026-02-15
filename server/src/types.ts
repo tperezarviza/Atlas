@@ -45,6 +45,7 @@ export interface NewsPoint {
   headline: string;
   source: string;
   category: string;
+  fetchedAt: string;
 }
 
 export interface FeedItem {

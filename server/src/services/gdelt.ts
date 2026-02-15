@@ -2,6 +2,7 @@ import { FETCH_TIMEOUT_API, TTL } from '../config.js';
 import { cache } from '../cache.js';
 import { translateTexts } from './translate.js';
 import { withCircuitBreaker } from '../utils/circuit-breaker.js';
+import { isInPermanentZone } from '../utils/permanentZones.js';
 import { isBigQueryAvailable } from './bigquery.js';
 import { fetchGdeltNewsBQ } from './gdelt-bq.js';
 import type { NewsPoint, NewsWireItem, NewsBullet } from '../types.js';
@@ -97,6 +98,7 @@ async function fetchGdeltQuery(
   const data: GdeltGeoJSON = await res.json();
   if (!data.features) return [];
 
+  const now = new Date().toISOString();
   const points: NewsPoint[] = [];
   for (let i = 0; i < data.features.length; i++) {
     const f = data.features[i];
@@ -110,6 +112,7 @@ async function fetchGdeltQuery(
       headline,
       source: formatDomain(f.properties.domain),
       category,
+      fetchedAt: now,
     });
   }
   return points;
@@ -180,11 +183,31 @@ export async function fetchGdeltNews(): Promise<void> {
       // Translate non-English headlines before caching
       await translateHeadlines(deduped);
 
-      const fetchedAt = Date.now();
-      cache.set('news', deduped, TTL.NEWS);
-      console.log(`[GDELT] Total: ${deduped.length} unique news points cached`);
+      // Merge with existing cached events to accumulate over time
+      const existing = cache.get<NewsPoint[]>('news') ?? [];
+      const newKeys = new Set(deduped.map(p =>
+        `${p.lat.toFixed(1)}_${p.lng.toFixed(1)}_${p.headline.substring(0, 40).toLowerCase()}`
+      ));
+      const kept = existing.filter(p => {
+        const key = `${p.lat.toFixed(1)}_${p.lng.toFixed(1)}_${p.headline.substring(0, 40).toLowerCase()}`;
+        return !newKeys.has(key); // keep old events not in new batch
+      });
+      const merged = [...deduped, ...kept];
 
-      const wire = newsToWire(deduped, fetchedAt);
+      // Prune events older than 7 days (keep permanent zones)
+      const MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
+      const now = Date.now();
+      const pruned = merged.filter(p => {
+        const age = now - new Date(p.fetchedAt).getTime();
+        if (age > MAX_AGE_MS) return isInPermanentZone(p.lat, p.lng);
+        return true;
+      });
+
+      const fetchedAtMs = Date.now();
+      cache.set('news', pruned, TTL.NEWS);
+      console.log(`[GDELT] Total: ${deduped.length} new + ${kept.length} kept = ${pruned.length} after prune`);
+
+      const wire = newsToWire(pruned, fetchedAtMs);
       cache.set('newswire', wire, TTL.NEWS);
     } else {
       console.warn('[GDELT] No data received, keeping cache/mock');

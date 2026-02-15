@@ -44,11 +44,12 @@ export default function MapLegend({ layers, onToggle, counts }: MapLegendProps) 
 
       {open && (
         <div className="space-y-[3px]">
-          {/* News legend */}
-          <LegendDot color="#ff3b3b" label="News: Crisis (tone < -5)" />
-          <LegendDot color="#ff8c00" label="News: Negative" />
-          <LegendDot color="#d4a72c" label="News: Neutral" opacity={0.5} />
-          <LegendDot color="#00ff88" label="News: Positive" opacity={0.5} />
+          {/* News legend — color by age */}
+          <LegendDot color="#ff4444" label="News: < 1h" />
+          <LegendDot color="#ff8844" label="News: 1-6h" />
+          <LegendDot color="#ffaa44" label="News: 6-24h" opacity={0.85} />
+          <LegendDot color="#888855" label="News: 1-2 days" opacity={0.6} />
+          <LegendDot color="#666655" label="News: 2-3 days" opacity={0.4} />
 
           <div className="h-[6px]" />
 

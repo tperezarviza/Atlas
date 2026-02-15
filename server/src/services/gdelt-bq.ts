@@ -2,6 +2,7 @@ import { bqQuery } from './bigquery.js';
 import { cache } from '../cache.js';
 import { TTL } from '../config.js';
 import { translateTexts } from './translate.js';
+import { isInPermanentZone } from '../utils/permanentZones.js';
 import type { NewsPoint, NewsWireItem, NewsBullet } from '../types.js';
 
 interface BQNewsRow {
@@ -111,6 +112,7 @@ export async function fetchGdeltNewsBQ(): Promise<void> {
         headline: row.Title || `Event: ${row.Actor1CountryCode || '?'} → ${row.Actor2CountryCode || '?'}`,
         source: formatDomain(row.domain),
         category: row.category,
+        fetchedAt: new Date().toISOString(),
       });
     }
 
@@ -121,11 +123,31 @@ export async function fetchGdeltNewsBQ(): Promise<void> {
       points[i].headline = translated[i];
     }
 
-    const fetchedAt = Date.now();
-    cache.set('news', points, TTL.NEWS);
-    console.log(`[GDELT-BQ] ${points.length} unique news points cached`);
+    // Merge with existing cached events to accumulate over time
+    const existing = cache.get<NewsPoint[]>('news') ?? [];
+    const newKeys = new Set(points.map(p =>
+      `${p.lat.toFixed(1)}_${p.lng.toFixed(1)}_${(p.headline).substring(0, 40).toLowerCase()}`
+    ));
+    const kept = existing.filter(p => {
+      const key = `${p.lat.toFixed(1)}_${p.lng.toFixed(1)}_${p.headline.substring(0, 40).toLowerCase()}`;
+      return !newKeys.has(key);
+    });
+    const merged = [...points, ...kept];
 
-    const wire = newsToWire(points, fetchedAt);
+    // Prune events older than 7 days (keep permanent zones)
+    const MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
+    const now = Date.now();
+    const pruned = merged.filter(p => {
+      const age = now - new Date(p.fetchedAt).getTime();
+      if (age > MAX_AGE_MS) return isInPermanentZone(p.lat, p.lng);
+      return true;
+    });
+
+    const fetchedAtMs = Date.now();
+    cache.set('news', pruned, TTL.NEWS);
+    console.log(`[GDELT-BQ] ${points.length} new + ${kept.length} kept = ${pruned.length} after prune`);
+
+    const wire = newsToWire(pruned, fetchedAtMs);
     cache.set('newswire', wire, TTL.NEWS);
   } catch (err) {
     console.error('[GDELT-BQ] Failed:', err instanceof Error ? err.message : err);

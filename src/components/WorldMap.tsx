@@ -3,8 +3,9 @@ import { MapContainer, TileLayer, Marker, Tooltip, Polyline, GeoJSON, useMap } f
 import L from 'leaflet';
 import { useApiData } from '../hooks/useApiData';
 import { api } from '../services/api';
-import { conflictMarkerSize, newsMarkerSize, toneToClass } from '../utils/formatters';
+import { conflictMarkerSize, newsMarkerSize } from '../utils/formatters';
 import { connectionColors, connectionDash } from '../utils/colors';
+import { getAgeBucket, getEventColor, getEventOpacity, isInPermanentZone } from '../utils/permanentZones';
 import MapLegend from './MapLegend';
 import ConflictDetailOverlay from './ConflictDetailOverlay';
 import { nuclearFacilities } from '../data/nuclearFacilities';
@@ -73,21 +74,28 @@ function getConflictIcon(severity: string): L.DivIcon {
   return icon;
 }
 
-// FIX AUDIT-1: Bucket tone to integer to prevent unbounded cache growth
-const newsIconCache = new Map<number, L.DivIcon>();
-function getNewsIcon(tone: number): L.DivIcon {
+// News icon cache: keyed by tone bucket + age bucket + permanent zone
+const newsIconCache = new Map<string, L.DivIcon>();
+function getNewsIcon(tone: number, fetchedAt: string | undefined, lat: number, lng: number): L.DivIcon {
   const bucketedTone = Math.round(tone);
-  let icon = newsIconCache.get(bucketedTone);
+  const ageBucket = getAgeBucket(fetchedAt);
+  const inZone = isInPermanentZone(lat, lng);
+  const key = `${bucketedTone}_${ageBucket}_${inZone ? 1 : 0}`;
+
+  let icon = newsIconCache.get(key);
   if (!icon) {
-    const cls = toneToClass(tone);
     const size = newsMarkerSize(tone);
+    const color = getEventColor(fetchedAt, lat, lng);
+    const opacity = getEventOpacity(fetchedAt, lat, lng);
+    const shouldPulse = ageBucket === 0 && tone < -5;
+    const cls = shouldPulse ? 'news-marker news-pulse' : 'news-marker';
     icon = L.divIcon({
       className: '',
-      html: `<div class="news-marker ${cls === 'positive' ? 'pos' : cls}" style="width:${size}px;height:${size}px"></div>`,
+      html: `<div class="${cls}" style="width:${size}px;height:${size}px;background:${color};opacity:${opacity}"></div>`,
       iconSize: [size, size],
       iconAnchor: [size / 2, size / 2],
     });
-    newsIconCache.set(bucketedTone, icon);
+    newsIconCache.set(key, icon);
   }
   return icon;
 }
@@ -375,12 +383,12 @@ export default function WorldMap({ selectedConflictId, onSelectConflict, onCount
           </Marker>
         ))}
 
-        {/* News markers */}
+        {/* News markers — color by age, size by tone */}
         {n.map((item) => (
           <Marker
             key={item.id}
             position={[item.lat, item.lng]}
-            icon={getNewsIcon(item.tone)}
+            icon={getNewsIcon(item.tone, item.fetchedAt, item.lat, item.lng)}
             zIndexOffset={item.tone < -5 ? 500 : 0}
           >
             <Tooltip direction="top" offset={[0, -6]} className="map-tooltip">

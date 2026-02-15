@@ -229,38 +229,25 @@ will-change: box-shadow;
   opacity: 0.7;
 }
 
-/* News markers */
+/* News markers — color/opacity set inline by age */
 .news-marker {
   border-radius: 50%;
   border: 1.5px solid rgba(255, 200, 50, 0.2);
   cursor: pointer;
-  opacity: 0.8;
   transition: opacity 0.2s, transform 0.2s;
+  animation: marker-scale-in 0.3s ease-out;
 }
 
 .news-marker:hover {
-  opacity: 1;
+  opacity: 1 !important;
   transform: scale(1.5);
   z-index: 1000 !important;
 }
 
-.news-marker.neg-high {
-  background: #ff3b3b;
+/* Fresh critical news pulse */
+.news-pulse {
   animation: marker-scale-in 0.3s ease-out, pulse-news 2s 0.3s infinite;
-}
-
-.news-marker.neg-mid {
-  background: #ff8c00;
-}
-
-.news-marker.neutral {
-  background: #d4a72c;
-  opacity: 0.5;
-}
-
-.news-marker.pos {
-  background: #00ff88;
-  opacity: 0.4;
+  will-change: box-shadow;
 }
 
 /* Map tooltip */
