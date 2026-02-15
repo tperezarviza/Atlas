@@ -58,6 +58,7 @@ export interface FeedItem {
   text: string;
   engagement: string;
   tags: string[];
+  tier: 1 | 2 | 3 | 4;
 }
 
 export interface MarketItem {

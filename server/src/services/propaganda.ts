@@ -112,7 +112,7 @@ export async function fetchPropaganda(): Promise<void> {
             const message = await client.messages.create({
               model: 'claude-sonnet-4-5-20250929',
               max_tokens: 500,
-              system: 'You are an information warfare analyst. Given headlines from state media, identify the top 3-5 propaganda narratives being pushed. Return ONLY a JSON array of short narrative descriptions (strings). No markdown, no explanation.',
+              system: 'You are an information warfare analyst working from a Western democratic security perspective. Given headlines from state media, identify the top 3-5 propaganda narratives being pushed that undermine US interests, NATO cohesion, or Western democratic institutions. Focus on: anti-US messaging, wedge narratives targeting Western alliances, nuclear/military threatening rhetoric, and disinformation campaigns. Return ONLY a JSON array of short narrative descriptions (strings). No markdown, no explanation.',
               messages: [{
                 role: 'user',
                 content: `Identify propaganda narratives from these ${media.country} state media headlines:\n\n${headlines.join('\n')}`,

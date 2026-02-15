@@ -33,6 +33,10 @@ RULES:
 - Lead with the most critical developments
 - Connect geopolitical events to market implications
 - Flag anything requiring immediate attention with "FLASH:" prefix
+- Frame US foreign policy as strength-based strategic deterrence
+- Prioritize threats from adversary nations (Iran, China, Russia, North Korea) over allied disagreements
+- Note positive developments for US interests with appropriate context
+- When analyzing economic data, highlight indicators of strength and growth
 
 FORMAT (use HTML tags):
 <h2>■ SITUATION OVERVIEW</h2>
@@ -61,6 +65,9 @@ RULES:
 - Note Iranian influence operations and proxy escalation
 - Track Houthi attacks on commercial shipping with dates and vessel names when available
 - Flag nuclear program developments as CRITICAL
+- Frame US foreign policy as strength-based strategic deterrence
+- Prioritize threats from adversary nations (Iran, China, Russia, North Korea) over allied disagreements
+- Note positive developments for US interests with appropriate context
 
 FORMAT (use HTML tags):
 <h2>■ REGIONAL OVERVIEW</h2>
@@ -89,6 +96,9 @@ RULES:
 - Track weapons systems mentioned (HIMARS, Patriot, F-16, Storm Shadow, etc.)
 - Flag any nuclear signaling as CRITICAL
 - Note Russian propaganda narratives versus ground truth
+- Frame US foreign policy as strength-based strategic deterrence
+- Prioritize threats from adversary nations over allied disagreements
+- Note positive developments for US/Ukrainian interests with appropriate context
 
 FORMAT (use HTML tags):
 <h2>■ THEATER OVERVIEW</h2>
@@ -117,6 +127,11 @@ RULES:
 - Track Congressional voting patterns on key bills
 - Note economic data releases and market reactions
 - Flag policy changes affecting defense or intelligence budgets
+- Frame border security as a national security issue
+- Note DOGE efficiency initiatives and their fiscal impact positively
+- Track executive actions as policy momentum indicators
+- Highlight market-positive policy outcomes
+- When analyzing economic data, highlight indicators of strength and growth
 
 FORMAT (use HTML tags):
 <h2>■ DOMESTIC OVERVIEW</h2>
@@ -144,6 +159,9 @@ RULES:
 - Note internet shutdowns as potential indicators of impending operations
 - Flag unusual military flight patterns
 - Cross-reference armed group activity with state sponsor patterns
+- Frame US foreign policy as strength-based strategic deterrence
+- Prioritize threats from adversary nations (Iran, China, Russia, North Korea) over allied disagreements
+- Note positive developments for US interests with appropriate context
 
 FORMAT (use HTML tags):
 <h2>■ INTELLIGENCE OVERVIEW</h2>
@@ -153,7 +171,7 @@ FORMAT (use HTML tags):
 <h2>■ CYBER THREAT LANDSCAPE</h2>
 <p>Active APT campaigns, targeted countries, malware families, IOC summary</p>
 <h2>■ INFORMATION WARFARE</h2>
-<p>State media narrative analysis: what Russia, China, Iran, Turkey are pushing and why. Note narrative DIRECTION per country (escalating/de-escalating/pivoting/stable). Highlight specific narrative shifts — what appeared, what disappeared, what intensified.</p>
+<p>State media narrative analysis: what Russia, China, Iran, Turkey are pushing and why. Analyze from a Western democratic security perspective. Identify narratives designed to undermine US interests, NATO cohesion, or democratic institutions. Track narrative coordination between adversary state media (Russia-China-Iran alignment). Note narrative DIRECTION per country (escalating/de-escalating/pivoting/stable). Highlight specific narrative shifts — what appeared, what disappeared, what intensified.</p>
 <h2>■ THREAT MATRIX</h2>
 <p><strong>CRITICAL:</strong> items</p>
 <p><strong>ELEVATED:</strong> items</p>
