@@ -1,7 +1,10 @@
-import { FETCH_TIMEOUT_API, TTL } from '../config.js';
+import { TTL } from '../config.js';
 import { cache } from '../cache.js';
 import { translateTexts } from './translate.js';
 import type { HostilityPair, Severity } from '../types.js';
+
+const GDELT_TIMEOUT = 25_000;  // GDELT is slow — 25s timeout
+const PAIR_DELAY   = 3_000;    // 3s between pairs to avoid 429
 
 const HOSTILITY_PAIRS = [
   { id: 'hp-us-cn', countryA: 'United States', codeA: 'US', countryB: 'China', codeB: 'CN' },
@@ -46,13 +49,13 @@ export async function fetchHostilityIndex(): Promise<void> {
         const url = `https://api.gdeltproject.org/api/v2/doc/doc?query=${query}&mode=tonechart&format=json&timespan=7d`;
 
         const res = await fetch(url, {
-          signal: AbortSignal.timeout(FETCH_TIMEOUT_API),
+          signal: AbortSignal.timeout(GDELT_TIMEOUT),
           headers: { 'User-Agent': 'ATLAS/1.0' },
         });
 
         if (!res.ok) {
           console.warn(`[HOSTILITY] GDELT ${pair.id}: ${res.status}`);
-          await delay(1500);
+          await delay(PAIR_DELAY);
           continue;
         }
 
@@ -63,7 +66,7 @@ export async function fetchHostilityIndex(): Promise<void> {
           const fallbackQuery = encodeURIComponent(`${pair.countryA} ${pair.countryB}`);
           const fallbackUrl = `https://api.gdeltproject.org/api/v2/doc/doc?query=${fallbackQuery}&mode=tonechart&format=json&timespan=7d`;
           const fallbackRes = await fetch(fallbackUrl, {
-            signal: AbortSignal.timeout(FETCH_TIMEOUT_API),
+            signal: AbortSignal.timeout(GDELT_TIMEOUT),
             headers: { 'User-Agent': 'ATLAS/1.0' },
           });
           if (fallbackRes.ok) {
@@ -71,7 +74,7 @@ export async function fetchHostilityIndex(): Promise<void> {
           }
           if (!text.startsWith('{') && !text.startsWith('[')) {
             console.warn(`[HOSTILITY] GDELT ${pair.id}: non-JSON even after retry`);
-            await delay(1500);
+            await delay(PAIR_DELAY);
             continue;
           }
         }
@@ -80,7 +83,7 @@ export async function fetchHostilityIndex(): Promise<void> {
         const toneData = (json.tonechart ?? []) as { bin: number; count: number }[];
 
         if (toneData.length === 0) {
-          await delay(1500);
+          await delay(PAIR_DELAY);
           continue;
         }
 
@@ -89,7 +92,7 @@ export async function fetchHostilityIndex(): Promise<void> {
         const avgTone = totalCount > 0 ? totalWeightedTone / totalCount : 0;
 
         // Rate limit between GDELT requests
-        await delay(1500);
+        await delay(PAIR_DELAY);
 
         // Get top headlines
         let headlineQuery = encodeURIComponent(`${wrapIfNeeded(pair.countryA)} ${wrapIfNeeded(pair.countryB)}`);
@@ -98,7 +101,7 @@ export async function fetchHostilityIndex(): Promise<void> {
 
         try {
           const hRes = await fetch(headlineUrl, {
-            signal: AbortSignal.timeout(FETCH_TIMEOUT_API),
+            signal: AbortSignal.timeout(GDELT_TIMEOUT),
             headers: { 'User-Agent': 'ATLAS/1.0' },
           });
           if (hRes.ok) {
@@ -108,7 +111,7 @@ export async function fetchHostilityIndex(): Promise<void> {
               const hFallbackQuery = encodeURIComponent(`${pair.countryA} ${pair.countryB}`);
               const hFallbackUrl = `https://api.gdeltproject.org/api/v2/doc/doc?query=${hFallbackQuery}&mode=artlist&maxrecords=5&format=json&timespan=7d`;
               const hFallbackRes = await fetch(hFallbackUrl, {
-                signal: AbortSignal.timeout(FETCH_TIMEOUT_API),
+                signal: AbortSignal.timeout(GDELT_TIMEOUT),
                 headers: { 'User-Agent': 'ATLAS/1.0' },
               });
               if (hFallbackRes.ok) hText = await hFallbackRes.text();
@@ -144,8 +147,8 @@ export async function fetchHostilityIndex(): Promise<void> {
         console.warn(`[HOSTILITY] ${pair.id} failed:`, err instanceof Error ? err.message : err);
       }
 
-      // Rate limit: 1.5s between requests
-      await delay(1500);
+      // Rate limit between pairs
+      await delay(PAIR_DELAY);
     }
 
     if (pairs.length > 0) {
