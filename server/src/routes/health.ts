@@ -12,6 +12,7 @@ const CACHE_KEYS = [
   'unsc_calendar',
   'cloudflare_outages',
   'fire_hotspots',
+  'polymarket',
 ];
 
 // Map cache keys to human-readable service names and categories
@@ -50,6 +51,7 @@ const SERVICE_META: Record<string, { name: string; category: string }> = {
   unsc_calendar: { name: 'UNSC Calendar', category: 'Intelligence' },
   cloudflare_outages: { name: 'Cloudflare Radar', category: 'Cyber' },
   fire_hotspots: { name: 'NASA FIRMS Fires', category: 'Intelligence' },
+  polymarket: { name: 'Polymarket Predictions', category: 'Markets' },
 };
 
 const startTime = Date.now();

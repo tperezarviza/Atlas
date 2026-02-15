@@ -30,6 +30,7 @@ import { fetchEarthquakes } from './services/earthquakes.js';
 import { fetchUNSC } from './services/unsc.js';
 import { fetchCloudflareOutages } from './services/cloudflare-radar.js';
 import { fetchFirmsHotspots } from './services/firms.js';
+import { fetchPolymarket } from './services/polymarket.js';
 
 function safeRun(name: string, fn: () => Promise<void> | void) {
   return async () => {
@@ -128,6 +129,9 @@ export function startCronJobs() {
 
   // 5,35 * * * * -> NASA FIRMS hotspots (every 30 min, offset 5)
   cron.schedule('5,35 * * * *', safeRun('firms', fetchFirmsHotspots));
+
+  // */5 * * * * -> Polymarket prediction markets (every 5 min)
+  cron.schedule('2,7,12,17,22,27,32,37,42,47,52,57 * * * *', safeRun('polymarket', fetchPolymarket));
 
   // * * * * * -> Alerts analysis (every minute)
   cron.schedule('* * * * *', safeRun('alerts', analyzeAlerts));

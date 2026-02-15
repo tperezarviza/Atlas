@@ -28,6 +28,7 @@ import { fetchEarthquakes } from './earthquakes.js';
 import { fetchUNSC } from './unsc.js';
 import { fetchCloudflareOutages } from './cloudflare-radar.js';
 import { fetchFirmsHotspots } from './firms.js';
+import { fetchPolymarket } from './polymarket.js';
 
 async function safeRun(name: string, fn: () => Promise<void> | void) {
   try {
@@ -55,6 +56,7 @@ export async function warmUpCache(): Promise<void> {
     safeRun('UNSC', fetchUNSC),
     safeRun('Cloudflare', fetchCloudflareOutages),
     safeRun('FIRMS', fetchFirmsHotspots),
+    safeRun('Polymarket', fetchPolymarket),
   ]);
 
   // Phase 2: APIs with auth + heavier fetches
