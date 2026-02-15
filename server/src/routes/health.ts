@@ -14,6 +14,7 @@ const CACHE_KEYS = [
   'fire_hotspots',
   'polymarket',
   'cii',
+  'focal_points',
 ];
 
 // Map cache keys to human-readable service names and categories
@@ -54,6 +55,7 @@ const SERVICE_META: Record<string, { name: string; category: string }> = {
   fire_hotspots: { name: 'NASA FIRMS Fires', category: 'Intelligence' },
   polymarket: { name: 'Polymarket Predictions', category: 'Markets' },
   cii: { name: 'Country Instability Index', category: 'Intelligence' },
+  focal_points: { name: 'Focal Point Detection', category: 'Intelligence' },
 };
 
 const startTime = Date.now();

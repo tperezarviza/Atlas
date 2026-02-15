@@ -32,6 +32,7 @@ import { fetchCloudflareOutages } from './services/cloudflare-radar.js';
 import { fetchFirmsHotspots } from './services/firms.js';
 import { fetchPolymarket } from './services/polymarket.js';
 import { computeCII } from './services/cii.js';
+import { detectFocalPoints } from './services/focal-points.js';
 
 function safeRun(name: string, fn: () => Promise<void> | void) {
   return async () => {
@@ -134,8 +135,11 @@ export function startCronJobs() {
   // */5 * * * * -> Polymarket prediction markets (every 5 min)
   cron.schedule('2,7,12,17,22,27,32,37,42,47,52,57 * * * *', safeRun('polymarket', fetchPolymarket));
 
-  // 20 */1 * * * -> Country Instability Index (every 30 min, offset 20)
+  // 20,50 * * * * -> Country Instability Index (every 30 min, offset 20)
   cron.schedule('20,50 * * * *', safeRun('cii', computeCII));
+
+  // 7,22,37,52 * * * * -> Focal Point Detection (every 15 min, offset 7)
+  cron.schedule('7,22,37,52 * * * *', safeRun('focal-points', detectFocalPoints));
 
   // * * * * * -> Alerts analysis (every minute)
   cron.schedule('* * * * *', safeRun('alerts', analyzeAlerts));
