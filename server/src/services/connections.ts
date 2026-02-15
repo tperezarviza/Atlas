@@ -70,8 +70,10 @@ function isValidConnection(c: unknown): c is {
 }
 
 export async function fetchConnections(): Promise<void> {
-  // BQ GKG queries disabled — table scans too expensive for free tier
-  // Keep Claude approach until GKG partitioned tables available
+  // Prefer BQ GKG when available (billing attached — ~1.5GB/query, runs every 12h)
+  if (isBigQueryAvailable()) {
+    return fetchConnectionsBQ();
+  }
 
   if (!ANTHROPIC_API_KEY) {
     console.warn('[CONNECTIONS] No ANTHROPIC_API_KEY configured, skipping');
