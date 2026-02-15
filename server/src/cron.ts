@@ -39,6 +39,7 @@ import { fetchCountryToneBQ } from './services/cii-bq.js';
 import { detectGeoConvergence } from './services/geo-convergence.js';
 import { flushDailyBytes } from './services/bq-cost-tracker.js';
 import { fetchGoogleTrends } from './services/google-trends-bq.js';
+import { detectSurges } from './services/surge-detection.js';
 
 function safeRun(name: string, fn: () => Promise<void> | void) {
   return async () => {
@@ -161,6 +162,9 @@ export function startCronJobs() {
 
   // 0 * * * * -> Flush BQ cost tracking bytes to Redis (hourly)
   cron.schedule('0 * * * *', safeRun('bq-cost-flush', flushDailyBytes));
+
+  // 8,23,38,53 * * * * -> Surge detection (every 15 min, offset 8)
+  cron.schedule('8,23,38,53 * * * *', safeRun('surge-detection', detectSurges));
 
   // * * * * * -> Alerts analysis (every minute)
   cron.schedule('* * * * *', safeRun('alerts', analyzeAlerts));

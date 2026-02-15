@@ -22,8 +22,9 @@ import BasesMarkers from './map/BasesMarkers';
 import CableLines from './map/CableLines';
 import PipelineLines from './map/PipelineLines';
 import ConvergenceMarkers from './map/ConvergenceMarkers';
+import SurgeMarkers from './map/SurgeMarkers';
 import type { GeoJSONCollection } from '../services/api';
-import type { Conflict, NewsPoint, Connection, MapLayerId, MilitaryFlight, Chokepoint, InternetIncident, ArmedGroup, Vessel, NaturalEvent, Earthquake, ConvergenceHotspot } from '../types';
+import type { Conflict, NewsPoint, Connection, MapLayerId, MilitaryFlight, Chokepoint, InternetIncident, ArmedGroup, Vessel, NaturalEvent, Earthquake, ConvergenceHotspot, SurgeAlert } from '../types';
 
 const NEWS_INTERVAL = 900_000;        // 15 min
 const CONNECTIONS_INTERVAL = 21_600_000; // 6 hours
@@ -54,6 +55,7 @@ const DEFAULT_LAYERS: Record<MapLayerId, boolean> = {
   cables: false,
   pipelines: false,
   convergence: false,
+  surges: false,
 };
 
 const ALLOWED_SEVERITIES = new Set(['critical', 'high', 'medium', 'low']);
@@ -268,6 +270,7 @@ export default function WorldMap({ selectedConflictId, onSelectConflict, onCount
   const { data: cablesData } = useApiData<GeoJSONCollection>(api.layerCables, 3_600_000, { enabled: layers.cables });
   const { data: pipelinesData } = useApiData<GeoJSONCollection>(api.layerPipelines, 3_600_000, { enabled: layers.pipelines });
   const { data: convergenceData } = useApiData<ConvergenceHotspot[]>(api.geoConvergence, 1_800_000, { enabled: layers.convergence });
+  const { data: surgeData } = useApiData<SurgeAlert[]>(api.surgeAlerts, 900_000, { enabled: layers.surges });
 
   // Lazy-load GeoJSON with abort cleanup
   useEffect(() => {
@@ -471,6 +474,7 @@ export default function WorldMap({ selectedConflictId, onSelectConflict, onCount
         <CableLines data={cablesData} visible={layers.cables} />
         <PipelineLines data={pipelinesData} visible={layers.pipelines} />
         <ConvergenceMarkers data={convergenceData} visible={layers.convergence} />
+        <SurgeMarkers data={surgeData} visible={layers.surges} />
       </MapContainer>
 
       {/* News count badge - top left */}
@@ -506,6 +510,7 @@ export default function WorldMap({ selectedConflictId, onSelectConflict, onCount
           cables: cablesData?.features?.length ?? 0,
           pipelines: pipelinesData?.features?.length ?? 0,
           convergence: convergenceData?.length ?? 0,
+          surges: surgeData?.length ?? 0,
         }}
       />
 

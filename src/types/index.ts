@@ -17,13 +17,13 @@ export type EventSeverity = 'minor' | 'moderate' | 'severe' | 'extreme';
 export type EconImpact = 'high' | 'medium' | 'low';
 export type ChokepointStatus = 'normal' | 'elevated' | 'disrupted' | 'critical';
 export type AlertPriority = 'flash' | 'urgent' | 'priority' | 'routine';
-export type AlertSource = 'gdelt' | 'acled' | 'acled_spike' | 'ooni' | 'markets' | 'executive_orders' | 'usgs' | 'eonet' | 'trump' | 'twitter' | 'rss';
+export type AlertSource = 'gdelt' | 'acled' | 'acled_spike' | 'ooni' | 'markets' | 'executive_orders' | 'usgs' | 'eonet' | 'trump' | 'twitter' | 'rss' | 'anomaly' | 'surge';
 export type NewsBullet = 'critical' | 'high' | 'medium' | 'accent';
 export type CalendarUrgency = 'today' | 'soon' | 'future';
 export type SessionRegion = 'americas' | 'europe' | 'asia_pacific' | 'middle_east_africa';
 export type SessionStatus = 'open' | 'closed' | 'pre_market' | 'after_hours';
 export type SupplyRisk = 'critical' | 'high' | 'medium' | 'low';
-export type MapLayerId = 'flights' | 'shipping' | 'internet' | 'nuclear' | 'armedGroups' | 'vessels' | 'naturalEvents' | 'earthquakes' | 'bases' | 'cables' | 'pipelines' | 'convergence';
+export type MapLayerId = 'flights' | 'shipping' | 'internet' | 'nuclear' | 'armedGroups' | 'vessels' | 'naturalEvents' | 'earthquakes' | 'bases' | 'cables' | 'pipelines' | 'convergence' | 'surges';
 
 export interface ConvergenceHotspot {
   id: string;
@@ -477,6 +477,22 @@ export interface Earthquake {
   url: string;
   alert: string | null;
   tsunami: boolean;
+}
+
+export type SurgeLevel = 'watch' | 'elevated' | 'critical';
+
+export interface SurgeAlert {
+  baseId: string;
+  baseName: string;
+  lat: number;
+  lng: number;
+  level: SurgeLevel;
+  currentCount: number;
+  baselineMean: number;
+  baselineStdDev: number;
+  zScore: number;
+  topCallsigns: string[];
+  detectedAt: string;
 }
 
 export interface OFACSanction {

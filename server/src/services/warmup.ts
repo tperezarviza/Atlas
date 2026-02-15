@@ -35,6 +35,7 @@ import { runAnomalyDetection } from './anomaly-detector.js';
 import { fetchCountryToneBQ } from './cii-bq.js';
 import { detectGeoConvergence } from './geo-convergence.js';
 import { fetchGoogleTrends } from './google-trends-bq.js';
+import { detectSurges } from './surge-detection.js';
 import { cache } from '../cache.js';
 import { redisGet } from '../redis.js';
 
@@ -131,6 +132,7 @@ export async function warmUpCache(): Promise<void> {
     safeRun('Focal Points', detectFocalPoints),
     safeRun('Anomaly Detection', runAnomalyDetection),
     safeRun('Geo Convergence', detectGeoConvergence),
+    safeRun('Surge Detection', detectSurges),
   ]);
 
   // Phase 4: Slow AI analysis + ACLED-dependent services

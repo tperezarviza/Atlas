@@ -20,6 +20,7 @@ const LAYER_META: { id: MapLayerId; icon: string; label: string }[] = [
   { id: 'cables', icon: '🔗', label: 'Undersea Cables' },
   { id: 'pipelines', icon: '🛢', label: 'Pipelines' },
   { id: 'convergence', icon: '◉', label: 'Convergence Zones' },
+  { id: 'surges', icon: '⚡', label: 'Flight Surges' },
 ];
 
 export default function MapLegend({ layers, onToggle, counts }: MapLegendProps) {

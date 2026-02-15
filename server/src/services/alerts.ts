@@ -4,6 +4,7 @@ import { cache } from '../cache.js';
 import { redisGet, redisSet } from '../redis.js';
 import type { Alert, AlertPriority, AlertSource, Conflict, NewsPoint, InternetIncident, MarketSection, ExecutiveOrder, NaturalEvent, TwitterIntelItem, FeedItem } from '../types.js';
 import type { Earthquake } from './earthquakes.js';
+import type { SurgeAlert } from './surge-detection.js';
 
 const MAX_ALERTS = 200;
 const RETENTION_MS = 24 * 60 * 60 * 1000; // 24h
@@ -207,6 +208,22 @@ function checkRssFeeds(): void {
   }
 }
 
+function checkSurges(): void {
+  const surges = cache.get<SurgeAlert[]>('surge_alerts');
+  if (!surges) return;
+
+  for (const s of surges) {
+    const priority: AlertPriority = s.level === 'critical' ? 'flash'
+      : s.level === 'elevated' ? 'urgent' : 'priority';
+    addAlert(
+      priority,
+      'surge',
+      `Flight surge near ${s.baseName}: ${s.currentCount} aircraft (z=${s.zScore})`,
+      `Level: ${s.level.toUpperCase()} • Baseline: ${s.baselineMean}±${s.baselineStdDev} • ${s.topCallsigns.join(', ')}`,
+    );
+  }
+}
+
 function checkAnomalies(): void {
   const anomalies = cache.get<any[]>('anomalies');
   if (!anomalies) return;
@@ -235,6 +252,7 @@ export function analyzeAlerts(): void {
   checkTwitterIntel();
   checkRssFeeds();
   checkAnomalies();
+  checkSurges();
   pruneOld();
 
   cache.set('alerts', alertStore, 60_000);

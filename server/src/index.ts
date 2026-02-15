@@ -133,6 +133,9 @@ app.get('/api/geo-convergence', async () => cache.get('geo_convergence') ?? []);
 // Google Trends route (BQ-powered)
 app.get('/api/google-trends', async () => cache.get('google_trends') ?? null);
 
+// Surge detection route
+app.get('/api/surge-alerts', async () => cache.get('surge_alerts') ?? []);
+
 // SPA fallback — serve index.html for non-API routes
 app.setNotFoundHandler((request, reply) => {
   if (request.url.startsWith('/api/')) {

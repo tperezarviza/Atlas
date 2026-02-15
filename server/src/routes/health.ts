@@ -26,6 +26,7 @@ const CACHE_KEYS = [
   'geo_convergence',
   'entity_connections',
   'google_trends',
+  'surge_alerts',
 ];
 
 // Map cache keys to human-readable service names and categories
@@ -74,6 +75,7 @@ const SERVICE_META: Record<string, { name: string; category: string }> = {
   geo_convergence: { name: 'Geo Convergence', category: 'BigQuery' },
   entity_connections: { name: 'BQ Entity Connections', category: 'BigQuery' },
   google_trends: { name: 'Google Trends', category: 'BigQuery' },
+  surge_alerts: { name: 'Surge Detection', category: 'Military' },
 };
 
 const startTime = Date.now();
