@@ -28,7 +28,12 @@ interface UnifiedEvent {
   sortKey: number;
 }
 
-export default function IntelMonitor() {
+interface IntelMonitorProps {
+  filter?: (event: UnifiedEvent) => boolean;
+  title?: string;
+}
+
+export default function IntelMonitor({ filter, title }: IntelMonitorProps = {}) {
   const { data: calData, loading: calLoading, error: calError, lastUpdate: calLast } =
     useApiData<CalendarEvent[]>(api.calendar, 3_600_000);
   const { data: econData, loading: econLoading, error: econError, lastUpdate: econLast } =
@@ -74,8 +79,9 @@ export default function IntelMonitor() {
       }
     }
 
-    return events.sort((a, b) => a.sortKey - b.sortKey);
-  }, [calData, econData]);
+    const sorted = events.sort((a, b) => a.sortKey - b.sortKey);
+    return filter ? sorted.filter(filter) : sorted;
+  }, [calData, econData, filter]);
 
   const isLoading = (calLoading && !calData) || (econLoading && !econData);
   const hasError = (calError && !calData) || (econError && !econData);
@@ -92,7 +98,7 @@ export default function IntelMonitor() {
         style={{ borderBottom: '1px solid rgba(255,200,50,0.10)', background: 'rgba(255,200,50,0.025)', minHeight: 32, padding: '14px 18px 10px 18px' }}
       >
         <div className="font-title text-[12px] font-semibold tracking-[2px] uppercase text-text-secondary">
-          🔍 Intel Monitor
+          {title ? `🔍 ${title}` : '🔍 Intel Monitor'}
         </div>
         <DataBadge data={badgeData} error={badgeError} loading={badgeLoading} lastUpdate={badgeLast} intervalMs={3_600_000} liveLabel="Live" mockLabel="Mock" />
       </div>
@@ -106,7 +112,11 @@ export default function IntelMonitor() {
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto">
-        {isLoading ? <Skeleton lines={5} /> : (
+        {isLoading ? <Skeleton lines={5} /> : unifiedEvents.length === 0 ? (
+          <div className="flex items-center justify-center h-full py-8">
+            <span className="font-data text-[10px] text-text-muted tracking-[0.5px]">No matching events</span>
+          </div>
+        ) : (
           unifiedEvents.map(event => (
             <div
               key={event.id}

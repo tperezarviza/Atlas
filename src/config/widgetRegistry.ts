@@ -35,6 +35,10 @@ export const WIDGETS: WidgetDef[] = [
   { id: 'congress-tracker', label: 'Congress Tracker', icon: '🏛️' },
   { id: 'internet-freedom', label: 'Internet Freedom', icon: '🌐' },
   { id: 'newswire-domestic', label: 'Breaking: Domestic', icon: '📰' },
+  { id: 'leader-feed-me', label: 'Middle East Intel', icon: '🕌' },
+  { id: 'leader-feed-intel', label: 'Cyber & Intel Feed', icon: '🛡️' },
+  { id: 'intel-monitor-me', label: 'Intel: Middle East', icon: '🔍' },
+  { id: 'narratives-me', label: 'Narratives: Middle East', icon: '🌐' },
 ];
 
 export interface LayoutPreset {

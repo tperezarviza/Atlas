@@ -20,11 +20,11 @@ export const VIEW_LAYOUT_PRESETS: Record<ViewId, LayoutPreset> = {
     label: 'MIDEAST',
     icon: '🕌',
     slots: {
-      'r2c1': 'leader-feed',
+      'r2c1': 'leader-feed-me',
       'r2c3': 'markets',
       'r3c1': 'newswire-me',
-      'r3c2-left': 'intel-monitor',
-      'r3c2-right': 'global-narratives',
+      'r3c2-left': 'intel-monitor-me',
+      'r3c2-right': 'narratives-me',
       'r3c3': 'ai-brief',
     },
   },
@@ -59,7 +59,7 @@ export const VIEW_LAYOUT_PRESETS: Record<ViewId, LayoutPreset> = {
     label: 'INTEL',
     icon: '🕵️',
     slots: {
-      'r2c1': 'leader-feed',
+      'r2c1': 'leader-feed-intel',
       'r2c3': 'newswire',
       'r3c1': 'global-narratives',
       'r3c2-left': 'intel-monitor',

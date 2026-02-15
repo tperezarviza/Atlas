@@ -21,7 +21,13 @@ function flagForCode(code: string): string {
   return FLAG_MAP[code] ?? '🏳';
 }
 
-export default function GlobalNarratives() {
+interface GlobalNarrativesProps {
+  propagandaFilter?: (entry: PropagandaEntry) => boolean;
+  hostilityFilter?: (pair: HostilityPair) => boolean;
+  title?: string;
+}
+
+export default function GlobalNarratives({ propagandaFilter, hostilityFilter, title }: GlobalNarrativesProps = {}) {
   const { data: propData, loading: propLoading, error: propError, lastUpdate: propLast } =
     useApiData<PropagandaEntry[]>(api.propaganda, 3_600_000);
   const { data: hostData, loading: hostLoading, error: hostError, lastUpdate: hostLast } =
@@ -34,11 +40,11 @@ export default function GlobalNarratives() {
   const badgeLast = propLast || hostLast;
 
   const sortedPropaganda = propData
-    ? [...propData].sort((a, b) => Math.abs(b.toneAvg) - Math.abs(a.toneAvg))
+    ? [...propData].filter(e => !propagandaFilter || propagandaFilter(e)).sort((a, b) => Math.abs(b.toneAvg) - Math.abs(a.toneAvg))
     : null;
 
   const sortedHostility = hostData
-    ? [...hostData].sort((a, b) => a.avgTone - b.avgTone)
+    ? [...hostData].filter(p => !hostilityFilter || hostilityFilter(p)).sort((a, b) => a.avgTone - b.avgTone)
     : null;
 
   return (
@@ -49,7 +55,7 @@ export default function GlobalNarratives() {
         style={{ borderBottom: '1px solid rgba(255,200,50,0.10)', background: 'rgba(255,200,50,0.025)', minHeight: 32, padding: '14px 18px 10px 18px' }}
       >
         <div className="font-title text-[12px] font-semibold tracking-[2px] uppercase text-text-secondary">
-          🌐 Global Narratives
+          {title ? `🌐 ${title}` : '🌐 Global Narratives'}
         </div>
         <DataBadge data={badgeData} error={badgeError} loading={badgeLoading} lastUpdate={badgeLast} intervalMs={3_600_000} liveLabel="Live" mockLabel="Mock" />
       </div>
