@@ -13,13 +13,25 @@ export interface CloudflareOutage {
   description: string;
 }
 
+const CF_API_TOKEN = process.env.CF_API_TOKEN ?? '';
+
 export async function fetchCloudflareOutages(): Promise<void> {
+  if (!CF_API_TOKEN) {
+    // TODO: Cloudflare Radar annotations API requires auth (X-Auth-Email + X-Auth-Key or Bearer token).
+    // Set CF_API_TOKEN in .env once we have a Cloudflare API token.
+    console.warn('[CLOUDFLARE] No CF_API_TOKEN set, skipping outage fetch');
+    return;
+  }
+
   console.log('[CLOUDFLARE] Fetching internet outages...');
   try {
     const url = `https://api.cloudflare.com/client/v4/radar/annotations/outages?dateRange=7d&format=json&limit=50`;
 
     const res = await fetch(url, {
-      headers: { 'Accept': 'application/json' },
+      headers: {
+        'Accept': 'application/json',
+        'Authorization': `Bearer ${CF_API_TOKEN}`,
+      },
       signal: AbortSignal.timeout(FETCH_TIMEOUT_API),
     });
 
