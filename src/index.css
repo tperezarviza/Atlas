@@ -39,6 +39,14 @@
   --font-body: 'Chakra Petch', sans-serif;
 }
 
+:root {
+  --text-panel-header: 14px;
+  --text-body: 14px;
+  --text-meta: 12px;
+  --text-mono: 14px;
+  --text-ticker: 13px;
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -379,7 +387,7 @@ html.kiosk .atlas-resize-handle-vertical {
 /* ── AI Brief content formatting ── */
 .brief-content h2 {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 600;
   letter-spacing: 1px;
   color: #ffc832;
@@ -393,6 +401,7 @@ html.kiosk .atlas-resize-handle-vertical {
   margin-bottom: 12px;
   color: #c8a020;
   line-height: 1.65;
+  font-size: var(--text-body);
 }
 .brief-content ul, .brief-content ol {
   margin-left: 16px;
@@ -402,6 +411,7 @@ html.kiosk .atlas-resize-handle-vertical {
   margin-bottom: 4px;
   color: #c8a020;
   line-height: 1.65;
+  font-size: var(--text-body);
 }
 .brief-content strong {
   color: #ffe082;

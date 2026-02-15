@@ -186,4 +186,8 @@ export const api = {
   earthquakes:         () => fetchJSON<Earthquake[]>('/api/earthquakes'),
   // System Health
   health:              () => fetchJSON<HealthResponse>('/api/health'),
+  // CII + Polymarket + Focal Points
+  cii:                 () => fetchJSON<any[]>('/api/cii'),
+  polymarket:          () => fetchJSON<any[]>('/api/polymarket'),
+  focalPoints:         () => fetchJSON<any[]>('/api/focal-points'),
 };
