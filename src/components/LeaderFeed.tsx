@@ -122,8 +122,8 @@ function FeedItemRow({ item }: { item: FeedItem }) {
     <motion.div
       initial={{ opacity: 0, height: 0 }}
       animate={{ opacity: 1, height: 'auto' }}
-      transition={{ duration: 0.25 }}
-      className="cursor-pointer transition-colors duration-200 hover:bg-bg-card-hover"
+      transition={{ duration: 0.15 }}
+      className="cursor-pointer transition-colors duration-150 hover:bg-bg-card-hover"
       style={{
         overflow: 'hidden',
         borderBottom: '1px solid rgba(255,200,50,0.10)',

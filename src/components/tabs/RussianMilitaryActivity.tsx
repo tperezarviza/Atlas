@@ -156,7 +156,7 @@ export default function RussianMilitaryActivity() {
                             style={{ background: 'rgba(255,255,255,.04)' }}
                           >
                             <div
-                              className="h-full rounded-[1px] transition-[width] duration-500"
+                              className="h-full rounded-[1px] transition-[width] duration-300"
                               style={{
                                 width: `${pct}%`,
                                 background: 'linear-gradient(90deg, #ff3b3b, #ff8c00)',

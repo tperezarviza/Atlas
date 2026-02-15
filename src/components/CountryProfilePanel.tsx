@@ -386,7 +386,7 @@ function RiskBar({ label, value, max, invert, category }: { label: string; value
       </div>
       <div className="h-[3px] rounded-full mt-[2px]" style={{ background: 'rgba(255,200,50,.06)' }}>
         <div
-          className="h-full rounded-full transition-all duration-500"
+          className="h-full rounded-full transition-all duration-300"
           style={{ width: `${pct}%`, background: color }}
         />
       </div>

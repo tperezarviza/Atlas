@@ -46,7 +46,7 @@ export default function NatoResponse() {
 
       {/* Scrollable body */}
       <div className="flex-1 overflow-y-auto">
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4 }}>
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.15 }}>
           {/* Defense Spending vs 2% Target */}
           <div style={{ borderBottom: '1px solid rgba(255,200,50,0.10)' }}>
             <div className="px-3 py-[6px]">
@@ -82,7 +82,7 @@ export default function NatoResponse() {
                       >
                         {/* Filled bar */}
                         <div
-                          className="h-full rounded-[1px] transition-[width] duration-500"
+                          className="h-full rounded-[1px] transition-[width] duration-300"
                           style={{
                             width: `${barWidth}%`,
                             background: barColor,

@@ -86,10 +86,12 @@ body::before {
 
 /* Panel glow */
 .panel-glow {
-  transition: box-shadow 0.3s;
+  scroll-behavior: smooth;
+  transition: box-shadow 0.15s;
   box-shadow: 0 0 6px rgba(255,200,50,0.03);
 }
 .panel-glow:hover {
+  scroll-behavior: smooth;
   box-shadow: 0 0 16px rgba(255,200,50,0.08);
 }
 
@@ -103,10 +105,10 @@ body::before {
   100% { background-color: transparent; }
 }
 .flash-up {
-  animation: flash-green 1s ease-out;
+  animation: flash-green 0.5s ease-out;
 }
 .flash-down {
-  animation: flash-red 1s ease-out;
+  animation: flash-red 0.5s ease-out;
 }
 
 /* Marker scale-in */
@@ -678,4 +680,9 @@ html.kiosk .atlas-resize-handle-vertical {
   word-wrap: break-word;
   overflow-wrap: break-word;
   white-space: pre-wrap;
+}
+
+/* Smooth scroll for panel content */
+.overflow-y-auto {
+  scroll-behavior: smooth;
 }

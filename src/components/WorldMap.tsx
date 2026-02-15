@@ -117,7 +117,7 @@ function MapFlyTo({ center, zoom }: { center: [number, number]; zoom: number }) 
   const prevRef = useRef({ center, zoom });
   useEffect(() => {
     if (prevRef.current.center[0] !== center[0] || prevRef.current.center[1] !== center[1] || prevRef.current.zoom !== zoom) {
-      map.flyTo(center, zoom, { duration: 0.8 });
+      map.flyTo(center, zoom, { duration: 0.5 });
       prevRef.current = { center, zoom };
     }
   }, [map, center, zoom]);
