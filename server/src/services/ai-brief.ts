@@ -46,7 +46,7 @@ FORMAT (use HTML tags):
 <h2>■ MARKET IMPLICATIONS</h2>
 <p>How today's geopolitics affect global markets: equities, commodities, crypto, forex</p>
 <h2>■ 72-HOUR OUTLOOK</h2>
-<p>What to expect next across all theaters</p>
+<p>What to expect next across all theaters. Reference any propaganda narrative shifts that might indicate upcoming actions.</p>
 <h2>■ RECOMMENDED MONITORING</h2>
 <ul><li>Specific indicators, tripwires, and sources to track</li></ul>`,
 
@@ -153,7 +153,7 @@ FORMAT (use HTML tags):
 <h2>■ CYBER THREAT LANDSCAPE</h2>
 <p>Active APT campaigns, targeted countries, malware families, IOC summary</p>
 <h2>■ INFORMATION WARFARE</h2>
-<p>State media narrative analysis: what Russia, China, Iran, Turkey are pushing and why</p>
+<p>State media narrative analysis: what Russia, China, Iran, Turkey are pushing and why. Note narrative DIRECTION per country (escalating/de-escalating/pivoting/stable). Highlight specific narrative shifts — what appeared, what disappeared, what intensified.</p>
 <h2>■ THREAT MATRIX</h2>
 <p><strong>CRITICAL:</strong> items</p>
 <p><strong>ELEVATED:</strong> items</p>
@@ -224,7 +224,7 @@ INTELLIGENCE TWEETS: ${JSON.stringify(meTweets.map(t => ({ text: t.text.substrin
 
 HOSTILITY INDICES: ${JSON.stringify(meHostility.map(h => ({ countryA: h.countryA, countryB: h.countryB, avgTone: h.avgTone, trend: h.trend })))}
 
-STATE MEDIA NARRATIVES (Iran, Turkey): ${JSON.stringify(mePropaganda.map(p => ({ country: p.country, narratives: p.narratives, headlines: p.sampleHeadlines.slice(0, 3) })))}
+STATE MEDIA NARRATIVES (Iran, Turkey): ${JSON.stringify(mePropaganda.map(p => ({ country: p.country, narratives: p.narratives, direction: p.narrativeDirection ?? 'unknown', shifts: p.narrativeShifts ?? [], headlines: p.sampleHeadlines.slice(0, 3) })))}
 
 Current UTC: ${new Date().toISOString()}`;
 }
@@ -263,7 +263,7 @@ MILITARY TWEETS: ${JSON.stringify(uaTweets.map(t => ({ text: t.text.substring(0,
 
 HOSTILITY INDICES: ${JSON.stringify(uaHostility.map(h => ({ countryA: h.countryA, countryB: h.countryB, avgTone: h.avgTone, trend: h.trend })))}
 
-RUSSIAN STATE MEDIA NARRATIVES: ${JSON.stringify(ruPropaganda.map(p => ({ narratives: p.narratives, headlines: p.sampleHeadlines.slice(0, 3) })))}
+RUSSIAN STATE MEDIA NARRATIVES: ${JSON.stringify(ruPropaganda.map(p => ({ narratives: p.narratives, direction: p.narrativeDirection ?? 'unknown', shifts: p.narrativeShifts ?? [], headlines: p.sampleHeadlines.slice(0, 3) })))}
 
 Current UTC: ${new Date().toISOString()}`;
 }
@@ -316,7 +316,7 @@ function gatherIntelData(): string {
 
   return `CYBER THREATS: ${JSON.stringify(criticalCyber.map(c => ({ name: c.name, description: c.description.substring(0, 150), adversary: c.adversary, targeted_countries: c.targeted_countries, severity: c.severity, malware_families: c.malware_families })))}
 
-STATE MEDIA PROPAGANDA: ${JSON.stringify(propaganda.map(p => ({ country: p.country, outlet: p.outlet, narratives: p.narratives, headlines: p.sampleHeadlines.slice(0, 3) })))}
+STATE MEDIA PROPAGANDA: ${JSON.stringify(propaganda.map(p => ({ country: p.country, outlet: p.outlet, narratives: p.narratives, direction: p.narrativeDirection ?? 'unknown', shifts: p.narrativeShifts ?? [], headlines: p.sampleHeadlines.slice(0, 3) })))}
 
 HOSTILITY INDEX: ${JSON.stringify(hostility.slice(0, 10).map(h => ({ countryA: h.countryA, countryB: h.countryB, avgTone: h.avgTone, articleCount: h.articleCount, trend: h.trend })))}
 

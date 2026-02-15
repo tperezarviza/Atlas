@@ -4,6 +4,7 @@ import { ANTHROPIC_API_KEY, FETCH_TIMEOUT_RSS, TTL } from '../config.js';
 import { cache } from '../cache.js';
 import { stripHTML } from '../utils.js';
 import { translateTexts } from './translate.js';
+import { redisGet, redisSet } from '../redis.js';
 import type { PropagandaEntry } from '../types.js';
 
 const parser = new RSSParser({ timeout: FETCH_TIMEOUT_RSS });
@@ -126,6 +127,45 @@ export async function fetchPropaganda(): Promise<void> {
           }
         }
 
+        // Compare with previous narratives for shift detection
+        const prevKey = `narratives:prev:${media.code}`;
+        const previousNarratives = await redisGet<string[]>(prevKey) ?? [];
+
+        let shiftAnalysis: { shifts: string[]; direction: string } = { shifts: [], direction: 'stable' };
+
+        if (previousNarratives.length > 0 && narratives.length > 0 && client) {
+          try {
+            const shiftMessage = await client.messages.create({
+              model: 'claude-sonnet-4-5-20250929',
+              max_tokens: 400,
+              system: 'You are an information warfare analyst tracking propaganda shifts. Compare current narratives with previous ones. Return ONLY JSON: { "shifts": ["description of each change"], "direction": "escalating" | "de-escalating" | "stable" | "pivoting" }',
+              messages: [{
+                role: 'user',
+                content: `PREVIOUS ${media.country} narratives:\n${previousNarratives.join('\n')}\n\nCURRENT ${media.country} narratives:\n${narratives.join('\n')}\n\nIdentify what changed, what's new, what disappeared.`,
+              }],
+            });
+
+            const shiftText = shiftMessage.content.find(b => b.type === 'text')?.text ?? '{}';
+            let cleaned = shiftText.trim();
+            const fm = cleaned.match(/```(?:json)?\s*([\s\S]*?)```/);
+            if (fm) cleaned = fm[1].trim();
+            const fb = cleaned.indexOf('{');
+            const lb = cleaned.lastIndexOf('}');
+            if (fb !== -1 && lb > fb) cleaned = cleaned.slice(fb, lb + 1);
+
+            const parsed = JSON.parse(cleaned);
+            shiftAnalysis = {
+              shifts: Array.isArray(parsed.shifts) ? parsed.shifts.map(String) : [],
+              direction: parsed.direction ?? 'stable',
+            };
+          } catch (err) {
+            console.warn(`[PROPAGANDA] Shift analysis failed for ${media.country}:`, err instanceof Error ? err.message : err);
+          }
+        }
+
+        // Store current narratives for next comparison
+        await redisSet(prevKey, narratives, 7 * 24 * 3600);
+
         const outletName = media.outlets.map((o) => o.name).join(' / ');
         entries.push({
           id: `prop-${media.code.toLowerCase()}`,
@@ -138,9 +178,11 @@ export async function fetchPropaganda(): Promise<void> {
           toneAvg: 0, // Google News RSS doesn't provide tone
           articleCount: articles.length,
           analysisDate: new Date().toISOString(),
+          narrativeShifts: shiftAnalysis.shifts,
+          narrativeDirection: shiftAnalysis.direction as PropagandaEntry['narrativeDirection'],
         });
 
-        console.log(`[PROPAGANDA] ${media.country}: ${articles.length} articles, ${narratives.length} narratives`);
+        console.log(`[PROPAGANDA] ${media.country}: ${articles.length} articles, ${narratives.length} narratives, direction: ${shiftAnalysis.direction}`);
       } catch (err) {
         console.warn(`[PROPAGANDA] ${media.country} failed:`, err instanceof Error ? err.message : err);
       }
