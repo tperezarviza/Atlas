@@ -101,7 +101,7 @@ export default function DashboardLayout({
           onLayoutChanged={row3Layout.onLayoutChanged}
         >
           <CollapsiblePanel
-            defaultSize="18%"
+            defaultSize="25%"
             minSize="10%"
             collapsible={canCollapse}
             collapsedSize="2%"
@@ -116,20 +116,22 @@ export default function DashboardLayout({
 
           <PanelHandle disabled={!canResize} />
 
-          <Panel id="r3c2" defaultSize="52%" minSize="15%">
-            <Group
-              orientation="horizontal"
-              defaultLayout={r3c2Layout.defaultLayout}
-              onLayoutChanged={r3c2Layout.onLayoutChanged}
-            >
-              <Panel id="r3c2-left" defaultSize="50%" minSize="20%">
-                {r3c2Left}
-              </Panel>
-              <PanelHandle disabled={!canResize} />
-              <Panel id="r3c2-right" defaultSize="50%" minSize="20%">
-                {r3c2Right}
-              </Panel>
-            </Group>
+          <Panel id="r3c2" defaultSize="45%" minSize="15%">
+            <div className="h-full rounded-[14px] overflow-hidden panel-glow" style={{ background: 'rgba(255,200,50,0.025)', border: '1px solid rgba(255,200,50,0.10)', backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)' }}>
+              <Group
+                orientation="horizontal"
+                defaultLayout={r3c2Layout.defaultLayout}
+                onLayoutChanged={r3c2Layout.onLayoutChanged}
+              >
+                <Panel id="r3c2-left" defaultSize="50%" minSize="20%">
+                  {r3c2Left}
+                </Panel>
+                <PanelHandle disabled={!canResize} />
+                <Panel id="r3c2-right" defaultSize="50%" minSize="20%">
+                  {r3c2Right}
+                </Panel>
+              </Group>
+            </div>
           </Panel>
 
           <PanelHandle disabled={!canResize} />

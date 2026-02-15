@@ -81,7 +81,7 @@ export default memo(function CIIDashboard({ contextId }: CIIDashboardProps) {
   if (loading && !data) return <Skeleton lines={8} />;
 
   return (
-    <div className="h-full flex flex-col" style={{ background: 'rgba(255,200,50,0.015)' }}>
+    <div className="h-full flex flex-col" style={{ background: 'transparent' }}>
       {/* Header */}
       <div
         className="shrink-0 flex items-center justify-between px-3 py-2"

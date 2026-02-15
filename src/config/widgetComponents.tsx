@@ -9,6 +9,7 @@ const NewsWire = lazy(() => import('../components/NewsWire'));
 const AIBrief = lazy(() => import('../components/AIBrief'));
 const CIIDashboard = lazy(() => import('../components/CIIDashboard'));
 const PolymarketPanel = lazy(() => import('../components/PolymarketPanel'));
+const IntelCenterRight = lazy(() => import('../components/IntelCenterRight'));
 
 // ── Filter functions per context ──
 
@@ -95,6 +96,7 @@ const W = {
   AIBrief: withSuspense(AIBrief),
   CIIDashboard: withSuspense(CIIDashboard),
   PolymarketPanel: withSuspense(PolymarketPanel),
+  IntelCenterRight: withSuspense(IntelCenterRight),
 };
 
 const WIDGET_MAP: Record<string, WidgetEntry> = {
@@ -104,6 +106,7 @@ const WIDGET_MAP: Record<string, WidgetEntry> = {
   'ai-brief': W.AIBrief,
   'cii-dashboard': W.CIIDashboard,
   'polymarket': W.PolymarketPanel,
+  'intel-center-right': W.IntelCenterRight,
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

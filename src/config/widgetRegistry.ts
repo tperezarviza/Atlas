@@ -25,6 +25,7 @@ export const WIDGETS: WidgetDef[] = [
   { id: 'cii-dashboard', label: 'Instability Index', icon: '📊' },
   { id: 'polymarket', label: 'Prediction Markets', icon: '📈' },
   { id: 'focal-points', label: 'Focal Points', icon: '🎯' },
+  { id: 'intel-center-right', label: 'Predictions & Focal Points', icon: '🎯' },
 ];
 
 export interface LayoutPreset {
