@@ -1,6 +1,7 @@
 import { cache } from '../cache.js';
 import { TTL } from '../config.js';
 import { redisGet, redisSet } from '../redis.js';
+import { fetchBQAnomalyCounts } from './anomaly-bq.js';
 import type { Conflict, NewsPoint, InternetIncident } from '../types.js';
 import type { Earthquake } from './earthquakes.js';
 
@@ -61,7 +62,7 @@ const CALIBRATION_MIN = 10; // minimum samples before alerting
 
 // ── Count current values per event type × region ──
 
-function countCurrentValues(): Map<string, number> {
+async function countCurrentValues(): Promise<Map<string, number>> {
   const counts = new Map<string, number>();
 
   // Military flights by region
@@ -96,6 +97,12 @@ function countCurrentValues(): Map<string, number> {
   const ooni = cache.get<InternetIncident[]>('ooni') ?? [];
   counts.set('ooni_shutdowns:global', ooni.filter(i => !i.endDate).length);
 
+  // Merge BigQuery event counts (get their own Welford baselines)
+  const bqCounts = await fetchBQAnomalyCounts();
+  for (const [key, value] of bqCounts) {
+    counts.set(key, value);
+  }
+
   return counts;
 }
 
@@ -105,7 +112,7 @@ export async function runAnomalyDetection(): Promise<void> {
   console.log('[ANOMALY] Running anomaly detection...');
 
   const weekday = WEEKDAYS[new Date().getUTCDay()];
-  const currentValues = countCurrentValues();
+  const currentValues = await countCurrentValues();
   const anomalies: Anomaly[] = [];
 
   for (const [metricKey, currentValue] of currentValues) {

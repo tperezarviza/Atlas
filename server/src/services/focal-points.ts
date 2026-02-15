@@ -2,6 +2,8 @@ import Anthropic from '@anthropic-ai/sdk';
 import { ANTHROPIC_API_KEY, TTL } from '../config.js';
 import { cache } from '../cache.js';
 import { redisGet, redisSet } from '../redis.js';
+import { isBigQueryAvailable } from './bigquery.js';
+import { detectFocalPointsBQ } from './focal-points-bq.js';
 import type { NewsPoint, FeedItem, TwitterIntelItem, Conflict, HostilityPair, InternetIncident } from '../types.js';
 
 export interface FocalPoint {
@@ -73,6 +75,9 @@ function escapeRegex(str: string): string {
 }
 
 export async function detectFocalPoints(): Promise<void> {
+  if (isBigQueryAvailable()) {
+    return detectFocalPointsBQ();
+  }
   console.log('[FOCAL] Detecting focal points...');
 
   try {

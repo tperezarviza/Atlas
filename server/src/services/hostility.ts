@@ -2,6 +2,8 @@ import { TTL } from '../config.js';
 import { cache } from '../cache.js';
 import { translateTexts } from './translate.js';
 import { withCircuitBreaker } from '../utils/circuit-breaker.js';
+import { isBigQueryAvailable } from './bigquery.js';
+import { fetchHostilityBQ } from './hostility-bq.js';
 import type { HostilityPair, Severity } from '../types.js';
 
 const GDELT_TIMEOUT = 25_000;  // GDELT is slow — 25s timeout
@@ -37,6 +39,9 @@ function delay(ms: number): Promise<void> {
 }
 
 export async function fetchHostilityIndex(): Promise<void> {
+  if (isBigQueryAvailable()) {
+    return fetchHostilityBQ();
+  }
   console.log('[HOSTILITY] Fetching hostility index for 15 country pairs...');
 
   try {

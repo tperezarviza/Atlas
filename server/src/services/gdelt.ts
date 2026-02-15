@@ -2,6 +2,8 @@ import { FETCH_TIMEOUT_API, TTL } from '../config.js';
 import { cache } from '../cache.js';
 import { translateTexts } from './translate.js';
 import { withCircuitBreaker } from '../utils/circuit-breaker.js';
+import { isBigQueryAvailable } from './bigquery.js';
+import { fetchGdeltNewsBQ } from './gdelt-bq.js';
 import type { NewsPoint, NewsWireItem, NewsBullet } from '../types.js';
 
 interface GdeltFeature {
@@ -146,6 +148,9 @@ function newsToWire(news: NewsPoint[], fetchedAt: number): NewsWireItem[] {
 }
 
 export async function fetchGdeltNews(): Promise<void> {
+  if (isBigQueryAvailable()) {
+    return fetchGdeltNewsBQ();
+  }
   console.log(`[GDELT] Fetching news from ${GDELT_QUERIES.length} thematic + regional queries...`);
 
   try {

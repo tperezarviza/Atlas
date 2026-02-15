@@ -14,6 +14,7 @@ export const X_BEARER_TOKEN = process.env.X_BEARER_TOKEN ?? '';
 export const ALIENVAULT_API_KEY = process.env.ALIENVAULT_API_KEY ?? '';
 export const FIRMS_API_KEY = process.env.FIRMS_API_KEY ?? '';
 export const CLOUDFLARE_API_TOKEN = process.env.CLOUDFLARE_API_TOKEN ?? '';
+export const GCP_PROJECT_ID = process.env.GCP_PROJECT_ID ?? '';
 export const REDIS_URL = process.env.REDIS_URL ?? 'redis://localhost:6379';
 
 // All secret values for error sanitization

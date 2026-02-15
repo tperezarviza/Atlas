@@ -45,6 +45,8 @@ import { startCronJobs } from './cron.js';
 import { warmUpCache } from './services/warmup.js';
 import { loadStaticLayers } from './services/static-layers.js';
 import { initRedis } from './redis.js';
+import { initBigQuery } from './services/bigquery.js';
+import { cache } from './cache.js';
 import fastifyStatic from '@fastify/static';
 import path from 'path';
 
@@ -125,6 +127,9 @@ registerFocalPointsRoutes(app);
 registerAnomalyRoutes(app);
 registerLayerRoutes(app);
 
+// Geo-convergence route (BQ-powered)
+app.get('/api/geo-convergence', async () => cache.get('geo_convergence') ?? []);
+
 // SPA fallback — serve index.html for non-API routes
 app.setNotFoundHandler((request, reply) => {
   if (request.url.startsWith('/api/')) {
@@ -144,6 +149,9 @@ try {
 
   // Initialize Redis connection
   initRedis();
+
+  // Initialize BigQuery (if configured)
+  initBigQuery();
 
   // Warm up caches in background (don't block startup)
   warmUpCache().catch((err) => {

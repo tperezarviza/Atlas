@@ -2,6 +2,8 @@ import type { FastifyInstance } from 'fastify';
 import { cache } from '../cache.js';
 import { isRedisConnected } from '../redis.js';
 import { getCircuitStates } from '../utils/circuit-breaker.js';
+import { isBigQueryAvailable } from '../services/bigquery.js';
+import { getDailyBytes, bytesToCost } from '../services/bq-cost-tracker.js';
 
 const CACHE_KEYS = [
   'conflicts', 'news', 'feed', 'markets', 'forex',
@@ -20,6 +22,9 @@ const CACHE_KEYS = [
   'layer_bases',
   'layer_cables',
   'layer_pipelines',
+  'country_tone_bq',
+  'geo_convergence',
+  'entity_connections',
 ];
 
 // Map cache keys to human-readable service names and categories
@@ -64,6 +69,9 @@ const SERVICE_META: Record<string, { name: string; category: string }> = {
   layer_bases: { name: 'Military Bases Layer', category: 'Map Layers' },
   layer_cables: { name: 'Undersea Cables Layer', category: 'Map Layers' },
   layer_pipelines: { name: 'Pipelines Layer', category: 'Map Layers' },
+  country_tone_bq: { name: 'BQ Country Tone', category: 'BigQuery' },
+  geo_convergence: { name: 'Geo Convergence', category: 'BigQuery' },
+  entity_connections: { name: 'BQ Entity Connections', category: 'BigQuery' },
 };
 
 const startTime = Date.now();
@@ -92,10 +100,18 @@ export function registerHealthRoutes(app: FastifyInstance) {
     const okCount = services.filter(s => s.status === 'ok').length;
     const totalCount = services.length;
 
+    const bqEnabled = isBigQueryAvailable();
+    const bqDailyBytes = bqEnabled ? await getDailyBytes() : 0;
+
     return {
       status: 'ok',
       uptime: Math.floor((Date.now() - startTime) / 1000),
       redisConnected: isRedisConnected(),
+      bigquery: {
+        enabled: bqEnabled,
+        dailyBytesProcessed: bqDailyBytes,
+        dailyCostEstimate: `$${bytesToCost(bqDailyBytes).toFixed(4)}`,
+      },
       summary: { ok: okCount, total: totalCount },
       circuitBreakers: getCircuitStates(),
       services,

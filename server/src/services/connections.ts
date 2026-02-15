@@ -1,6 +1,8 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { ANTHROPIC_API_KEY, TTL } from '../config.js';
 import { cache } from '../cache.js';
+import { isBigQueryAvailable } from './bigquery.js';
+import { fetchConnectionsBQ } from './connections-bq.js';
 import type { Connection, Conflict, ConnectionType } from '../types.js';
 
 const VALID_TYPES: ConnectionType[] = ['proxy_war', 'arms_flow', 'alliance', 'spillover', 'military', 'cyber'];
@@ -68,6 +70,10 @@ function isValidConnection(c: unknown): c is {
 }
 
 export async function fetchConnections(): Promise<void> {
+  if (isBigQueryAvailable()) {
+    return fetchConnectionsBQ();
+  }
+
   if (!ANTHROPIC_API_KEY) {
     console.warn('[CONNECTIONS] No ANTHROPIC_API_KEY configured, skipping');
     return;

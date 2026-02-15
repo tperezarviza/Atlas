@@ -1,6 +1,7 @@
 import { cache } from '../cache.js';
 import { TTL } from '../config.js';
 import { redisGet, redisSet } from '../redis.js';
+import type { CountryToneBQ } from './cii-bq.js';
 import type { NewsPoint, Conflict, InternetIncident, HostilityPair } from '../types.js';
 import type { MilitaryFlight } from '../types.js';
 
@@ -107,21 +108,31 @@ function clamp(val: number, min: number, max: number): number {
 }
 
 function computeNewsFactor(news: NewsPoint[], countryCode: string): number {
+  // Try BQ-sourced country tone first (more accurate)
+  const bqTones = cache.get<CountryToneBQ[]>('country_tone_bq') ?? [];
+  const bqMatch = bqTones.find(t => t.isoCode === countryCode);
+
+  if (bqMatch && bqMatch.articleCount >= 5) {
+    const volumeScore = clamp(bqMatch.articleCount / 20, 0, 1) * 30;
+    const toneScore = clamp((-bqMatch.avgTone) / 8, 0, 1) * 40;
+    const negRatio = clamp(bqMatch.negativePct / 100, 0, 1) * 20;
+    const violenceScore = clamp(bqMatch.violenceCount / 10, 0, 1) * 10;
+    return clamp(Math.round(volumeScore + toneScore + negRatio + violenceScore), 0, 100);
+  }
+
+  // Fallback: existing geo-proximity logic
   const info = CODE_TO_INFO[countryCode];
   if (!info || !news.length) return 0;
 
-  // Match by proximity (within ~5 degrees)
   const nearby = news.filter(n => isNear(n.lat, n.lng, info.lat, info.lng, 5));
   if (!nearby.length) return 0;
 
-  // Negative tone = instability signal. GDELT tone ranges ~[-10, +10]
   const avgTone = nearby.reduce((sum, n) => sum + n.tone, 0) / nearby.length;
   const negCount = nearby.filter(n => n.tone < -2).length;
 
-  // Score: more negative news + lower tone = higher instability
-  const volumeScore = clamp(nearby.length / 5, 0, 1) * 40;      // up to 40 for volume
-  const toneScore = clamp((-avgTone) / 8, 0, 1) * 40;            // up to 40 for negative tone
-  const negRatio = clamp(negCount / Math.max(nearby.length, 1), 0, 1) * 20; // up to 20
+  const volumeScore = clamp(nearby.length / 5, 0, 1) * 40;
+  const toneScore = clamp((-avgTone) / 8, 0, 1) * 40;
+  const negRatio = clamp(negCount / Math.max(nearby.length, 1), 0, 1) * 20;
 
   return clamp(Math.round(volumeScore + toneScore + negRatio), 0, 100);
 }

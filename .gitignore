@@ -40,6 +40,9 @@ nul
 Screenshot *.png
 mugshot.jpg
 
+# GCP service account key
+gcp-service-account.json
+
 # One-off test/deploy scripts
 test_*.py
 check_*.py
