@@ -23,7 +23,19 @@ export type CalendarUrgency = 'today' | 'soon' | 'future';
 export type SessionRegion = 'americas' | 'europe' | 'asia_pacific' | 'middle_east_africa';
 export type SessionStatus = 'open' | 'closed' | 'pre_market' | 'after_hours';
 export type SupplyRisk = 'critical' | 'high' | 'medium' | 'low';
-export type MapLayerId = 'flights' | 'shipping' | 'internet' | 'nuclear' | 'armedGroups' | 'vessels' | 'naturalEvents' | 'earthquakes' | 'bases' | 'cables' | 'pipelines';
+export type MapLayerId = 'flights' | 'shipping' | 'internet' | 'nuclear' | 'armedGroups' | 'vessels' | 'naturalEvents' | 'earthquakes' | 'bases' | 'cables' | 'pipelines' | 'convergence';
+
+export interface ConvergenceHotspot {
+  id: string;
+  lat: number;
+  lng: number;
+  gridLat: number;
+  gridLng: number;
+  eventTypes: string[];
+  totalEvents: number;
+  avgTone: number;
+  score: number;
+}
 
 export interface NuclearFacility {
   id: string;

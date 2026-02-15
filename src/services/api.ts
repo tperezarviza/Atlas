@@ -65,6 +65,7 @@ import type {
   Alert,
   Vessel,
   Earthquake,
+  ConvergenceHotspot,
 } from '../types';
 
 export interface TopBarKPI {
@@ -205,4 +206,6 @@ export const api = {
   layerBases:          () => fetchJSON<GeoJSONCollection>('/api/layers/bases'),
   layerCables:         () => fetchJSON<GeoJSONCollection>('/api/layers/cables'),
   layerPipelines:      () => fetchJSON<GeoJSONCollection>('/api/layers/pipelines'),
+  // Geo Convergence
+  geoConvergence:      () => fetchJSON<ConvergenceHotspot[]>('/api/geo-convergence'),
 };

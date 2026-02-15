@@ -711,3 +711,13 @@ html.kiosk .atlas-resize-handle-vertical {
 .alert-glow-urgent {
   animation: alert-glow-urgent 0.6s ease-out;
 }
+
+/* Convergence zone pulse */
+@keyframes convergence-pulse {
+  0% { stroke-opacity: 0.7; fill-opacity: 0.18; }
+  50% { stroke-opacity: 1; fill-opacity: 0.30; }
+  100% { stroke-opacity: 0.7; fill-opacity: 0.18; }
+}
+.convergence-pulse {
+  animation: convergence-pulse 3s ease-in-out infinite;
+}
