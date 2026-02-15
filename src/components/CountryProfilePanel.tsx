@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
 import { api } from '../services/api';
 import StrategicDepsViz from './StrategicDepsViz';
 import type { CountryProfile, Conflict, ArmedGroup, StrategicDependency } from '../types';
@@ -93,13 +92,9 @@ export default function CountryProfilePanel({ countryCode, onClose, conflicts }:
   });
 
   return (
-    <AnimatePresence>
+    <>
       {countryCode && (
-        <motion.div
-          initial={{ x: 480 }}
-          animate={{ x: 0 }}
-          exit={{ x: 480 }}
-          transition={{ duration: 0.2, ease: 'easeOut' }}
+        <div
           className="fixed right-0 z-[900] overflow-hidden flex flex-col"
           style={{
             top: 48,
@@ -108,6 +103,9 @@ export default function CountryProfilePanel({ countryCode, onClose, conflicts }:
             background: '#000000',
             borderLeft: '1px solid rgba(255,200,50,0.10)',
             boxShadow: '-8px 0 32px rgba(0,0,0,.4)',
+            transform: 'translateX(0)',
+            transition: 'transform 0.2s ease-out',
+            willChange: 'transform',
           }}
         >
           {loading ? (
@@ -325,9 +323,9 @@ export default function CountryProfilePanel({ countryCode, onClose, conflicts }:
               </div>
             </>
           )}
-        </motion.div>
+        </div>
       )}
-    </AnimatePresence>
+    </>
   );
 }
 

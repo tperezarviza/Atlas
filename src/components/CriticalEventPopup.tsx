@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
 import { api } from '../services/api'
 import type { Alert } from '../types'
 
@@ -70,7 +69,6 @@ function classifyAlert(alert: Alert): EventDisplay {
     return { type: 'natural', icon, label: 'NATURAL EVENT', ...EVENT_STYLES.natural }
   }
 
-  // Military / GDELT / ACLED / Twitter / RSS
   const icon = title.includes('missile') || title.includes('strike') ? '🚀'
     : title.includes('explosion') || title.includes('bomb') ? '💥'
     : title.includes('nuclear') ? '☢️'
@@ -92,6 +90,7 @@ function formatUtcTime(): string {
 export default function CriticalEventPopup() {
   const [alert, setAlert] = useState<Alert | null>(null)
   const [visible, setVisible] = useState(false)
+  const [mounted, setMounted] = useState(false)
   const dismissTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const seenIdsRef = useRef<Set<string>>(new Set())
   const initialLoadRef = useRef(true)
@@ -104,12 +103,17 @@ export default function CriticalEventPopup() {
     clearTimers()
     setAlert(a)
     setVisible(true)
-    dismissTimerRef.current = setTimeout(() => setVisible(false), DISMISS_MS)
+    requestAnimationFrame(() => setMounted(true))
+    dismissTimerRef.current = setTimeout(() => {
+      setMounted(false)
+      setTimeout(() => setVisible(false), 180)
+    }, DISMISS_MS)
   }, [clearTimers])
 
   const dismiss = useCallback(() => {
     clearTimers()
-    setVisible(false)
+    setMounted(false)
+    setTimeout(() => setVisible(false), 180)
     if (alert) api.markAlertRead(alert.id).catch(() => {})
   }, [clearTimers, alert])
 
@@ -117,7 +121,6 @@ export default function CriticalEventPopup() {
     async function check() {
       try {
         const alerts = await api.alerts()
-        // Only flash/urgent from non-trump sources
         const critical = alerts.filter(a =>
           (a.priority === 'flash' || a.priority === 'urgent') &&
           !a.read &&
@@ -156,32 +159,37 @@ export default function CriticalEventPopup() {
   if (!alert) return null
   const ev = classifyAlert(alert)
 
-
   return (
-    <AnimatePresence>
+    <>
       {visible && (
         <>
-          <motion.div
-            className="fixed inset-0"
-            style={{ background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(10px)', zIndex: 9996 }}
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
+          {/* Backdrop — NO blur */}
+          <div
             onClick={dismiss}
+            style={{
+              position: 'fixed', inset: 0, zIndex: 9996,
+              background: 'rgba(0,0,0,0.85)',
+              opacity: mounted ? 1 : 0,
+              transition: 'opacity 0.18s ease-out',
+            }}
           />
 
-          <motion.div
-            className="fixed"
+          {/* Popup — pure CSS */}
+          <div
             style={{
-              top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
+              position: 'fixed',
+              top: '50%', left: '50%',
               width: 'min(820px, 94vw)', background: '#0a0a0a',
               border: `2px solid ${ev.borderColor}`, borderRadius: 8,
               overflow: 'hidden', zIndex: 9997,
-              boxShadow: `0 0 80px ${ev.glowColor}, 0 0 160px ${ev.glowColor.replace(/[\d.]+\)$/, '0.06)')}`,
+              boxShadow: `0 0 60px ${ev.glowColor}`,
+              opacity: mounted ? 1 : 0,
+              transform: mounted
+                ? 'translate(-50%, -50%) scale(1)'
+                : 'translate(-50%, -50%) scale(0.92)',
+              transition: 'opacity 0.18s ease-out, transform 0.18s ease-out',
+              willChange: 'transform, opacity',
             }}
-            initial={{ opacity: 0, scale: 0.88, y: '-50%', x: '-50%' }}
-            animate={{ opacity: 1, scale: 1, y: '-50%', x: '-50%' }}
-            exit={{ opacity: 0, scale: 0.92, y: '-50%', x: '-50%' }}
-            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
           >
             {/* Header */}
             <div style={{
@@ -212,10 +220,8 @@ export default function CriticalEventPopup() {
               </div>
             </div>
 
-
             {/* Content */}
             <div style={{ display: 'flex', minHeight: 200 }}>
-              {/* Icon panel */}
               <div style={{
                 flexShrink: 0, width: 160, display: 'flex', flexDirection: 'column',
                 alignItems: 'center', justifyContent: 'center', padding: 20, gap: 12,
@@ -241,7 +247,6 @@ export default function CriticalEventPopup() {
                 </div>
               </div>
 
-              {/* Text area */}
               <div style={{ flex: 1, padding: '20px 24px', display: 'flex', flexDirection: 'column' }}>
                 <div style={{ fontSize: 18, fontWeight: 700, color: '#f1f5f9', marginBottom: 10, lineHeight: 1.3 }}>
                   {alert.title}
@@ -279,9 +284,9 @@ export default function CriticalEventPopup() {
               </div>
               <button className="tn-dismiss" onClick={dismiss}>Dismiss</button>
             </div>
-          </motion.div>
+          </div>
         </>
       )}
-    </AnimatePresence>
+    </>
   )
 }

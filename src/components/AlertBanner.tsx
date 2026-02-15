@@ -1,5 +1,4 @@
-import { useEffect, useState } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
+import { useEffect, useState, useRef } from 'react';
 import type { Alert } from '../types';
 
 function timeAgo(ts: string): string {
@@ -38,11 +37,9 @@ export default function AlertBanner({ alerts, dismissedIds, onDismiss }: AlertBa
 
   return (
     <div className="fixed top-[50px] left-0 right-0 z-[950] flex flex-col gap-[2px] pointer-events-none">
-      <AnimatePresence>
-        {visible.map(alert => (
-          <BannerItem key={alert.id} alert={alert} onDismiss={onDismiss} />
-        ))}
-      </AnimatePresence>
+      {visible.map(alert => (
+        <BannerItem key={alert.id} alert={alert} onDismiss={onDismiss} />
+      ))}
     </div>
   );
 }
@@ -50,6 +47,16 @@ export default function AlertBanner({ alerts, dismissedIds, onDismiss }: AlertBa
 function BannerItem({ alert, onDismiss }: { alert: Alert; onDismiss: (id: string) => void }) {
   const style = PRIORITY_STYLES[alert.priority] ?? PRIORITY_STYLES.urgent;
   const [, setTick] = useState(0);
+  const [visible, setVisible] = useState(false);
+  const mountedRef = useRef(false);
+
+  // Animate in on mount
+  useEffect(() => {
+    if (!mountedRef.current) {
+      mountedRef.current = true;
+      requestAnimationFrame(() => setVisible(true));
+    }
+  }, []);
 
   // Auto-dismiss after 30s
   useEffect(() => {
@@ -64,42 +71,31 @@ function BannerItem({ alert, onDismiss }: { alert: Alert; onDismiss: (id: string
   }, []);
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: -20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      transition={{ duration: 0.3 }}
+    <div
       className={`pointer-events-auto mx-4 ${alert.priority === 'flash' ? 'alert-glow-flash' : 'alert-glow-urgent'}`}
       style={{
         background: style.bg,
         borderLeft: `3px solid ${style.border}`,
         borderRadius: 3,
-        backdropFilter: 'blur(12px)',
+        opacity: visible ? 1 : 0,
+        transform: visible ? 'translateY(0)' : 'translateY(-12px)',
+        transition: 'opacity 0.18s ease-out, transform 0.18s ease-out',
       }}
     >
       <div className="flex items-center gap-3 px-4 py-2">
-        {/* Pulsing dot */}
         <span
           className="w-[6px] h-[6px] rounded-full shrink-0"
           style={{ background: style.border, animation: 'pulse-dot 1.5s infinite' }}
         />
-
-        {/* Priority badge */}
         <span className={`font-data text-[8px] font-bold uppercase px-[5px] py-[1px] rounded-[2px] shrink-0 ${style.badge}`}>
           {alert.priority}
         </span>
-
-        {/* Title */}
         <span className="font-data text-[11px] text-text-primary flex-1 truncate">
           {alert.title}
         </span>
-
-        {/* Time */}
         <span className="font-data text-[9px] text-text-muted shrink-0">
           {timeAgo(alert.timestamp)}
         </span>
-
-        {/* Dismiss */}
         <button
           onClick={() => onDismiss(alert.id)}
           className="text-text-muted hover:text-text-primary text-[14px] leading-none cursor-pointer shrink-0 ml-1"
@@ -107,6 +103,6 @@ function BannerItem({ alert, onDismiss }: { alert: Alert; onDismiss: (id: string
           ✕
         </button>
       </div>
-    </motion.div>
+    </div>
   );
 }
