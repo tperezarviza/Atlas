@@ -6,7 +6,7 @@ import { fetchConflicts } from './acled.js';
 import { fetchMacro } from './macro.js';
 import { fetchCalendar } from './calendar.js';
 import { fetchBorderStats } from './border.js';
-import { fetchBrief } from './ai-brief.js';
+import { generateAllBriefs } from './ai-brief.js';
 import { fetchConnections } from './connections.js';
 import { fetchOoniIncidents } from './ooni.js';
 import { fetchSanctions } from './sanctions.js';
@@ -70,7 +70,7 @@ export async function warmUpCache(): Promise<void> {
   composeTicker();
 
   await Promise.allSettled([
-    safeRun('AI Brief', async () => { await fetchBrief(); }),
+    safeRun('AI Briefs (all desks)', generateAllBriefs),
     safeRun('Connections', fetchConnections),
     safeRun('Countries', fetchCountries),
     safeRun('Armed Groups', fetchArmedGroups),
