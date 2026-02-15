@@ -7,13 +7,13 @@ import { useKioskMode } from './hooks/useKioskMode'
 import { useLayoutConfig } from './hooks/useLayoutConfig'
 import ErrorBoundary from './components/ErrorBoundary'
 import TopBar from './components/TopBar'
-import WorldMap from './components/WorldMap'
 import Ticker from './components/Ticker'
 import AlertBanner from './components/AlertBanner'
 import TabPanel from './components/tabs/TabPanel'
 import DashboardLayout from './components/layout/DashboardLayout'
 
-// Lazy-loaded overlays (not needed on initial paint)
+// Lazy-loaded heavy components
+const WorldMap = lazy(() => import('./components/WorldMap'))
 const BootSequence = lazy(() => import('./components/BootSequence'))
 const CountryProfilePanel = lazy(() => import('./components/CountryProfilePanel'))
 const TrumpNewsPopup = lazy(() => import('./components/TrumpNewsPopup'))
@@ -147,18 +147,20 @@ export default function App() {
             }
             map={
               <motion.div className="h-full" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.04, duration: 0.15, ease: 'easeOut' }}>
-                <WorldMap
-                  selectedConflictId={selectedConflictId}
-                  onSelectConflict={handleSelectConflict}
-                  onCountryClick={setSelectedCountryCode}
-                  conflicts={conflicts}
-                  conflictsLoading={conflictsLoading}
-                  conflictsError={conflictsError}
-                  conflictsLastUpdate={conflictsLastUpdate}
-                  viewCenter={mapView.center}
-                  viewZoom={mapView.zoom}
-                  activeTab={activeView}
-                />
+                <Suspense fallback={<div className="h-full w-full" style={{ background: '#0a0a0a' }} />}>
+                  <WorldMap
+                    selectedConflictId={selectedConflictId}
+                    onSelectConflict={handleSelectConflict}
+                    onCountryClick={setSelectedCountryCode}
+                    conflicts={conflicts}
+                    conflictsLoading={conflictsLoading}
+                    conflictsError={conflictsError}
+                    conflictsLastUpdate={conflictsLastUpdate}
+                    viewCenter={mapView.center}
+                    viewZoom={mapView.zoom}
+                    activeTab={activeView}
+                  />
+                </Suspense>
               </motion.div>
             }
             r2c3={

@@ -2,15 +2,13 @@ import { lazy, Suspense, type ComponentType } from 'react';
 import type { FeedItem, NewsWireItem, PropagandaEntry, HostilityPair } from '../types';
 import type { ViewId } from '../types/views';
 
-// ── Eager imports (GLOBAL tab — needed on first paint) ──
-import LeaderFeed from '../components/LeaderFeed';
-import MarketsDashboard from '../components/MarketsDashboard';
-import NewsWire from '../components/NewsWire';
-import IntelMonitor from '../components/IntelMonitor';
-import AIBrief from '../components/AIBrief';
-import GlobalNarratives from '../components/GlobalNarratives';
-
-// ── Lazy imports (tab-specific — loaded on demand) ──
+// ── All widget components lazy-loaded ──
+const LeaderFeed = lazy(() => import('../components/LeaderFeed'));
+const MarketsDashboard = lazy(() => import('../components/MarketsDashboard'));
+const NewsWire = lazy(() => import('../components/NewsWire'));
+const IntelMonitor = lazy(() => import('../components/IntelMonitor'));
+const AIBrief = lazy(() => import('../components/AIBrief'));
+const GlobalNarratives = lazy(() => import('../components/GlobalNarratives'));
 const UkraineWarMetrics = lazy(() => import('../components/tabs/UkraineWarMetrics'));
 const RussianMilitaryActivity = lazy(() => import('../components/tabs/RussianMilitaryActivity'));
 const NatoResponse = lazy(() => import('../components/tabs/NatoResponse'));
@@ -85,33 +83,44 @@ function withSuspense(LazyComponent: WidgetEntry): WidgetEntry {
   };
 }
 
+// Wrap all lazy widgets with Suspense
+const W = {
+  LeaderFeed: withSuspense(LeaderFeed),
+  MarketsDashboard: withSuspense(MarketsDashboard),
+  NewsWire: withSuspense(NewsWire),
+  IntelMonitor: withSuspense(IntelMonitor),
+  AIBrief: withSuspense(AIBrief),
+  GlobalNarratives: withSuspense(GlobalNarratives),
+  UkraineWarMetrics: withSuspense(UkraineWarMetrics),
+  RussianMilitaryActivity: withSuspense(RussianMilitaryActivity),
+  NatoResponse: withSuspense(NatoResponse),
+  ExecutiveOrdersList: withSuspense(ExecutiveOrdersList),
+  CongressTracker: withSuspense(CongressTracker),
+  InternetFreedomPanel: withSuspense(InternetFreedomPanel),
+};
+
 const WIDGET_MAP: Record<string, WidgetEntry> = {
-  // Eager (GLOBAL tab)
-  'leader-feed': LeaderFeed,
-  'markets': MarketsDashboard,
-  'newswire': NewsWire,
-  'intel-monitor': IntelMonitor,
-  'ai-brief': AIBrief,
-  'global-narratives': GlobalNarratives,
-  // Lazy (UKRAINE tab)
-  'ukraine-leader': LeaderFeed,
-  'ukraine-metrics': withSuspense(UkraineWarMetrics),
-  'russian-military': withSuspense(RussianMilitaryActivity),
-  'nato-response': withSuspense(NatoResponse),
-  // Lazy (DOMESTIC tab)
-  'trump-feed': LeaderFeed,
-  'executive-orders': withSuspense(ExecutiveOrdersList),
-  'congress-tracker': withSuspense(CongressTracker),
-  // Lazy (INTEL tab)
-  'internet-freedom': withSuspense(InternetFreedomPanel),
-  // Filtered variants (reuse eager components)
-  'newswire-me': NewsWire,
-  'newswire-ua': NewsWire,
-  'newswire-domestic': NewsWire,
-  'leader-feed-me': LeaderFeed,
-  'leader-feed-intel': LeaderFeed,
-  'intel-monitor-me': IntelMonitor,
-  'narratives-me': GlobalNarratives,
+  'leader-feed': W.LeaderFeed,
+  'markets': W.MarketsDashboard,
+  'newswire': W.NewsWire,
+  'intel-monitor': W.IntelMonitor,
+  'ai-brief': W.AIBrief,
+  'global-narratives': W.GlobalNarratives,
+  'ukraine-leader': W.LeaderFeed,
+  'ukraine-metrics': W.UkraineWarMetrics,
+  'russian-military': W.RussianMilitaryActivity,
+  'nato-response': W.NatoResponse,
+  'trump-feed': W.LeaderFeed,
+  'executive-orders': W.ExecutiveOrdersList,
+  'congress-tracker': W.CongressTracker,
+  'internet-freedom': W.InternetFreedomPanel,
+  'newswire-me': W.NewsWire,
+  'newswire-ua': W.NewsWire,
+  'newswire-domestic': W.NewsWire,
+  'leader-feed-me': W.LeaderFeed,
+  'leader-feed-intel': W.LeaderFeed,
+  'intel-monitor-me': W.IntelMonitor,
+  'narratives-me': W.GlobalNarratives,
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
