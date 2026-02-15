@@ -73,8 +73,8 @@ export function startCronJobs() {
   // 0 8,18 * * * -> AI Briefs (morning + afternoon, all 5 desks)
   cron.schedule('0 8,18 * * *', safeRun('ai-briefs', generateAllBriefs));
 
-  // 0 */6 * * * -> Connections (BQ co-occurrence or Claude fallback)
-  cron.schedule('0 */6 * * *', safeRun('connections', fetchConnections));
+  // 0 */4 * * * -> Connections (Claude analysis)
+  cron.schedule('0 */4 * * *', safeRun('connections', fetchConnections));
 
   // 0 */12 * * * -> Calendar
   cron.schedule('0 */12 * * *', safeRun('calendar', fetchCalendar));
@@ -143,8 +143,8 @@ export function startCronJobs() {
   // 20,50 * * * * -> Country Instability Index (every 30 min, offset 20)
   cron.schedule('20,50 * * * *', safeRun('cii', computeCII));
 
-  // 7 * * * * -> Focal Point Detection (hourly via BQ GKG, was every 15 min with Claude NER)
-  cron.schedule('7 * * * *', safeRun('focal-points', detectFocalPoints));
+  // 7,22,37,52 * * * * -> Focal Point Detection (every 15 min, Claude NER)
+  cron.schedule('7,22,37,52 * * * *', safeRun('focal-points', detectFocalPoints));
 
   // 12,27,42,57 * * * * -> Anomaly Detection (every 15 min, offset 12)
   cron.schedule('12,27,42,57 * * * *', safeRun('anomaly-detection', runAnomalyDetection));

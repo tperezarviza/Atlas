@@ -75,9 +75,8 @@ function escapeRegex(str: string): string {
 }
 
 export async function detectFocalPoints(): Promise<void> {
-  if (isBigQueryAvailable()) {
-    return detectFocalPointsBQ();
-  }
+  // BQ GKG queries disabled — table scans too expensive for free tier
+  // Keep Claude NER approach until GKG partitioned tables available
   console.log('[FOCAL] Detecting focal points...');
 
   try {
