@@ -23,6 +23,7 @@ interface GdeltGeoJSON {
 }
 
 const GDELT_QUERIES = [
+  // Thematic queries
   { query: '(conflict OR war OR military OR attack OR strike)', category: 'conflict', timespan: '60m', maxpoints: 500 },
   { query: '(terrorism OR terrorist OR bombing)', category: 'terrorism', timespan: '60m', maxpoints: 200 },
   { query: '(trump OR tariff OR border OR immigration)', category: 'us_politics', timespan: '60m', maxpoints: 200 },
@@ -32,6 +33,15 @@ const GDELT_QUERIES = [
   { query: '(israel OR gaza OR hamas OR hezbollah OR houthi)', category: 'middle_east', timespan: '60m', maxpoints: 200 },
   { query: '(oil OR energy OR OPEC OR gas OR pipeline)', category: 'energy', timespan: '60m', maxpoints: 200 },
   { query: 'crisis OR disaster OR emergency', category: 'crisis', timespan: '60m', maxpoints: 300 },
+  // Regional crises — catch conflicts in areas not covered by thematic queries
+  { query: '(haiti OR "port-au-prince" OR gang OR cartel) (crisis OR violence OR attack OR killed)', category: 'latam_crisis', timespan: '24h', maxpoints: 100 },
+  { query: '(sudan OR khartoum OR darfur OR RSF OR SAF) (war OR fighting OR displaced OR militia)', category: 'africa_crisis', timespan: '24h', maxpoints: 100 },
+  { query: '(myanmar OR "min aung" OR rohingya OR junta) (coup OR fighting OR resistance)', category: 'asia_crisis', timespan: '24h', maxpoints: 100 },
+  { query: '(venezuela OR maduro) (protest OR crisis OR sanctions)', category: 'latam_crisis', timespan: '24h', maxpoints: 50 },
+  { query: '(ethiopia OR tigray OR amhara OR eritrea) (conflict OR fighting OR ceasefire)', category: 'africa_crisis', timespan: '24h', maxpoints: 50 },
+  { query: '(somalia OR al-shabaab) (attack OR killed OR military)', category: 'africa_crisis', timespan: '24h', maxpoints: 50 },
+  { query: '(libya OR sahel OR niger OR mali OR burkina) (coup OR militia OR junta OR insurgent)', category: 'africa_crisis', timespan: '24h', maxpoints: 50 },
+  { query: '(colombia OR "drug war" OR FARC OR ELN) (attack OR killed OR coca)', category: 'latam_crisis', timespan: '24h', maxpoints: 50 },
 ];
 
 /** Extract the first article title from GDELT html field (contains <a> tags). */
@@ -135,7 +145,7 @@ function newsToWire(news: NewsPoint[], fetchedAt: number): NewsWireItem[] {
 }
 
 export async function fetchGdeltNews(): Promise<void> {
-  console.log('[GDELT] Fetching news from 9 thematic queries...');
+  console.log(`[GDELT] Fetching news from ${GDELT_QUERIES.length} thematic + regional queries...`);
 
   try {
     const results = await Promise.allSettled(
