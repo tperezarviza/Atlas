@@ -46,6 +46,20 @@ class TTLCache {
     return this.store.has(key);
   }
 
+  getWithStatus<T>(key: string): { data: T | null; status: 'fresh' | 'stale' | 'very_stale' | 'no_data'; ageMs: number | null } {
+    const entry = this.store.get(key);
+    if (!entry) return { data: null, status: 'no_data', ageMs: null };
+    const age = Date.now() - entry.setAt;
+    if (age < entry.ttlMs) return { data: entry.data as T, status: 'fresh', ageMs: age };
+    if (age < entry.ttlMs * 3) return { data: entry.data as T, status: 'stale', ageMs: age };
+    return { data: entry.data as T, status: 'very_stale', ageMs: age };
+  }
+
+  getSetAt(key: string): number | null {
+    const entry = this.store.get(key);
+    return entry ? entry.setAt : null;
+  }
+
   /** Remove entries that are far past their TTL to prevent memory leaks */
   private sweep(): void {
     const now = Date.now();

@@ -36,6 +36,7 @@ import { registerVesselsRoutes } from './routes/vessels.js';
 import { registerEarthquakeRoutes } from './routes/earthquakes.js';
 import { startCronJobs } from './cron.js';
 import { warmUpCache } from './services/warmup.js';
+import { initRedis } from './redis.js';
 import fastifyStatic from '@fastify/static';
 import path from 'path';
 
@@ -122,6 +123,9 @@ app.setNotFoundHandler((request, reply) => {
 try {
   await app.listen({ port: PORT, host: '0.0.0.0' });
   console.log(`ATLAS API server running on port ${PORT}`);
+
+  // Initialize Redis connection
+  initRedis();
 
   // Warm up caches in background (don't block startup)
   warmUpCache().catch((err) => {

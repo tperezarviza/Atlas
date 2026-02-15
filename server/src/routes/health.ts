@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { cache } from '../cache.js';
+import { isRedisConnected } from '../redis.js';
 
 const CACHE_KEYS = [
   'conflicts', 'news', 'feed', 'markets', 'forex',
@@ -51,11 +52,12 @@ const startTime = Date.now();
 
 export function registerHealthRoutes(app: FastifyInstance) {
   app.get('/api/health', async () => {
-    const services: { key: string; name: string; category: string; status: 'ok' | 'stale' | 'empty'; ageSeconds: number | null }[] = [];
+    const services: { key: string; name: string; category: string; status: 'ok' | 'stale' | 'empty'; ageSeconds: number | null; ageMinutes: number | null; lastUpdate: string | null }[] = [];
 
     for (const key of CACHE_KEYS) {
       const fresh = cache.isFresh(key);
       const ageMs = cache.age(key);
+      const setAt = cache.getSetAt(key);
       const meta = SERVICE_META[key] ?? { name: key, category: 'Other' };
 
       services.push({
@@ -64,6 +66,8 @@ export function registerHealthRoutes(app: FastifyInstance) {
         category: meta.category,
         status: ageMs === null ? 'empty' : fresh ? 'ok' : 'stale',
         ageSeconds: ageMs !== null ? Math.floor(ageMs / 1000) : null,
+        ageMinutes: ageMs !== null ? Math.round(ageMs / 60000) : null,
+        lastUpdate: setAt !== null ? new Date(setAt).toISOString() : null,
       });
     }
 
@@ -73,6 +77,7 @@ export function registerHealthRoutes(app: FastifyInstance) {
     return {
       status: 'ok',
       uptime: Math.floor((Date.now() - startTime) / 1000),
+      redisConnected: isRedisConnected(),
       summary: { ok: okCount, total: totalCount },
       services,
     };

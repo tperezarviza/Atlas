@@ -12,6 +12,7 @@ export const OPENSKY_CLIENT_ID = process.env.OPENSKY_CLIENT_ID ?? '';
 export const OPENSKY_CLIENT_SECRET = process.env.OPENSKY_CLIENT_SECRET ?? '';
 export const X_BEARER_TOKEN = process.env.X_BEARER_TOKEN ?? '';
 export const ALIENVAULT_API_KEY = process.env.ALIENVAULT_API_KEY ?? '';
+export const REDIS_URL = process.env.REDIS_URL ?? 'redis://localhost:6379';
 
 // All secret values for error sanitization
 const ALL_SECRETS: string[] = [
@@ -66,6 +67,12 @@ export const TTL = {
   ECON_CALENDAR:   4 * 60 * 60 * 1000,  // 4 h
   ALERTS:     30_000,                   // 30 s
   STATIC:     7 * 24 * 60 * 60 * 1000, // 7 d
+  CII:           30 * 60 * 1000,        // 30 min
+  FOCAL_POINTS:  15 * 60 * 1000,        // 15 min
+  ANOMALY:       15 * 60 * 1000,        // 15 min
+  POLYMARKET:     5 * 60 * 1000,        // 5 min
+  CLOUDFLARE:    15 * 60 * 1000,        // 15 min
+  FIRMS:         30 * 60 * 1000,        // 30 min
 } as const;
 
 export const FETCH_TIMEOUT_API = 15_000;
