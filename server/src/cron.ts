@@ -28,6 +28,8 @@ import { fetchEconomicCalendar } from './services/economic-calendar.js';
 import { analyzeAlerts } from './services/alerts.js';
 import { fetchEarthquakes } from './services/earthquakes.js';
 import { fetchUNSC } from './services/unsc.js';
+import { fetchCloudflareOutages } from './services/cloudflare-radar.js';
+import { fetchFirmsHotspots } from './services/firms.js';
 
 function safeRun(name: string, fn: () => Promise<void> | void) {
   return async () => {
@@ -120,6 +122,12 @@ export function startCronJobs() {
 
   // 0,30 * * * * -> USGS Earthquakes (every 30 min)
   cron.schedule('0,30 * * * *', safeRun('earthquakes', fetchEarthquakes));
+
+  // */15 * * * * -> Cloudflare Radar outages (every 15 min, offset 5)
+  cron.schedule('5,20,35,50 * * * *', safeRun('cloudflare', fetchCloudflareOutages));
+
+  // 5,35 * * * * -> NASA FIRMS hotspots (every 30 min, offset 5)
+  cron.schedule('5,35 * * * *', safeRun('firms', fetchFirmsHotspots));
 
   // * * * * * -> Alerts analysis (every minute)
   cron.schedule('* * * * *', safeRun('alerts', analyzeAlerts));

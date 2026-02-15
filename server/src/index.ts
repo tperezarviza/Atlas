@@ -34,6 +34,8 @@ import { registerEconomicCalendarRoutes } from './routes/economic-calendar.js';
 import { registerAlertsRoutes } from './routes/alerts.js';
 import { registerVesselsRoutes } from './routes/vessels.js';
 import { registerEarthquakeRoutes } from './routes/earthquakes.js';
+import { registerCloudflareRoutes } from './routes/cloudflare.js';
+import { registerFirmsRoutes } from './routes/firms.js';
 import { startCronJobs } from './cron.js';
 import { warmUpCache } from './services/warmup.js';
 import { initRedis } from './redis.js';
@@ -109,6 +111,8 @@ registerEconomicCalendarRoutes(app);
 registerAlertsRoutes(app);
 registerVesselsRoutes(app);
 registerEarthquakeRoutes(app);
+registerCloudflareRoutes(app);
+registerFirmsRoutes(app);
 
 // SPA fallback — serve index.html for non-API routes
 app.setNotFoundHandler((request, reply) => {

@@ -12,6 +12,7 @@ export const OPENSKY_CLIENT_ID = process.env.OPENSKY_CLIENT_ID ?? '';
 export const OPENSKY_CLIENT_SECRET = process.env.OPENSKY_CLIENT_SECRET ?? '';
 export const X_BEARER_TOKEN = process.env.X_BEARER_TOKEN ?? '';
 export const ALIENVAULT_API_KEY = process.env.ALIENVAULT_API_KEY ?? '';
+export const FIRMS_API_KEY = process.env.FIRMS_API_KEY ?? '';
 export const REDIS_URL = process.env.REDIS_URL ?? 'redis://localhost:6379';
 
 // All secret values for error sanitization

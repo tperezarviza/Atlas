@@ -10,6 +10,8 @@ const CACHE_KEYS = [
   'twitter', 'cyber_threats', 'natural_events', 'economic_calendar', 'alerts',
   'earthquakes',
   'unsc_calendar',
+  'cloudflare_outages',
+  'fire_hotspots',
 ];
 
 // Map cache keys to human-readable service names and categories
@@ -46,6 +48,8 @@ const SERVICE_META: Record<string, { name: string; category: string }> = {
   alerts: { name: 'Alerts Engine', category: 'System' },
   earthquakes: { name: 'USGS Earthquakes', category: 'Intelligence' },
   unsc_calendar: { name: 'UNSC Calendar', category: 'Intelligence' },
+  cloudflare_outages: { name: 'Cloudflare Radar', category: 'Cyber' },
+  fire_hotspots: { name: 'NASA FIRMS Fires', category: 'Intelligence' },
 };
 
 const startTime = Date.now();
