@@ -1,5 +1,6 @@
 import { FETCH_TIMEOUT_API, TTL } from '../config.js';
 import { cache } from '../cache.js';
+import { withCircuitBreaker } from '../utils/circuit-breaker.js';
 
 const FIRMS_API_KEY = process.env.FIRMS_API_KEY ?? '';
 
@@ -74,7 +75,11 @@ export async function fetchFirmsHotspots(): Promise<void> {
 
     for (const [name, bbox] of Object.entries(REGIONS)) {
       try {
-        const hotspots = await fetchRegion(name, bbox);
+        const hotspots = await withCircuitBreaker(
+          'firms',
+          () => fetchRegion(name, bbox),
+          () => [] as FireHotspot[],
+        );
         allHotspots.push(...hotspots);
         console.log(`[FIRMS] ${name}: ${hotspots.length} hotspots`);
       } catch (err) {

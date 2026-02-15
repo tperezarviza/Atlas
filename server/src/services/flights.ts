@@ -1,5 +1,6 @@
 import { OPENSKY_CLIENT_ID, OPENSKY_CLIENT_SECRET, FETCH_TIMEOUT_API, TTL } from '../config.js';
 import { cache } from '../cache.js';
+import { withCircuitBreaker } from '../utils/circuit-breaker.js';
 import type { MilitaryFlight, FlightCategory } from '../types.js';
 
 // OpenSky OAuth2 token management
@@ -187,7 +188,11 @@ export async function fetchFlights(): Promise<void> {
     // Fetch regions sequentially to respect rate limits
     for (const [name, bbox] of Object.entries(REGIONS)) {
       try {
-        const flights = await fetchRegion(name, bbox, token);
+        const flights = await withCircuitBreaker(
+          'opensky',
+          () => fetchRegion(name, bbox, token),
+          () => [] as MilitaryFlight[],
+        );
         for (const f of flights) {
           if (!seen.has(f.icao24)) {
             seen.add(f.icao24);

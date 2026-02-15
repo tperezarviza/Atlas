@@ -1,3 +1,5 @@
+import { redisGet, redisSet } from './redis.js';
+
 interface CacheEntry<T> {
   data: T;
   setAt: number;
@@ -24,6 +26,30 @@ class TTLCache {
     if (!entry) return null;
     // Return data even if stale — stale data is better than nothing
     return entry.data as T;
+  }
+
+  async setWithRedis<T>(key: string, value: T, memoryTTL: number, redisTTLSeconds?: number): Promise<void> {
+    this.set(key, value, memoryTTL);
+    const ttl = redisTTLSeconds ?? Math.ceil(memoryTTL * 3 / 1000);
+    try {
+      await redisSet(`cache:${key}`, value, ttl);
+    } catch (err) {
+      console.warn(`[CACHE] Redis backup failed for ${key}:`, err instanceof Error ? err.message : err);
+    }
+  }
+
+  async getWithRedis<T>(key: string): Promise<T | undefined> {
+    const mem = this.get<T>(key);
+    if (mem !== null) return mem;
+    try {
+      const redis = await redisGet<T>(`cache:${key}`);
+      if (redis !== null && redis !== undefined) {
+        console.log(`[CACHE] Restored ${key} from Redis backup`);
+        this.set(key, redis, 120_000); // 2 min bridge TTL
+        return redis;
+      }
+    } catch { /* Redis unavailable, continue without */ }
+    return undefined;
   }
 
   isFresh(key: string): boolean {

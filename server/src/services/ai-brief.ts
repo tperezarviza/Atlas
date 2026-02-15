@@ -419,7 +419,7 @@ export async function fetchBrief(focus?: string): Promise<BriefResponse> {
     sources: SOURCE_LABELS[focusKey] ?? SOURCE_LABELS.global,
   };
 
-  cache.set(cacheKey, brief, TTL.BRIEF);
+  await cache.setWithRedis(cacheKey, brief, TTL.BRIEF, 24 * 3600);
   console.log(`[AI-BRIEF] ${focusKey.toUpperCase()} brief generated and cached`);
   return brief;
 }

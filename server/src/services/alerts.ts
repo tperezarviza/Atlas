@@ -1,6 +1,7 @@
 import { createHash } from 'crypto';
 import { readFileSync, writeFileSync, mkdirSync } from 'fs';
 import { cache } from '../cache.js';
+import { redisGet, redisSet } from '../redis.js';
 import type { Alert, AlertPriority, AlertSource, Conflict, NewsPoint, InternetIncident, MarketSection, ExecutiveOrder, NaturalEvent, TwitterIntelItem, FeedItem } from '../types.js';
 import type { Earthquake } from './earthquakes.js';
 
@@ -238,6 +239,9 @@ export function analyzeAlerts(): void {
 
   cache.set('alerts', alertStore, 60_000);
 
+  // Persist seenHashes to Redis for restart recovery
+  redisSet('state:alertSeenHashes', [...seenHashes], 24 * 3600).catch(() => {});
+
   console.log(`[ALERTS] ${alertStore.length} alerts in store (${alertStore.filter(a => !a.read).length} unread)`);
 }
 
@@ -288,6 +292,16 @@ function saveAlerts(): void {
 
 // Load on startup
 loadAlerts();
+
+// Restore from Redis if file-based load was empty
+export async function restoreAlertState(): Promise<void> {
+  if (seenHashes.size > 0) return; // already loaded from disk
+  const saved = await redisGet<string[]>('state:alertSeenHashes');
+  if (saved && Array.isArray(saved)) {
+    saved.forEach(h => seenHashes.add(h));
+    console.log(`[ALERTS] Restored ${saved.length} seen hashes from Redis`);
+  }
+}
 
 // Save periodically (every 5 min)
 setInterval(saveAlerts, 5 * 60 * 1000);

@@ -1,6 +1,7 @@
 import { FETCH_TIMEOUT_API, TTL } from '../config.js';
 import { cache } from '../cache.js';
 import { translateTexts } from './translate.js';
+import { withCircuitBreaker } from '../utils/circuit-breaker.js';
 import type { NewsPoint, NewsWireItem, NewsBullet } from '../types.js';
 
 interface GdeltFeature {
@@ -150,7 +151,11 @@ export async function fetchGdeltNews(): Promise<void> {
   try {
     const results = await Promise.allSettled(
       GDELT_QUERIES.map((q) =>
-        fetchGdeltQuery(q.query, q.category, q.timespan, q.maxpoints)
+        withCircuitBreaker(
+          'gdelt',
+          () => fetchGdeltQuery(q.query, q.category, q.timespan, q.maxpoints),
+          () => cache.get<NewsPoint[]>('news') ?? [],
+        )
       )
     );
 

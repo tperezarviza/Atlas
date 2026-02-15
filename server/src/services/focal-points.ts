@@ -193,7 +193,7 @@ export async function detectFocalPoints(): Promise<void> {
     // Save current as "previous" for next cycle
     await redisSet('focal:previous', top, 24 * 3600);
 
-    cache.set('focal_points', top, TTL.FOCAL_POINTS);
+    await cache.setWithRedis('focal_points', top, TTL.FOCAL_POINTS, 3600);
     console.log(`[FOCAL] ${top.length} focal points detected. Top: ${top.slice(0, 3).map(f => `${f.entity}(${f.score})`).join(', ')}`);
   } catch (err) {
     console.error('[FOCAL] Detection failed:', err instanceof Error ? err.message : err);

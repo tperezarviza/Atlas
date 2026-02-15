@@ -1,5 +1,6 @@
 import { ACLED_EMAIL, ACLED_PASSWORD, FETCH_TIMEOUT_API, TTL } from '../config.js';
 import { cache } from '../cache.js';
+import { withCircuitBreaker } from '../utils/circuit-breaker.js';
 import type { Conflict, Severity, Trend } from '../types.js';
 
 interface AcledEvent {
@@ -167,14 +168,20 @@ export async function fetchConflicts(): Promise<void> {
 
     const url = `https://acleddata.com/api/acled/read?year=${previousYear}|${currentYear}&year_where=BETWEEN&limit=5000&fields=event_id_cnty|event_date|event_type|sub_event_type|actor1|actor2|country|latitude|longitude|fatalities|notes`;
 
-    const res = await fetch(url, {
-      signal: AbortSignal.timeout(FETCH_TIMEOUT_API),
-      headers: { Authorization: `Bearer ${accessToken}` },
-    });
-    if (!res.ok) throw new Error(`ACLED API ${res.status}`);
-
-    const json = await res.json();
-    let events: AcledEvent[] = json.data ?? [];
+    let events: AcledEvent[] = await withCircuitBreaker(
+      'acled',
+      async () => {
+        const res = await fetch(url, {
+          signal: AbortSignal.timeout(FETCH_TIMEOUT_API),
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+        if (!res.ok) throw new Error(`ACLED API ${res.status}`);
+        const json = await res.json();
+        return (json.data ?? []) as AcledEvent[];
+      },
+      () => [] as AcledEvent[],
+    );
+    if (events.length === 0 && !cache.has('conflicts')) return;
 
     // Filter to the most recent 90 days of available data
     if (events.length > 0) {

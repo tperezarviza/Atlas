@@ -1,5 +1,6 @@
 import cron from 'node-cron';
 import { sanitizeError } from './config.js';
+import { redisKeys } from './redis.js';
 import { fetchMarkets } from './services/markets.js';
 import { fetchFeeds } from './services/feeds.js';
 import { fetchGdeltNews } from './services/gdelt.js';
@@ -147,6 +148,12 @@ export function startCronJobs() {
 
   // * * * * * -> Alerts analysis (every minute)
   cron.schedule('* * * * *', safeRun('alerts', analyzeAlerts));
+
+  // Daily 4am: Redis key count monitoring
+  cron.schedule('0 4 * * *', safeRun('redis-monitor', async () => {
+    const keys = await redisKeys('*');
+    console.log(`[REDIS] Key count: ${keys.length} (cache:* = ${keys.filter(k => k.startsWith('cache:')).length}, state:* = ${keys.filter(k => k.startsWith('state:')).length})`);
+  }));
 
   console.log('[CRON] All jobs scheduled');
 }

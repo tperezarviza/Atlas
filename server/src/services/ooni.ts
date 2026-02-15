@@ -1,6 +1,7 @@
 import { FETCH_TIMEOUT_API, TTL } from '../config.js';
 import { cache } from '../cache.js';
 import { safeJson } from '../utils.js';
+import { withCircuitBreaker } from '../utils/circuit-breaker.js';
 import type { InternetIncident } from '../types.js';
 
 interface OoniIncident {
@@ -26,15 +27,19 @@ export async function fetchOoniIncidents(): Promise<void> {
   console.log('[OONI] Fetching internet incident data...');
 
   try {
-    const res = await fetch('https://api.ooni.io/api/v1/incidents/search?status=ongoing&limit=50', {
-      signal: AbortSignal.timeout(FETCH_TIMEOUT_API),
-      headers: { 'User-Agent': 'ATLAS/1.0 (Geopolitical Dashboard)' },
-    });
-
-    if (!res.ok) throw new Error(`OONI API ${res.status}`);
-
-    const json = await safeJson<Record<string, unknown>>(res);
-    const raw: OoniIncident[] = ((json.incidents ?? []) as OoniIncident[]).slice(0, 100);
+    const raw = await withCircuitBreaker<OoniIncident[]>(
+      'ooni',
+      async () => {
+        const res = await fetch('https://api.ooni.io/api/v1/incidents/search?status=ongoing&limit=50', {
+          signal: AbortSignal.timeout(FETCH_TIMEOUT_API),
+          headers: { 'User-Agent': 'ATLAS/1.0 (Geopolitical Dashboard)' },
+        });
+        if (!res.ok) throw new Error(`OONI API ${res.status}`);
+        const json = await safeJson<Record<string, unknown>>(res);
+        return ((json.incidents ?? []) as OoniIncident[]).slice(0, 100);
+      },
+      () => [] as OoniIncident[],
+    );
 
     if (raw.length === 0) {
       console.warn('[OONI] No incidents returned');

@@ -1,5 +1,7 @@
 import { X_BEARER_TOKEN, FETCH_TIMEOUT_API, TTL } from '../config.js';
 import { cache } from '../cache.js';
+import { redisSet } from '../redis.js';
+import { withCircuitBreaker } from '../utils/circuit-breaker.js';
 import type { TwitterIntelItem, TweetCategory, TweetPriority } from '../types.js';
 
 const API_BASE = 'https://api.x.com/2';
@@ -130,6 +132,9 @@ let monthlyTweetsRead = 0;
 let currentMonth = new Date().getMonth();
 let queryIndex = 0;
 
+export function setMonthlyTweetsRead(count: number): void { monthlyTweetsRead = count; }
+export function setQueryIndex(idx: number): void { queryIndex = idx; }
+
 const MONTHLY_CAP = 10_000;
 const CAP_WARNING_PCT = 0.9;
 
@@ -231,17 +236,25 @@ export async function fetchTwitterPrimary(): Promise<void> {
 
   console.log(`[TWITTER] Fetching: ${q.label} (budget: ${monthlyTweetsRead}/${MONTHLY_CAP})`);
   try {
-    const newTweets = await searchTweets(q, 10);
+    const newTweets = await withCircuitBreaker(
+      'twitter',
+      () => searchTweets(q, 10),
+      () => [] as TwitterIntelItem[],
+    );
     const existing = cache.get<TwitterIntelItem[]>('twitter') || [];
     const seen = new Set(existing.map(t => t.id));
     const merged = [...newTweets.filter(t => !seen.has(t.id)), ...existing]
       .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
       .slice(0, 200);
 
-    cache.set('twitter', merged, TTL.TWITTER);
+    await cache.setWithRedis('twitter', merged, TTL.TWITTER, 3600);
     if (newTweets.length > 0) {
       console.log(`[TWITTER] +${newTweets.length} tweets (total: ${merged.length})`);
     }
+
+    // Persist state to Redis for restart recovery
+    await redisSet('state:twitterMonthlyCount', monthlyTweetsRead, 35 * 86400).catch(() => {});
+    await redisSet('state:twitterQueryIndex', queryIndex, 35 * 86400).catch(() => {});
   } catch (err) {
     console.error('[TWITTER] Fetch failed:', err instanceof Error ? err.message : err);
   }

@@ -1,6 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { cache } from '../cache.js';
 import { isRedisConnected } from '../redis.js';
+import { getCircuitStates } from '../utils/circuit-breaker.js';
 
 const CACHE_KEYS = [
   'conflicts', 'news', 'feed', 'markets', 'forex',
@@ -90,6 +91,7 @@ export function registerHealthRoutes(app: FastifyInstance) {
       uptime: Math.floor((Date.now() - startTime) / 1000),
       redisConnected: isRedisConnected(),
       summary: { ok: okCount, total: totalCount },
+      circuitBreakers: getCircuitStates(),
       services,
     };
   });

@@ -117,7 +117,7 @@ ${JSON.stringify(conflicts.map((c) => ({ name: c.name, lat: c.lat, lng: c.lng, s
       return;
     }
 
-    cache.set('connections', connections, TTL.CONNECTIONS);
+    await cache.setWithRedis('connections', connections, TTL.CONNECTIONS, 12 * 3600);
     console.log(`[CONNECTIONS] ${connections.length} connections cached`);
   } catch (err) {
     console.error('[CONNECTIONS] Fetch failed:', err);

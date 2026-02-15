@@ -191,7 +191,7 @@ export async function fetchPropaganda(): Promise<void> {
     }
 
     if (entries.length > 0) {
-      cache.set('propaganda', entries, TTL.PROPAGANDA);
+      await cache.setWithRedis('propaganda', entries, TTL.PROPAGANDA, 48 * 3600);
       console.log(`[PROPAGANDA] ${entries.length} state media entries cached`);
     } else {
       console.warn('[PROPAGANDA] No entries fetched, keeping cache/mock');

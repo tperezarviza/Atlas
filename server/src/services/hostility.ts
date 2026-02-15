@@ -1,6 +1,7 @@
 import { TTL } from '../config.js';
 import { cache } from '../cache.js';
 import { translateTexts } from './translate.js';
+import { withCircuitBreaker } from '../utils/circuit-breaker.js';
 import type { HostilityPair, Severity } from '../types.js';
 
 const GDELT_TIMEOUT = 25_000;  // GDELT is slow — 25s timeout
@@ -45,38 +46,40 @@ export async function fetchHostilityIndex(): Promise<void> {
 
     for (const pair of HOSTILITY_PAIRS) {
       try {
-        const query = encodeURIComponent(`${wrapIfNeeded(pair.countryA)} ${wrapIfNeeded(pair.countryB)}`);
-        const url = `https://api.gdeltproject.org/api/v2/doc/doc?query=${query}&mode=tonechart&format=json&timespan=7d`;
+        const fetchToneData = async (): Promise<string> => {
+          const query = encodeURIComponent(`${wrapIfNeeded(pair.countryA)} ${wrapIfNeeded(pair.countryB)}`);
+          const url = `https://api.gdeltproject.org/api/v2/doc/doc?query=${query}&mode=tonechart&format=json&timespan=7d`;
 
-        const res = await fetch(url, {
-          signal: AbortSignal.timeout(GDELT_TIMEOUT),
-          headers: { 'User-Agent': 'ATLAS/1.0' },
-        });
-
-        if (!res.ok) {
-          console.warn(`[HOSTILITY] GDELT ${pair.id}: ${res.status}`);
-          await delay(PAIR_DELAY);
-          continue;
-        }
-
-        let text = await res.text();
-
-        // Fallback: if GDELT rejects the query (e.g. "phrase too short"), retry without any quotes
-        if (!text.startsWith('{') && !text.startsWith('[')) {
-          const fallbackQuery = encodeURIComponent(`${pair.countryA} ${pair.countryB}`);
-          const fallbackUrl = `https://api.gdeltproject.org/api/v2/doc/doc?query=${fallbackQuery}&mode=tonechart&format=json&timespan=7d`;
-          const fallbackRes = await fetch(fallbackUrl, {
+          const res = await fetch(url, {
             signal: AbortSignal.timeout(GDELT_TIMEOUT),
             headers: { 'User-Agent': 'ATLAS/1.0' },
           });
-          if (fallbackRes.ok) {
-            text = await fallbackRes.text();
-          }
+
+          if (!res.ok) throw new Error(`GDELT ${pair.id}: ${res.status}`);
+
+          let text = await res.text();
+
           if (!text.startsWith('{') && !text.startsWith('[')) {
-            console.warn(`[HOSTILITY] GDELT ${pair.id}: non-JSON even after retry`);
-            await delay(PAIR_DELAY);
-            continue;
+            const fallbackQuery = encodeURIComponent(`${pair.countryA} ${pair.countryB}`);
+            const fallbackUrl = `https://api.gdeltproject.org/api/v2/doc/doc?query=${fallbackQuery}&mode=tonechart&format=json&timespan=7d`;
+            const fallbackRes = await fetch(fallbackUrl, {
+              signal: AbortSignal.timeout(GDELT_TIMEOUT),
+              headers: { 'User-Agent': 'ATLAS/1.0' },
+            });
+            if (fallbackRes.ok) text = await fallbackRes.text();
+            if (!text.startsWith('{') && !text.startsWith('[')) throw new Error(`GDELT ${pair.id}: non-JSON`);
           }
+
+          return text;
+        };
+
+        let text: string;
+        try {
+          text = await withCircuitBreaker(`gdelt-hostility`, fetchToneData);
+        } catch {
+          console.warn(`[HOSTILITY] GDELT ${pair.id}: circuit breaker or fetch failed`);
+          await delay(PAIR_DELAY);
+          continue;
         }
 
         const json = JSON.parse(text) as Record<string, unknown>;
@@ -152,7 +155,7 @@ export async function fetchHostilityIndex(): Promise<void> {
     }
 
     if (pairs.length > 0) {
-      cache.set('hostility', pairs, TTL.HOSTILITY);
+      await cache.setWithRedis('hostility', pairs, TTL.HOSTILITY, 12 * 3600);
       console.log(`[HOSTILITY] ${pairs.length} hostility pairs cached`);
     } else {
       console.warn('[HOSTILITY] No pairs fetched, keeping cache/mock');
