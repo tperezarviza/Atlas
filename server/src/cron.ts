@@ -31,6 +31,7 @@ import { fetchUNSC } from './services/unsc.js';
 import { fetchCloudflareOutages } from './services/cloudflare-radar.js';
 import { fetchFirmsHotspots } from './services/firms.js';
 import { fetchPolymarket } from './services/polymarket.js';
+import { computeCII } from './services/cii.js';
 
 function safeRun(name: string, fn: () => Promise<void> | void) {
   return async () => {
@@ -132,6 +133,9 @@ export function startCronJobs() {
 
   // */5 * * * * -> Polymarket prediction markets (every 5 min)
   cron.schedule('2,7,12,17,22,27,32,37,42,47,52,57 * * * *', safeRun('polymarket', fetchPolymarket));
+
+  // 20 */1 * * * -> Country Instability Index (every 30 min, offset 20)
+  cron.schedule('20,50 * * * *', safeRun('cii', computeCII));
 
   // * * * * * -> Alerts analysis (every minute)
   cron.schedule('* * * * *', safeRun('alerts', analyzeAlerts));

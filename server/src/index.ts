@@ -37,6 +37,7 @@ import { registerEarthquakeRoutes } from './routes/earthquakes.js';
 import { registerCloudflareRoutes } from './routes/cloudflare.js';
 import { registerFirmsRoutes } from './routes/firms.js';
 import { registerPolymarketRoutes } from './routes/polymarket.js';
+import { registerCIIRoutes } from './routes/cii.js';
 import { startCronJobs } from './cron.js';
 import { warmUpCache } from './services/warmup.js';
 import { initRedis } from './redis.js';
@@ -115,6 +116,7 @@ registerEarthquakeRoutes(app);
 registerCloudflareRoutes(app);
 registerFirmsRoutes(app);
 registerPolymarketRoutes(app);
+registerCIIRoutes(app);
 
 // SPA fallback — serve index.html for non-API routes
 app.setNotFoundHandler((request, reply) => {

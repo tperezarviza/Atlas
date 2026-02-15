@@ -13,6 +13,7 @@ const CACHE_KEYS = [
   'cloudflare_outages',
   'fire_hotspots',
   'polymarket',
+  'cii',
 ];
 
 // Map cache keys to human-readable service names and categories
@@ -52,6 +53,7 @@ const SERVICE_META: Record<string, { name: string; category: string }> = {
   cloudflare_outages: { name: 'Cloudflare Radar', category: 'Cyber' },
   fire_hotspots: { name: 'NASA FIRMS Fires', category: 'Intelligence' },
   polymarket: { name: 'Polymarket Predictions', category: 'Markets' },
+  cii: { name: 'Country Instability Index', category: 'Intelligence' },
 };
 
 const startTime = Date.now();
