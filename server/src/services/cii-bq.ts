@@ -18,7 +18,7 @@ SELECT
   COUNTIF(AvgTone < -2) / COUNT(*) * 100 as negative_pct,
   COUNTIF(EventRootCode IN ('18','19','20')) as violence_count
 FROM \`gdelt-bq.gdeltv2.events\`
-WHERE _PARTITIONTIME >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 24 HOUR)
+WHERE SQLDATE >= CAST(FORMAT_TIMESTAMP('%Y%m%d', TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 2 DAY)) AS INT64)
   AND Actor1CountryCode IN (
     'US','CH','RS','IR','UP','IS','SY','TU','IN','PK','AF',
     'IZ','YM','LE','SO','LY','VE','CU','KN','MY','SF','NI',

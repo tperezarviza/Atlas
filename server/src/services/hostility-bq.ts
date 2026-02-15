@@ -36,7 +36,7 @@ events AS (
     Actor1CountryCode, Actor2CountryCode,
     AvgTone, SOURCEURL
   FROM \`gdelt-bq.gdeltv2.events\`
-  WHERE _PARTITIONTIME >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 7 DAY)
+  WHERE SQLDATE >= CAST(FORMAT_TIMESTAMP('%Y%m%d', TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 7 DAY)) AS INT64)
     AND AvgTone IS NOT NULL
     AND Actor1CountryCode IS NOT NULL
     AND Actor2CountryCode IS NOT NULL

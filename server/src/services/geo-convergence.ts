@@ -30,7 +30,7 @@ WITH gridded AS (
     ActionGeo_Lat,
     ActionGeo_Long
   FROM \`gdelt-bq.gdeltv2.events\`
-  WHERE _PARTITIONTIME >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 24 HOUR)
+  WHERE SQLDATE >= CAST(FORMAT_TIMESTAMP('%Y%m%d', TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 2 DAY)) AS INT64)
     AND ActionGeo_Lat IS NOT NULL
     AND ActionGeo_Long IS NOT NULL
     AND EventRootCode IN ('10','11','12','13','14','15','17','18','19','20')

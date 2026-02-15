@@ -22,7 +22,7 @@ WITH article_entities AS (
     SPLIT(V2Themes, ';')[SAFE_OFFSET(0)] as theme
   FROM \`gdelt-bq.gdeltv2.gkg\`,
     UNNEST(SPLIT(V2Persons, ';')) AS person
-  WHERE _PARTITIONTIME >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 6 HOUR)
+  WHERE DATE >= CAST(FORMAT_TIMESTAMP('%Y%m%d%H%M%S', TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 6 HOUR)) AS INT64)
     AND V2Persons != ''
 
   UNION ALL
@@ -35,7 +35,7 @@ WITH article_entities AS (
     SPLIT(V2Themes, ';')[SAFE_OFFSET(0)]
   FROM \`gdelt-bq.gdeltv2.gkg\`,
     UNNEST(SPLIT(V2Organizations, ';')) AS org
-  WHERE _PARTITIONTIME >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 6 HOUR)
+  WHERE DATE >= CAST(FORMAT_TIMESTAMP('%Y%m%d%H%M%S', TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 6 HOUR)) AS INT64)
     AND V2Organizations != ''
 ),
 significant_entities AS (
