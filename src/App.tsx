@@ -1,5 +1,4 @@
 import { useState, useCallback, useEffect, useMemo, lazy, Suspense } from 'react'
-import { motion } from 'framer-motion'
 import { useApiData } from './hooks/useApiData'
 import { api } from './services/api'
 import { useContextRotation } from './hooks/useContextRotation'
@@ -126,14 +125,14 @@ export default function App() {
           <DashboardLayout
             kioskActive={kioskActive}
             r2c1={
-              <motion.div className="h-full" key={`r2c1-${context.id}`} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.02, duration: 0.15, ease: 'easeOut' }}>
+              <div className="h-full transition-opacity duration-300">
                 <TabPanel tabKey={`${context.id}-r2c1`}>
                   {renderSlot('r2c1')}
                 </TabPanel>
-              </motion.div>
+              </div>
             }
             map={
-              <motion.div className="h-full" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.04, duration: 0.15, ease: 'easeOut' }}>
+              <div className="h-full">
                 <Suspense fallback={<div className="h-full w-full" style={{ background: '#0a0a0a' }} />}>
                   <WorldMap
                     selectedConflictId={selectedConflictId}
@@ -148,36 +147,36 @@ export default function App() {
                     activeTab={context.id as TabId}
                   />
                 </Suspense>
-              </motion.div>
+              </div>
             }
             r2c3={
-              <motion.div className="h-full" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.06, duration: 0.15, ease: 'easeOut' }}>
+              <div className="h-full">
                 {renderSlot('r2c3')}
-              </motion.div>
+              </div>
             }
             r3c1={
-              <motion.div className="h-full" key={`r3c1-${context.id}`} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08, duration: 0.15, ease: 'easeOut' }}>
+              <div className="h-full transition-opacity duration-300">
                 <TabPanel tabKey={`${context.id}-r3c1`}>
                   {renderSlot('r3c1')}
                 </TabPanel>
-              </motion.div>
+              </div>
             }
             r3c2Left={
-              <motion.div className="h-full" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.10, duration: 0.15, ease: 'easeOut' }}>
+              <div className="h-full">
                 {renderSlot('r3c2-left')}
-              </motion.div>
+              </div>
             }
             r3c2Right={
-              <motion.div className="h-full" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12, duration: 0.15, ease: 'easeOut' }}>
+              <div className="h-full">
                 {renderSlot('r3c2-right')}
-              </motion.div>
+              </div>
             }
             r3c3={
-              <motion.div className="h-full" key={`r3c3-${context.id}`} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.14, duration: 0.15, ease: 'easeOut' }}>
+              <div className="h-full transition-opacity duration-300">
                 <TabPanel tabKey={`${context.id}-r3c3`}>
                   {renderSlot('r3c3')}
                 </TabPanel>
-              </motion.div>
+              </div>
             }
           />
         </div>

@@ -1,5 +1,4 @@
 import { memo, useState, useRef, useEffect, useMemo, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { useApiData } from '../hooks/useApiData';
 import { api } from '../services/api';
 import MaybeFadeIn from './MaybeFadeIn';
@@ -93,11 +92,11 @@ export default memo(function LeaderFeed({ filter, title }: LeaderFeedProps = {})
                 <span className="font-data text-[13px] text-text-muted tracking-[0.5px]">No matching items</span>
               </div>
             ) : (
-              <AnimatePresence initial={false}>
+              <>
               {feed.map((item) => (
                 <FeedItemRow key={item.id} item={item} />
               ))}
-              </AnimatePresence>
+              </>
             )}
           </MaybeFadeIn>
         </div>
@@ -119,11 +118,8 @@ function FeedItemRow({ item }: { item: FeedItem }) {
   }, [item.text]);
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: -8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.15 }}
-      className="cursor-pointer transition-colors duration-150 hover:bg-bg-card-hover"
+    <div
+      className="cursor-pointer transition-colors duration-150 hover:bg-bg-card-hover feed-item-enter"
       style={{
         borderBottom: '1px solid rgba(255,200,50,0.10)',
         borderLeft: `3px solid ${borderColors[item.category] || '#ffc832'}`,
@@ -209,7 +205,7 @@ function FeedItemRow({ item }: { item: FeedItem }) {
           </span>
         ))}
       </div>
-    </motion.div>
+    </div>
   );
 }
 

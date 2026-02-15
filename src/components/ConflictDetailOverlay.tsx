@@ -1,4 +1,3 @@
-import { AnimatePresence, motion } from 'framer-motion';
 import type { Conflict } from '../types';
 
 interface ConflictDetailOverlayProps {
@@ -21,16 +20,11 @@ const severityBg: Record<string, string> = {
 };
 
 export default function ConflictDetailOverlay({ conflict, onClose }: ConflictDetailOverlayProps) {
+  if (!conflict) return null;
+
   return (
-    <AnimatePresence>
-      {conflict && (
-        <motion.div
-          key={conflict.id}
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: 8 }}
-          transition={{ duration: 0.2 }}
-          className="absolute bottom-12 right-2 z-[800] overflow-hidden"
+        <div
+          className="absolute bottom-12 right-2 z-[800] overflow-hidden overlay-enter"
           style={{
             width: 280,
             background: 'rgba(0,0,0,.90)',
@@ -111,8 +105,6 @@ export default function ConflictDetailOverlay({ conflict, onClose }: ConflictDet
               </div>
             </div>
           </div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+        </div>
   );
 }

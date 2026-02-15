@@ -1,5 +1,4 @@
 import { memo } from 'react';
-import { motion } from 'framer-motion';
 import { PurpleBadge } from '../DataBadge';
 
 const NATO_SPENDING = [
@@ -47,7 +46,7 @@ export default memo(function NatoResponse() {
 
       {/* Scrollable body */}
       <div className="flex-1 overflow-y-auto">
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.15 }}>
+        <div>
           {/* Defense Spending vs 2% Target */}
           <div style={{ borderBottom: '1px solid rgba(255,200,50,0.10)' }}>
             <div className="px-3 py-[6px]">
@@ -150,7 +149,7 @@ export default memo(function NatoResponse() {
               </div>
             </div>
           </div>
-        </motion.div>
+        </div>
       </div>
     </div>
   );
