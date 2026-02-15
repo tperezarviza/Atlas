@@ -1,10 +1,10 @@
-import Anthropic from '@anthropic-ai/sdk';
 import RSSParser from 'rss-parser';
-import { ANTHROPIC_API_KEY, FETCH_TIMEOUT_RSS, TTL } from '../config.js';
+import { FETCH_TIMEOUT_RSS, TTL } from '../config.js';
 import { cache } from '../cache.js';
 import { stripHTML } from '../utils.js';
 import { translateTexts } from './translate.js';
 import { redisGet, redisSet } from '../redis.js';
+import { aiComplete } from '../utils/ai-client.js';
 import type { PropagandaEntry } from '../types.js';
 
 const parser = new RSSParser({ timeout: FETCH_TIMEOUT_RSS });
@@ -77,7 +77,6 @@ export async function fetchPropaganda(): Promise<void> {
   console.log('[PROPAGANDA] Analyzing state media narratives...');
 
   try {
-    const client = ANTHROPIC_API_KEY ? new Anthropic({ apiKey: ANTHROPIC_API_KEY }) : null;
     const entries: PropagandaEntry[] = [];
 
     for (const media of STATE_MEDIA) {
@@ -104,24 +103,17 @@ export async function fetchPropaganda(): Promise<void> {
         // Translate non-English headlines before AI analysis
         headlines = await translateTexts(headlines, `PROPAGANDA:${media.country}`);
 
-        // Use Claude AI to extract narratives
+        // Use AI to extract narratives (Haiku — mechanical extraction)
         let narratives: string[] = [];
 
-        if (client && headlines.length >= 3) {
+        if (headlines.length >= 3) {
           try {
-            const message = await client.messages.create({
-              model: 'claude-sonnet-4-5-20250929',
-              max_tokens: 500,
-              system: 'You are an information warfare analyst working from a Western democratic security perspective. Given headlines from state media, identify the top 3-5 propaganda narratives being pushed that undermine US interests, NATO cohesion, or Western democratic institutions. Focus on: anti-US messaging, wedge narratives targeting Western alliances, nuclear/military threatening rhetoric, and disinformation campaigns. Return ONLY a JSON array of short narrative descriptions (strings). No markdown, no explanation.',
-              messages: [{
-                role: 'user',
-                content: `Identify propaganda narratives from these ${media.country} state media headlines:\n\n${headlines.join('\n')}`,
-              }],
-            });
-
-            const textBlock = message.content.find((b) => b.type === 'text');
-            const text = textBlock?.text ?? '[]';
-            narratives = parseNarrativesJSON(text) ?? [];
+            const response = await aiComplete(
+              'You are an information warfare analyst working from a Western democratic security perspective. Given headlines from state media, identify the top 3-5 propaganda narratives being pushed that undermine US interests, NATO cohesion, or Western democratic institutions. Focus on: anti-US messaging, wedge narratives targeting Western alliances, nuclear/military threatening rhetoric, and disinformation campaigns. Return ONLY a JSON array of short narrative descriptions (strings). No markdown, no explanation.',
+              `Identify propaganda narratives from these ${media.country} state media headlines:\n\n${headlines.join('\n')}`,
+              { preferHaiku: true, maxTokens: 500 },
+            );
+            narratives = parseNarrativesJSON(response.text) ?? [];
           } catch (aiErr) {
             console.warn(`[PROPAGANDA] AI analysis failed for ${media.country}:`, aiErr instanceof Error ? aiErr.message : aiErr);
           }
@@ -133,20 +125,15 @@ export async function fetchPropaganda(): Promise<void> {
 
         let shiftAnalysis: { shifts: string[]; direction: string } = { shifts: [], direction: 'stable' };
 
-        if (previousNarratives.length > 0 && narratives.length > 0 && client) {
+        if (previousNarratives.length > 0 && narratives.length > 0) {
           try {
-            const shiftMessage = await client.messages.create({
-              model: 'claude-sonnet-4-5-20250929',
-              max_tokens: 400,
-              system: 'You are an information warfare analyst tracking propaganda shifts. Compare current narratives with previous ones. Return ONLY JSON: { "shifts": ["description of each change"], "direction": "escalating" | "de-escalating" | "stable" | "pivoting" }',
-              messages: [{
-                role: 'user',
-                content: `PREVIOUS ${media.country} narratives:\n${previousNarratives.join('\n')}\n\nCURRENT ${media.country} narratives:\n${narratives.join('\n')}\n\nIdentify what changed, what's new, what disappeared.`,
-              }],
-            });
+            const shiftResponse = await aiComplete(
+              'You are an information warfare analyst tracking propaganda shifts. Compare current narratives with previous ones. Return ONLY JSON: { "shifts": ["description of each change"], "direction": "escalating" | "de-escalating" | "stable" | "pivoting" }',
+              `PREVIOUS ${media.country} narratives:\n${previousNarratives.join('\n')}\n\nCURRENT ${media.country} narratives:\n${narratives.join('\n')}\n\nIdentify what changed, what's new, what disappeared.`,
+              { preferHaiku: true, maxTokens: 400 },
+            );
 
-            const shiftText = shiftMessage.content.find(b => b.type === 'text')?.text ?? '{}';
-            let cleaned = shiftText.trim();
+            let cleaned = shiftResponse.text.trim();
             const fm = cleaned.match(/```(?:json)?\s*([\s\S]*?)```/);
             if (fm) cleaned = fm[1].trim();
             const fb = cleaned.indexOf('{');

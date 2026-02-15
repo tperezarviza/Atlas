@@ -1,8 +1,8 @@
-import Anthropic from '@anthropic-ai/sdk';
-import { ANTHROPIC_API_KEY, TTL } from '../config.js';
+import { TTL } from '../config.js';
 import { cache } from '../cache.js';
 import { isBigQueryAvailable } from './bigquery.js';
 import { fetchConnectionsBQ } from './connections-bq.js';
+import { aiComplete } from '../utils/ai-client.js';
 import type { Connection, Conflict, ConnectionType } from '../types.js';
 
 const VALID_TYPES: ConnectionType[] = ['proxy_war', 'arms_flow', 'alliance', 'spillover', 'military', 'cyber'];
@@ -75,34 +75,20 @@ export async function fetchConnections(): Promise<void> {
     return fetchConnectionsBQ();
   }
 
-  if (!ANTHROPIC_API_KEY) {
-    console.warn('[CONNECTIONS] No ANTHROPIC_API_KEY configured, skipping');
-    return;
-  }
-
   console.log('[CONNECTIONS] Generating conflict connections...');
 
   try {
     const conflicts = cache.get<Conflict[]>('conflicts') ?? [];
 
-    const client = new Anthropic({ apiKey: ANTHROPIC_API_KEY });
+    const response = await aiComplete(
+      SYSTEM_PROMPT,
+      `Analyze these active conflicts and identify relationships:\n\n${JSON.stringify(conflicts.map((c) => ({ name: c.name, lat: c.lat, lng: c.lng, severity: c.severity, region: c.region })))}`,
+      { maxTokens: 2000 },
+    );
 
-    const message = await client.messages.create({
-      model: 'claude-sonnet-4-5-20250929',
-      max_tokens: 2000,
-      system: SYSTEM_PROMPT,
-      messages: [{
-        role: 'user',
-        content: `Analyze these active conflicts and identify relationships:
+    console.log(`[CONNECTIONS] AI via ${response.provider} in ${response.latencyMs}ms`);
 
-${JSON.stringify(conflicts.map((c) => ({ name: c.name, lat: c.lat, lng: c.lng, severity: c.severity, region: c.region })))}`,
-      }],
-    });
-
-    const textBlock = message.content.find((b) => b.type === 'text');
-    const text = textBlock?.text ?? '[]';
-
-    const rawArray = parseConnectionsJSON(text);
+    const rawArray = parseConnectionsJSON(response.text);
     if (!rawArray) {
       console.warn('[CONNECTIONS] Could not parse AI response as JSON array');
       return;

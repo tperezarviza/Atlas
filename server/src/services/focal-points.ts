@@ -1,9 +1,9 @@
-import Anthropic from '@anthropic-ai/sdk';
-import { ANTHROPIC_API_KEY, TTL } from '../config.js';
+import { TTL } from '../config.js';
 import { cache } from '../cache.js';
 import { redisGet, redisSet } from '../redis.js';
 import { isBigQueryAvailable } from './bigquery.js';
 import { detectFocalPointsBQ } from './focal-points-bq.js';
+import { aiComplete } from '../utils/ai-client.js';
 import type { NewsPoint, FeedItem, TwitterIntelItem, Conflict, HostilityPair, InternetIncident } from '../types.js';
 
 export interface FocalPoint {
@@ -21,31 +21,25 @@ export interface FocalPoint {
   updatedAt: string;
 }
 
-// Use Claude to extract entities from a batch of headlines
+// Use AI to extract entities from a batch of headlines (Haiku — mechanical NER task)
 async function extractEntities(headlines: string[]): Promise<{ name: string; type: string }[]> {
-  if (!ANTHROPIC_API_KEY || headlines.length === 0) return [];
-
-  const client = new Anthropic({ apiKey: ANTHROPIC_API_KEY });
+  if (headlines.length === 0) return [];
 
   try {
-    const message = await client.messages.create({
-      model: 'claude-sonnet-4-5-20250929',
-      max_tokens: 1000,
-      system: `You are a named entity extraction system for geopolitical intelligence. Extract entities from headlines.
+    const response = await aiComplete(
+      `You are a named entity extraction system for geopolitical intelligence. Extract entities from headlines.
 Return ONLY a JSON array of objects with "name" (canonical English name) and "type" (country|organization|person|event).
 Normalize country names to English (e.g., "Türkiye" → "Turkey"). Merge aliases (e.g., "IDF" + "Israel Defense Forces" → entity "IDF", type "organization").
 Focus on: countries, military organizations, political leaders, terrorist groups, international orgs, specific crises/events.
 Skip generic terms like "officials", "sources", "analysts".`,
-      messages: [{
-        role: 'user',
-        content: `Extract named entities from these intelligence headlines:\n\n${headlines.join('\n')}`,
-      }],
-    });
+      `Extract named entities from these intelligence headlines:\n\n${headlines.join('\n')}`,
+      { preferHaiku: true, maxTokens: 1000 },
+    );
 
-    const text = message.content.find(b => b.type === 'text')?.text ?? '[]';
+    console.log(`[FOCAL] NER via ${response.provider} in ${response.latencyMs}ms`);
 
     // Parse JSON (handle fenced code blocks)
-    let cleaned = text.trim();
+    let cleaned = response.text.trim();
     const fenceMatch = cleaned.match(/```(?:json)?\s*([\s\S]*?)```/);
     if (fenceMatch) cleaned = fenceMatch[1].trim();
 

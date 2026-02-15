@@ -1,6 +1,6 @@
-import Anthropic from '@anthropic-ai/sdk';
-import { ANTHROPIC_API_KEY, TTL } from '../config.js';
+import { TTL } from '../config.js';
 import { cache } from '../cache.js';
+import { aiComplete } from '../utils/ai-client.js';
 import type {
   BriefResponse, Conflict, NewsPoint, FeedItem, MarketSection,
   TwitterIntelItem, Alert, ExecutiveOrder, CongressBill, SenateNomination,
@@ -424,11 +424,6 @@ function sanitizeServerHtml(raw: string): string {
 // ── Public API ──
 
 export async function fetchBrief(focus?: string): Promise<BriefResponse> {
-  if (!ANTHROPIC_API_KEY) {
-    console.warn('[AI-BRIEF] No ANTHROPIC_API_KEY configured, skipping');
-    throw new Error('No API key');
-  }
-
   const focusKey = focus ?? 'global';
   console.log(`[AI-BRIEF] Generating ${focusKey.toUpperCase()} brief...`);
 
@@ -437,32 +432,24 @@ export async function fetchBrief(focus?: string): Promise<BriefResponse> {
   const userData = gatherData();
   const trendsContext = gatherTrendsContext(focusKey);
 
-  const client = new Anthropic({ apiKey: ANTHROPIC_API_KEY });
+  const response = await aiComplete(
+    systemPrompt,
+    `Generate intelligence brief based on this data:\n\n${userData}${trendsContext}`,
+    { maxTokens: 2500 },
+  );
 
-  const message = await client.messages.create({
-    model: 'claude-sonnet-4-5-20250929',
-    max_tokens: 2500,
-    temperature: 0.3,
-    system: systemPrompt,
-    messages: [{
-      role: 'user',
-      content: `Generate intelligence brief based on this data:\n\n${userData}${trendsContext}`,
-    }],
-  });
-
-  const textBlock = message.content.find((b) => b.type === 'text');
-  const html = sanitizeServerHtml(textBlock?.text ?? '<p>Brief generation failed</p>');
+  const html = sanitizeServerHtml(response.text || '<p>Brief generation failed</p>');
 
   const cacheKey = focus ? `brief:${focus}` : 'brief';
   const brief: BriefResponse = {
     html,
     generatedAt: new Date().toISOString(),
-    model: 'claude-sonnet-4-5-20250929',
+    model: response.provider,
     sources: SOURCE_LABELS[focusKey] ?? SOURCE_LABELS.global,
   };
 
   await cache.setWithRedis(cacheKey, brief, TTL.BRIEF, 24 * 3600);
-  console.log(`[AI-BRIEF] ${focusKey.toUpperCase()} brief generated and cached`);
+  console.log(`[AI-BRIEF] ${focusKey.toUpperCase()} generated via ${response.provider} in ${response.latencyMs}ms`);
   return brief;
 }
 

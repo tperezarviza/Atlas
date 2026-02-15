@@ -4,6 +4,7 @@ import { isRedisConnected } from '../redis.js';
 import { getCircuitStates } from '../utils/circuit-breaker.js';
 import { isBigQueryAvailable } from '../services/bigquery.js';
 import { getDailyBytes, bytesToCost } from '../services/bq-cost-tracker.js';
+import { getProviderStats } from '../utils/ai-client.js';
 
 const CACHE_KEYS = [
   'conflicts', 'news', 'feed', 'markets', 'forex',
@@ -118,6 +119,7 @@ export function registerHealthRoutes(app: FastifyInstance) {
       },
       summary: { ok: okCount, total: totalCount },
       circuitBreakers: getCircuitStates(),
+      aiProviders: getProviderStats(),
       services,
     };
   });
