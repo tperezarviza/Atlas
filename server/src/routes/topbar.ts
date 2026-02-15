@@ -65,6 +65,7 @@ function computeTopbar(tab?: string): TopBarData {
       ];
       break;
     }
+    case 'intel':
     case 'cyber': {
       const cyberThreats = cache.get<CyberThreatPulse[]>('cyber_threats');
 
@@ -100,7 +101,7 @@ function computeTopbar(tab?: string): TopBarData {
   return { kpis, threatLevel };
 }
 
-const VALID_TABS = new Set(['global', 'mideast', 'ukraine', 'domestic', 'cyber']);
+const VALID_TABS = new Set(['global', 'mideast', 'ukraine', 'domestic', 'cyber', 'intel']);
 
 export function registerTopbarRoutes(app: FastifyInstance) {
   app.get('/api/topbar', async (req) => {

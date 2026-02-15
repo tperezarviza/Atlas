@@ -88,11 +88,17 @@ export default function LeaderFeed({ filter, title }: LeaderFeedProps = {}) {
         /* Feed items */
         <div className="flex-1 overflow-y-auto">
           <MaybeFadeIn show={hasShownData.current}>
-            <AnimatePresence initial={false}>
-            {feed.map((item) => (
-              <FeedItemRow key={item.id} item={item} />
-            ))}
-            </AnimatePresence>
+            {feed.length === 0 && data ? (
+              <div className="flex items-center justify-center h-full py-8">
+                <span className="font-data text-[10px] text-text-muted tracking-[0.5px]">No matching items</span>
+              </div>
+            ) : (
+              <AnimatePresence initial={false}>
+              {feed.map((item) => (
+                <FeedItemRow key={item.id} item={item} />
+              ))}
+              </AnimatePresence>
+            )}
           </MaybeFadeIn>
         </div>
       )}

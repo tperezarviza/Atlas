@@ -51,7 +51,7 @@ export const VIEW_LAYOUT_PRESETS: Record<ViewId, LayoutPreset> = {
       'r3c1': 'newswire-domestic',
       'r3c2-left': 'executive-orders',
       'r3c2-right': 'congress-tracker',
-      'r3c3': null,
+      'r3c3': 'markets',
     },
   },
   intel: {

@@ -49,7 +49,11 @@ export default function NewsWire({ filter, title }: NewsWireProps = {}) {
         /* Items */
         <div className="flex-1 overflow-y-auto">
           <MaybeFadeIn show={hasShownData.current}>
-            {wire.map((item) => {
+            {wire.length === 0 && data ? (
+              <div className="flex items-center justify-center h-full py-8">
+                <span className="font-data text-[10px] text-text-muted tracking-[0.5px]">No matching items</span>
+              </div>
+            ) : wire.map((item) => {
               const tColor = toneToColor(item.tone);
               const toneWidth = Math.min(Math.abs(item.tone) * 8, 100);
               return (

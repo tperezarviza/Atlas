@@ -10,13 +10,6 @@ const FLIGHTS_REFRESH_MS = 120_000; // 2 min
 const FRONT_REFRESH_MS = 600_000; // 10 min
 const MAX_FLIGHTS_SHOWN = 8;
 
-const NUCLEAR_LEVELS = [
-  { label: 'LOW', color: '#00ff88' },
-  { label: 'MODERATE', color: '#d4a72c' },
-  { label: 'ELEVATED', color: '#ff8c00' },
-  { label: 'IMMINENT', color: '#ff3b3b' },
-] as const;
-
 export default function RussianMilitaryActivity() {
   const {
     data: flights,
@@ -182,47 +175,6 @@ export default function RussianMilitaryActivity() {
               </div>
             </div>
 
-            {/* Nuclear Rhetoric Gauge */}
-            <div className="px-3 py-[6px]">
-              <div className="font-data text-[8px] tracking-[1.5px] text-text-muted uppercase mb-[6px]">
-                ☢️ Nuclear Rhetoric Gauge
-              </div>
-              <div className="flex items-center justify-between mb-[6px]">
-                <span className="font-data text-[10px] text-text-muted">Current Level:</span>
-                <span
-                  className="font-data text-[12px] font-bold tracking-[1px]"
-                  style={{ color: 'rgba(255,255,255,.25)' }}
-                >
-                  —
-                </span>
-              </div>
-              {/* Gauge bar */}
-              <div className="flex gap-[2px] mb-[6px]">
-                {NUCLEAR_LEVELS.map((level) => (
-                  <div
-                    key={level.label}
-                    className="flex-1 flex flex-col items-center gap-[3px]"
-                  >
-                    <div
-                      className="w-full h-[6px] rounded-[1px]"
-                      style={{
-                        background: 'rgba(255,255,255,.06)',
-                        opacity: 0.4,
-                      }}
-                    />
-                    <span
-                      className="font-data text-[7px] tracking-[0.5px] uppercase"
-                      style={{ color: 'rgba(255,255,255,.25)' }}
-                    >
-                      {level.label}
-                    </span>
-                  </div>
-                ))}
-              </div>
-              <div className="font-data text-[9px] text-text-muted leading-[1.4]" style={{ opacity: 0.7 }}>
-                No real-time data source available
-              </div>
-            </div>
           </MaybeFadeIn>
         </div>
       )}
