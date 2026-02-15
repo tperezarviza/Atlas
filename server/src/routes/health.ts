@@ -15,6 +15,7 @@ const CACHE_KEYS = [
   'polymarket',
   'cii',
   'focal_points',
+  'anomalies',
 ];
 
 // Map cache keys to human-readable service names and categories
@@ -56,6 +57,7 @@ const SERVICE_META: Record<string, { name: string; category: string }> = {
   polymarket: { name: 'Polymarket Predictions', category: 'Markets' },
   cii: { name: 'Country Instability Index', category: 'Intelligence' },
   focal_points: { name: 'Focal Point Detection', category: 'Intelligence' },
+  anomalies: { name: 'Anomaly Detection', category: 'System' },
 };
 
 const startTime = Date.now();

@@ -39,6 +39,7 @@ import { registerFirmsRoutes } from './routes/firms.js';
 import { registerPolymarketRoutes } from './routes/polymarket.js';
 import { registerCIIRoutes } from './routes/cii.js';
 import { registerFocalPointsRoutes } from './routes/focal-points.js';
+import { registerAnomalyRoutes } from './routes/anomalies.js';
 import { startCronJobs } from './cron.js';
 import { warmUpCache } from './services/warmup.js';
 import { initRedis } from './redis.js';
@@ -119,6 +120,7 @@ registerFirmsRoutes(app);
 registerPolymarketRoutes(app);
 registerCIIRoutes(app);
 registerFocalPointsRoutes(app);
+registerAnomalyRoutes(app);
 
 // SPA fallback — serve index.html for non-API routes
 app.setNotFoundHandler((request, reply) => {

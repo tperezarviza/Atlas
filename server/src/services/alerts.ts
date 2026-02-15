@@ -206,6 +206,19 @@ function checkRssFeeds(): void {
   }
 }
 
+function checkAnomalies(): void {
+  const anomalies = cache.get<any[]>('anomalies');
+  if (!anomalies) return;
+
+  for (const a of anomalies) {
+    if (a.severity === 'critical') {
+      addAlert('urgent', 'anomaly', `ANOMALY: ${a.description}`);
+    } else if (a.severity === 'elevated') {
+      addAlert('priority', 'anomaly', `ANOMALY: ${a.description}`);
+    }
+  }
+}
+
 // ── Public API ──
 
 export function analyzeAlerts(): void {
@@ -220,6 +233,7 @@ export function analyzeAlerts(): void {
   checkNaturalEvents();
   checkTwitterIntel();
   checkRssFeeds();
+  checkAnomalies();
   pruneOld();
 
   console.log(`[ALERTS] ${alertStore.length} alerts in store (${alertStore.filter(a => !a.read).length} unread)`);

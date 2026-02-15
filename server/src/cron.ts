@@ -33,6 +33,7 @@ import { fetchFirmsHotspots } from './services/firms.js';
 import { fetchPolymarket } from './services/polymarket.js';
 import { computeCII } from './services/cii.js';
 import { detectFocalPoints } from './services/focal-points.js';
+import { runAnomalyDetection } from './services/anomaly-detector.js';
 
 function safeRun(name: string, fn: () => Promise<void> | void) {
   return async () => {
@@ -140,6 +141,9 @@ export function startCronJobs() {
 
   // 7,22,37,52 * * * * -> Focal Point Detection (every 15 min, offset 7)
   cron.schedule('7,22,37,52 * * * *', safeRun('focal-points', detectFocalPoints));
+
+  // 12,27,42,57 * * * * -> Anomaly Detection (every 15 min, offset 12)
+  cron.schedule('12,27,42,57 * * * *', safeRun('anomaly-detection', runAnomalyDetection));
 
   // * * * * * -> Alerts analysis (every minute)
   cron.schedule('* * * * *', safeRun('alerts', analyzeAlerts));

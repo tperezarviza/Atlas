@@ -31,6 +31,7 @@ import { fetchFirmsHotspots } from './firms.js';
 import { fetchPolymarket } from './polymarket.js';
 import { computeCII } from './cii.js';
 import { detectFocalPoints } from './focal-points.js';
+import { runAnomalyDetection } from './anomaly-detector.js';
 
 async function safeRun(name: string, fn: () => Promise<void> | void) {
   try {
@@ -86,10 +87,11 @@ export async function warmUpCache(): Promise<void> {
     safeRun('Alerts', analyzeAlerts),
   ]);
 
-  // Phase 3.5: CII + Focal Points (depend on news, conflicts, ooni, flights, hostility, twitter)
+  // Phase 3.5: CII + Focal Points + Anomaly Detection
   await Promise.allSettled([
     safeRun('CII', computeCII),
     safeRun('Focal Points', detectFocalPoints),
+    safeRun('Anomaly Detection', runAnomalyDetection),
   ]);
 
   // Phase 4: Slow AI analysis + ACLED-dependent services
