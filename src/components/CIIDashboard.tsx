@@ -78,7 +78,7 @@ export default memo(function CIIDashboard({ contextId }: CIIDashboardProps) {
     return [...data].sort((a, b) => b.score - a.score);
   }, [data]);
 
-  if (loading && !data) return <Skeleton rows={8} />;
+  if (loading && !data) return <Skeleton lines={8} />;
 
   return (
     <div className="h-full flex flex-col" style={{ background: 'rgba(255,200,50,0.015)' }}>
@@ -92,7 +92,7 @@ export default memo(function CIIDashboard({ contextId }: CIIDashboardProps) {
                 className="font-title font-bold uppercase tracking-widest">
             INSTABILITY INDEX
           </span>
-          <DataBadge count={sorted.length} label="countries" lastUpdate={lastUpdate} error={error} />
+          <DataBadge data={sorted.length > 0 ? sorted : null} error={error} lastUpdate={lastUpdate} />
         </div>
       </div>
 

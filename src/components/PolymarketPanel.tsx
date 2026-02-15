@@ -46,7 +46,7 @@ export default memo(function PolymarketPanel() {
       .slice(0, 8);
   }, [data]);
 
-  if (loading && !data) return <Skeleton rows={6} />;
+  if (loading && !data) return <Skeleton lines={6} />;
 
   return (
     <div className="h-full flex flex-col" style={{ background: 'rgba(255,200,50,0.015)' }}>
@@ -60,7 +60,7 @@ export default memo(function PolymarketPanel() {
                 className="font-title font-bold uppercase tracking-widest">
             PREDICTION MARKETS
           </span>
-          <DataBadge count={markets.length} label="markets" lastUpdate={lastUpdate} error={error} />
+          <DataBadge data={markets.length > 0 ? markets : null} error={error} lastUpdate={lastUpdate} />
         </div>
       </div>
 
