@@ -225,7 +225,7 @@ export default function CriticalEventPopup() {
               <div style={{
                 flexShrink: 0, width: 160, display: 'flex', flexDirection: 'column',
                 alignItems: 'center', justifyContent: 'center', padding: 20, gap: 12,
-                borderRight: '1px solid rgba(255,255,255,0.05)',
+                borderRight: '1px solid rgba(255,200,50,0.08)',
                 background: ev.type === 'earthquake' ? 'linear-gradient(180deg, #0f0f0f, #1a0f00)'
                   : ev.type === 'natural' ? 'linear-gradient(180deg, #0f0f0f, #0f0f00)'
                   : 'linear-gradient(180deg, #0f0f0f, #1a0505)',
@@ -248,11 +248,11 @@ export default function CriticalEventPopup() {
               </div>
 
               <div style={{ flex: 1, padding: '20px 24px', display: 'flex', flexDirection: 'column' }}>
-                <div style={{ fontSize: 18, fontWeight: 700, color: '#f1f5f9', marginBottom: 10, lineHeight: 1.3 }}>
+                <div style={{ fontSize: 18, fontWeight: 700, color: '#ffe082', marginBottom: 10, lineHeight: 1.3 }}>
                   {alert.title}
                 </div>
                 {alert.detail && (
-                  <div style={{ fontSize: 13, lineHeight: 1.6, color: '#94a3b8' }}>
+                  <div style={{ fontSize: 13, lineHeight: 1.6, color: '#c8a020' }}>
                     {alert.detail}
                   </div>
                 )}
@@ -260,14 +260,14 @@ export default function CriticalEventPopup() {
                   <span style={{
                     fontFamily: "'JetBrains Mono', monospace", fontSize: 8, fontWeight: 600,
                     letterSpacing: 1, padding: '2px 8px', borderRadius: 2, textTransform: 'uppercase' as const,
-                    background: 'rgba(255,255,255,0.05)', color: '#64748b', border: '1px solid rgba(255,255,255,0.08)',
+                    background: 'rgba(255,200,50,0.05)', color: '#7a6418', border: '1px solid rgba(255,200,50,0.10)',
                   }}>
                     {alert.source.toUpperCase()}
                   </span>
                   <span style={{
                     fontFamily: "'JetBrains Mono', monospace", fontSize: 8, fontWeight: 600,
                     letterSpacing: 1, padding: '2px 8px', borderRadius: 2, textTransform: 'uppercase' as const,
-                    background: 'rgba(255,255,255,0.05)', color: '#64748b', border: '1px solid rgba(255,255,255,0.08)',
+                    background: 'rgba(255,200,50,0.05)', color: '#7a6418', border: '1px solid rgba(255,200,50,0.10)',
                   }}>
                     {alert.priority.toUpperCase()}
                   </span>
@@ -278,7 +278,7 @@ export default function CriticalEventPopup() {
             {/* Footer */}
             <div className="tn-footer">
               <div className="tn-countdown" key={alert.id} style={{ animation: 'tn-countdown 45s linear forwards' }} />
-              <div style={{ display: 'flex', gap: 16, fontSize: 10, color: '#475569', letterSpacing: 0.5, textTransform: 'uppercase' as const }}>
+              <div style={{ display: 'flex', gap: 16, fontSize: 10, color: '#50400e', letterSpacing: 0.5, textTransform: 'uppercase' as const }}>
                 <span>Auto-dismiss 45s</span>
                 <span>ESC to close</span>
               </div>

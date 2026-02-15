@@ -12,7 +12,7 @@ const iconCache = new Map<string, L.DivIcon>();
 function getNuclearIcon(status: string): L.DivIcon {
   let icon = iconCache.get(status);
   if (!icon) {
-    const color = status === 'active' || status === 'under_construction' ? '#d4a72c' : '#64748b';
+    const color = status === 'active' || status === 'under_construction' ? '#d4a72c' : '#7a6418';
     const pulse = status === 'active' ? 'animation:pulse 2s infinite;' : '';
     icon = L.divIcon({
       className: '',

@@ -203,8 +203,8 @@ export default function TrumpNewsPopup() {
         style={{
           position: 'fixed', bottom: 8, right: 8, zIndex: 10001,
           width: 28, height: 28, borderRadius: '50%',
-          background: testMode ? '#b91c1c' : '#1e293b',
-          border: '1px solid #334155', color: testMode ? '#fff' : '#64748b',
+          background: testMode ? '#b91c1c' : 'rgba(255,200,50,0.06)',
+          border: '1px solid rgba(255,200,50,0.15)', color: testMode ? '#fff' : '#7a6418',
           fontSize: 12, cursor: 'pointer', display: 'flex',
           alignItems: 'center', justifyContent: 'center',
         }}
@@ -288,8 +288,8 @@ export default function TrumpNewsPopup() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
                   <div className="tn-avatar">DT</div>
                   <div>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: '#f1f5f9' }}>{post.handle}</div>
-                    <div style={{ fontSize: 10, color: '#64748b' }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: '#ffe082' }}>{post.handle}</div>
+                    <div style={{ fontSize: 10, color: '#7a6418' }}>
                       via <span style={{ color: '#b91c1c', fontWeight: 600 }}>{post.source}</span>
                     </div>
                   </div>
@@ -311,17 +311,17 @@ export default function TrumpNewsPopup() {
                           width: i === currentPage ? 20 : 8,
                           height: 8,
                           borderRadius: 4,
-                          background: i === currentPage ? '#d4af37' : '#334155',
+                          background: i === currentPage ? '#ffc832' : 'rgba(255,200,50,0.15)',
                           transition: 'width 0.2s, background 0.2s',
                         }}
                       />
                     ))}
-                    <span style={{ fontSize: 9, color: '#475569', marginLeft: 6 }}>{currentPage + 1}/{pages.length}</span>
+                    <span style={{ fontSize: 9, color: '#50400e', marginLeft: 6 }}>{currentPage + 1}/{pages.length}</span>
                   </div>
                 )}
 
                 {post.mediaUrl && (
-                  <div style={{ marginTop: 12, borderRadius: 4, overflow: 'hidden', border: '1px solid #1e293b', maxHeight: 200 }}>
+                  <div style={{ marginTop: 12, borderRadius: 4, overflow: 'hidden', border: '1px solid rgba(255,200,50,0.10)', maxHeight: 200 }}>
                     <img src={post.mediaUrl} alt="" style={{ width: '100%', maxHeight: 200, objectFit: 'cover', display: 'block' }} />
                   </div>
                 )}
@@ -330,7 +330,7 @@ export default function TrumpNewsPopup() {
 
             <div className="tn-footer">
               <div className="tn-countdown" key={post.id} />
-              <div style={{ display: 'flex', gap: 16, fontSize: 10, color: '#475569', letterSpacing: 0.5, textTransform: 'uppercase' as const }}>
+              <div style={{ display: 'flex', gap: 16, fontSize: 10, color: '#50400e', letterSpacing: 0.5, textTransform: 'uppercase' as const }}>
                 <span>Auto-dismiss 30s</span>
                 <span>ESC to close</span>
               </div>

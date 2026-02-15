@@ -14,7 +14,7 @@ const VESSEL_COLORS: Record<string, string> = {
   cargo: '#ffc832',
   container: '#00ff88',
   military: '#ff3b3b',
-  other: '#64748b',
+  other: '#7a6418',
 };
 
 function bucketHeading(heading: number): number {

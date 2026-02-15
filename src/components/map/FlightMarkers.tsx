@@ -13,7 +13,7 @@ const COUNTRY_COLORS: Record<string, string> = {
   'Russia': '#ff3b3b',
   'China': '#d4a72c',
 };
-const DEFAULT_COLOR = '#64748b';
+const DEFAULT_COLOR = '#7a6418';
 
 function bucketHeading(heading: number): number {
   return Math.round(heading / 45) * 45 % 360;
