@@ -21,7 +21,7 @@ const MIN_VOLUME = 50000; // $50K minimum to filter noise
 const GEO_KW = /iran|china|russia|ukraine|taiwan|nato|nuclear|north korea|missile|sanction|israel|gaza|houthi|yemen|syria|hezbollah|india.pak|pakistan.india|south china sea|arctic|venezuela/i;
 const US_KW = /trump|biden|harris|congress|senate|us election|us president|american|united states|\bgop\b|democrat|republican|border wall|immigration.*us|\bdoj\b|\bfbi\b|\bcia\b|pentagon|white house|\bdoge\b|\brfk\b|jd vance|desantis/i;
 const ECON_KW = /fed rate|federal reserve|interest rate|inflation|gdp|recession|bitcoin|btc|ethereum|crypto|s&p 500|nasdaq|dow jones|tariff|trade war|debt ceiling/i;
-const CONFLICT_KW = /\bwar\b|invasion|\battack\b|ceasefire|peace deal|troops deploy|military operation|casualties|bombing/i;
+const CONFLICT_KW = /\bwar\b|invasion|\battack\b|\bstrike\b|ceasefire|peace deal|troops deploy|military operation|casualties|bombing/i;
 const ESPORTS_KW = /counter.strike|esports|e-sports|\bbo[1-5]\b|group stage|playoff|tournament|league of legends|\blol\b|dota|valorant|overwatch/i;
 
 function classify(title: string): string {
