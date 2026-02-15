@@ -29,3 +29,22 @@ server/.env.*
 *.njsproj
 *.sln
 *.sw?
+
+# Prototypes & temp files
+*-prototype.html
+*-demo.html
+*.tmp
+nul
+
+# Screenshots
+Screenshot *.png
+mugshot.jpg
+
+# One-off test/deploy scripts
+test_*.py
+check_*.py
+redeploy.py
+final_*.py
+_w.js
+atlas-redesign-v4.jsx
+atlastest_*.txt
