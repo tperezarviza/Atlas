@@ -164,6 +164,6 @@ export async function runAnomalyDetection(): Promise<void> {
       console.log(`  [${a.severity.toUpperCase()}] ${a.description}`);
     }
   } else {
-    console.log('[ANOMALY] No anomalies detected (baselines: ${currentValues.size} metrics tracked)');
+    console.log(`[ANOMALY] No anomalies detected (baselines: ${currentValues.size} metrics tracked)`);
   }
 }
