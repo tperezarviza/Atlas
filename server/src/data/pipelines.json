@@ -1,0 +1,463 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [28.73, 60.70],
+          [26.0, 59.5],
+          [21.0, 57.5],
+          [18.0, 55.5],
+          [15.0, 54.8],
+          [13.65, 54.14]
+        ]
+      },
+      "properties": {
+        "name": "Nord Stream 1",
+        "type": "gas",
+        "operator": "Gazprom",
+        "status": "damaged",
+        "year": 2011
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [28.60, 59.70],
+          [26.0, 59.0],
+          [20.5, 57.0],
+          [17.5, 55.2],
+          [14.5, 54.5],
+          [13.67, 54.14]
+        ]
+      },
+      "properties": {
+        "name": "Nord Stream 2",
+        "type": "gas",
+        "operator": "Gazprom",
+        "status": "damaged",
+        "year": 2021
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [37.35, 44.88],
+          [35.0, 43.5],
+          [33.0, 42.5],
+          [30.0, 42.0],
+          [28.05, 41.64]
+        ]
+      },
+      "properties": {
+        "name": "TurkStream",
+        "type": "gas",
+        "operator": "Gazprom/Botas",
+        "status": "active",
+        "year": 2020
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [37.98, 44.55],
+          [37.0, 43.5],
+          [36.5, 42.5],
+          [36.33, 41.29]
+        ]
+      },
+      "properties": {
+        "name": "Blue Stream",
+        "type": "gas",
+        "operator": "Gazprom/ENI",
+        "status": "active",
+        "year": 2005
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [34.0, 57.0],
+          [30.0, 54.5],
+          [27.0, 53.5],
+          [24.0, 52.5],
+          [20.0, 52.0],
+          [17.0, 52.0],
+          [14.5, 52.35]
+        ]
+      },
+      "properties": {
+        "name": "Yamal-Europe",
+        "type": "gas",
+        "operator": "Gazprom",
+        "status": "active",
+        "year": 1999
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [52.3, 54.7],
+          [45.0, 53.0],
+          [37.0, 52.0],
+          [30.5, 52.0],
+          [27.5, 52.5],
+          [24.0, 52.0],
+          [20.5, 51.5],
+          [17.0, 51.0],
+          [14.5, 51.4]
+        ]
+      },
+      "properties": {
+        "name": "Druzhba (Friendship)",
+        "type": "oil",
+        "operator": "Transneft",
+        "status": "active",
+        "year": 1964
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [76.0, 66.0],
+          [60.0, 61.0],
+          [50.0, 56.0],
+          [40.0, 52.0],
+          [32.0, 49.5],
+          [25.0, 48.5],
+          [22.3, 48.6]
+        ]
+      },
+      "properties": {
+        "name": "Brotherhood",
+        "type": "gas",
+        "operator": "Gazprom",
+        "status": "active",
+        "year": 1967
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [49.87, 40.38],
+          [47.0, 41.0],
+          [45.0, 41.5],
+          [43.0, 42.0],
+          [41.0, 41.5],
+          [38.0, 39.5],
+          [36.0, 37.5],
+          [35.95, 36.85]
+        ]
+      },
+      "properties": {
+        "name": "BTC (Baku-Tbilisi-Ceyhan)",
+        "type": "oil",
+        "operator": "BP Consortium",
+        "status": "active",
+        "year": 2006
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [43.5, 41.2],
+          [41.0, 40.5],
+          [38.5, 39.5],
+          [36.0, 38.5],
+          [33.0, 38.0],
+          [30.0, 39.0],
+          [27.0, 40.5],
+          [26.4, 41.8]
+        ]
+      },
+      "properties": {
+        "name": "TANAP (Trans-Anatolian)",
+        "type": "gas",
+        "operator": "SOCAR/BP",
+        "status": "active",
+        "year": 2018
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [26.4, 41.8],
+          [24.0, 40.5],
+          [21.0, 40.0],
+          [20.0, 40.3],
+          [18.5, 40.5]
+        ]
+      },
+      "properties": {
+        "name": "TAP (Trans-Adriatic)",
+        "type": "gas",
+        "operator": "Shah Deniz Consortium",
+        "status": "active",
+        "year": 2020
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [49.87, 40.38],
+          [47.0, 41.0],
+          [45.0, 41.5],
+          [43.5, 41.2],
+          [41.3, 39.9]
+        ]
+      },
+      "properties": {
+        "name": "SCP (South Caucasus Pipeline)",
+        "type": "gas",
+        "operator": "BP/SOCAR",
+        "status": "active",
+        "year": 2006
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [34.5, 31.5],
+          [33.5, 33.5],
+          [32.0, 34.5],
+          [28.0, 36.0],
+          [24.0, 37.5]
+        ]
+      },
+      "properties": {
+        "name": "EastMed",
+        "type": "gas",
+        "operator": "Proposed Consortium",
+        "status": "proposed",
+        "year": 0
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [52.0, 27.8],
+          [52.0, 30.0],
+          [51.5, 33.0],
+          [50.0, 35.7],
+          [48.8, 38.4]
+        ]
+      },
+      "properties": {
+        "name": "IGAT (Iranian Gas Trunkline)",
+        "type": "gas",
+        "operator": "NIOC",
+        "status": "active",
+        "year": 1970
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [44.39, 35.47],
+          [43.0, 36.5],
+          [41.0, 37.0],
+          [38.0, 37.5],
+          [35.95, 36.85]
+        ]
+      },
+      "properties": {
+        "name": "Kirkuk-Ceyhan",
+        "type": "oil",
+        "operator": "SOMO",
+        "status": "active",
+        "year": 1977
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [54.0, 23.8],
+          [55.5, 24.5],
+          [56.3, 25.1]
+        ]
+      },
+      "properties": {
+        "name": "Habshan-Fujairah",
+        "type": "oil",
+        "operator": "ADNOC",
+        "status": "active",
+        "year": 2012
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [51.5, 25.9],
+          [52.5, 25.5],
+          [54.0, 24.8],
+          [55.5, 24.0],
+          [56.5, 23.5]
+        ]
+      },
+      "properties": {
+        "name": "Dolphin Gas Pipeline",
+        "type": "gas",
+        "operator": "Dolphin Energy",
+        "status": "active",
+        "year": 2007
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [112.0, 58.0],
+          [120.0, 55.0],
+          [127.0, 50.5],
+          [130.0, 48.5],
+          [134.5, 48.0]
+        ]
+      },
+      "properties": {
+        "name": "Power of Siberia 1",
+        "type": "gas",
+        "operator": "Gazprom",
+        "status": "active",
+        "year": 2019
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [76.0, 66.0],
+          [80.0, 58.0],
+          [90.0, 52.0],
+          [100.0, 48.0],
+          [107.0, 47.5],
+          [112.0, 42.0]
+        ]
+      },
+      "properties": {
+        "name": "Power of Siberia 2",
+        "type": "gas",
+        "operator": "Gazprom",
+        "status": "proposed",
+        "year": 0
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [61.8, 37.6],
+          [63.0, 35.0],
+          [65.0, 33.0],
+          [67.0, 31.0],
+          [69.0, 29.5],
+          [71.5, 30.2]
+        ]
+      },
+      "properties": {
+        "name": "TAPI (Turkmenistan-Afghanistan-Pakistan-India)",
+        "type": "gas",
+        "operator": "TAPI Pipeline Company",
+        "status": "under_construction",
+        "year": 0
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [93.55, 19.43],
+          [95.0, 21.0],
+          [97.0, 22.0],
+          [99.0, 23.5],
+          [101.0, 24.5],
+          [102.7, 25.0]
+        ]
+      },
+      "properties": {
+        "name": "Myanmar-China",
+        "type": "mixed",
+        "operator": "CNPC",
+        "status": "active",
+        "year": 2013
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [3.4, 6.4],
+          [3.5, 10.0],
+          [4.0, 14.0],
+          [3.0, 20.0],
+          [2.5, 26.0],
+          [2.0, 30.0],
+          [3.0, 36.8]
+        ]
+      },
+      "properties": {
+        "name": "Trans-Saharan",
+        "type": "gas",
+        "operator": "Proposed Consortium",
+        "status": "proposed",
+        "year": 0
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [3.4, 6.4],
+          [2.5, 6.3],
+          [1.3, 6.2],
+          [0.0, 5.6],
+          [-1.5, 5.0]
+        ]
+      },
+      "properties": {
+        "name": "West Africa Gas Pipeline",
+        "type": "gas",
+        "operator": "WAPCo",
+        "status": "active",
+        "year": 2011
+      }
+    }
+  ]
+}

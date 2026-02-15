@@ -23,7 +23,7 @@ export type CalendarUrgency = 'today' | 'soon' | 'future';
 export type SessionRegion = 'americas' | 'europe' | 'asia_pacific' | 'middle_east_africa';
 export type SessionStatus = 'open' | 'closed' | 'pre_market' | 'after_hours';
 export type SupplyRisk = 'critical' | 'high' | 'medium' | 'low';
-export type MapLayerId = 'flights' | 'shipping' | 'internet' | 'nuclear' | 'armedGroups' | 'vessels' | 'naturalEvents' | 'earthquakes';
+export type MapLayerId = 'flights' | 'shipping' | 'internet' | 'nuclear' | 'armedGroups' | 'vessels' | 'naturalEvents' | 'earthquakes' | 'bases' | 'cables' | 'pipelines';
 
 export interface NuclearFacility {
   id: string;

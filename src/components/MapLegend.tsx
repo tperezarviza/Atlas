@@ -16,6 +16,9 @@ const LAYER_META: { id: MapLayerId; icon: string; label: string }[] = [
   { id: 'vessels', icon: '🚢', label: 'Vessel Traffic' },
   { id: 'naturalEvents', icon: '🌍', label: 'Natural Events' },
   { id: 'earthquakes', icon: '🔴', label: 'Earthquakes (M4.5+)' },
+  { id: 'bases', icon: '🏛', label: 'Military Bases' },
+  { id: 'cables', icon: '🔗', label: 'Undersea Cables' },
+  { id: 'pipelines', icon: '🛢', label: 'Pipelines' },
 ];
 
 export default function MapLegend({ layers, onToggle, counts }: MapLegendProps) {

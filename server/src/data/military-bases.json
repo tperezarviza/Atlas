@@ -1,0 +1,951 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [43.1456, 11.5461] },
+      "properties": {
+        "name": "Camp Lemonnier",
+        "operator": "US",
+        "type": "combined",
+        "country_host": "DJ",
+        "region": "africa"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [51.3150, 25.1175] },
+      "properties": {
+        "name": "Al Udeid Air Base",
+        "operator": "US",
+        "type": "air_base",
+        "country_host": "QA",
+        "region": "middle_east"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [54.5478, 24.2482] },
+      "properties": {
+        "name": "Al Dhafra Air Base",
+        "operator": "US",
+        "type": "air_base",
+        "country_host": "AE",
+        "region": "middle_east"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [48.0783, 29.1194] },
+      "properties": {
+        "name": "Camp Arifjan",
+        "operator": "US",
+        "type": "army_base",
+        "country_host": "KW",
+        "region": "middle_east"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [35.4259, 37.0017] },
+      "properties": {
+        "name": "Incirlik Air Base",
+        "operator": "US",
+        "type": "air_base",
+        "country_host": "TR",
+        "region": "middle_east"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [7.6003, 49.4369] },
+      "properties": {
+        "name": "Ramstein Air Base",
+        "operator": "US",
+        "type": "air_base",
+        "country_host": "DE",
+        "region": "europe"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [12.5965, 46.0319] },
+      "properties": {
+        "name": "Aviano Air Base",
+        "operator": "US",
+        "type": "air_base",
+        "country_host": "IT",
+        "region": "europe"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-6.3496, 36.6453] },
+      "properties": {
+        "name": "Naval Station Rota",
+        "operator": "US",
+        "type": "naval_base",
+        "country_host": "ES",
+        "region": "europe"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [14.9222, 37.4017] },
+      "properties": {
+        "name": "NAS Sigonella",
+        "operator": "US",
+        "type": "air_base",
+        "country_host": "IT",
+        "region": "europe"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [139.6669, 35.2831] },
+      "properties": {
+        "name": "Fleet Activities Yokosuka",
+        "operator": "US",
+        "type": "naval_base",
+        "country_host": "JP",
+        "region": "asia_pacific"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [127.7694, 26.3516] },
+      "properties": {
+        "name": "Kadena Air Base",
+        "operator": "US",
+        "type": "air_base",
+        "country_host": "JP",
+        "region": "asia_pacific"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [127.0311, 36.9631] },
+      "properties": {
+        "name": "Camp Humphreys",
+        "operator": "US",
+        "type": "army_base",
+        "country_host": "KR",
+        "region": "asia_pacific"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [72.4111, -7.3133] },
+      "properties": {
+        "name": "Naval Support Facility Diego Garcia",
+        "operator": "US",
+        "type": "combined",
+        "country_host": "IO",
+        "region": "asia_pacific"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-75.0961, 19.9023] },
+      "properties": {
+        "name": "Naval Station Guantanamo Bay",
+        "operator": "US",
+        "type": "naval_base",
+        "country_host": "CU",
+        "region": "americas"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-68.7031, 76.5312] },
+      "properties": {
+        "name": "Pituffik Space Base (Thule)",
+        "operator": "US",
+        "type": "air_base",
+        "country_host": "GL",
+        "region": "arctic"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-22.6056, 63.9675] },
+      "properties": {
+        "name": "Naval Air Station Keflavik",
+        "operator": "US",
+        "type": "air_base",
+        "country_host": "IS",
+        "region": "arctic"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [50.6136, 26.2362] },
+      "properties": {
+        "name": "NSA Bahrain",
+        "operator": "US",
+        "type": "naval_base",
+        "country_host": "BH",
+        "region": "middle_east"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [21.2544, 42.3659] },
+      "properties": {
+        "name": "Camp Bondsteel",
+        "operator": "US",
+        "type": "army_base",
+        "country_host": "XK",
+        "region": "europe"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [11.9404, 49.6968] },
+      "properties": {
+        "name": "Grafenwoehr Training Area",
+        "operator": "US",
+        "type": "army_base",
+        "country_host": "DE",
+        "region": "europe"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [0.5609, 52.4093] },
+      "properties": {
+        "name": "RAF Lakenheath",
+        "operator": "US",
+        "type": "air_base",
+        "country_host": "GB",
+        "region": "europe"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [0.4864, 52.3613] },
+      "properties": {
+        "name": "RAF Mildenhall",
+        "operator": "US",
+        "type": "air_base",
+        "country_host": "GB",
+        "region": "europe"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [24.1186, 35.5133] },
+      "properties": {
+        "name": "Souda Bay NATO Base",
+        "operator": "US",
+        "type": "naval_base",
+        "country_host": "GR",
+        "region": "europe"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [14.2795, 40.8214] },
+      "properties": {
+        "name": "NSA Naples",
+        "operator": "US",
+        "type": "naval_base",
+        "country_host": "IT",
+        "region": "europe"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [126.7275, 37.0894] },
+      "properties": {
+        "name": "Osan Air Base",
+        "operator": "US",
+        "type": "air_base",
+        "country_host": "KR",
+        "region": "asia_pacific"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [132.2369, 34.1486] },
+      "properties": {
+        "name": "MCAS Iwakuni",
+        "operator": "US",
+        "type": "air_base",
+        "country_host": "JP",
+        "region": "asia_pacific"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [127.7561, 26.2758] },
+      "properties": {
+        "name": "Camp Foster (MCAS Futenma)",
+        "operator": "US",
+        "type": "combined",
+        "country_host": "JP",
+        "region": "asia_pacific"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [35.9486, 35.4009] },
+      "properties": {
+        "name": "Hmeimim Air Base",
+        "operator": "RU",
+        "type": "air_base",
+        "country_host": "SY",
+        "region": "middle_east"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [35.8866, 34.8890] },
+      "properties": {
+        "name": "Tartus Naval Facility",
+        "operator": "RU",
+        "type": "naval_base",
+        "country_host": "SY",
+        "region": "middle_east"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [33.5253, 44.6167] },
+      "properties": {
+        "name": "Sevastopol Naval Base",
+        "operator": "RU",
+        "type": "naval_base",
+        "country_host": "UA",
+        "region": "europe"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [20.5100, 54.7104] },
+      "properties": {
+        "name": "Kaliningrad / Baltiysk Naval Base",
+        "operator": "RU",
+        "type": "combined",
+        "country_host": "RU",
+        "region": "europe"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [33.4167, 69.0733] },
+      "properties": {
+        "name": "Severomorsk Naval Base",
+        "operator": "RU",
+        "type": "naval_base",
+        "country_host": "RU",
+        "region": "arctic"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [131.8855, 43.1150] },
+      "properties": {
+        "name": "Vladivostok Naval Base",
+        "operator": "RU",
+        "type": "naval_base",
+        "country_host": "RU",
+        "region": "asia_pacific"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [43.8467, 40.7942] },
+      "properties": {
+        "name": "102nd Military Base Gyumri",
+        "operator": "RU",
+        "type": "army_base",
+        "country_host": "AM",
+        "region": "middle_east"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [74.8464, 42.8533] },
+      "properties": {
+        "name": "Kant Air Base",
+        "operator": "RU",
+        "type": "air_base",
+        "country_host": "KG",
+        "region": "asia_pacific"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [68.7700, 38.5600] },
+      "properties": {
+        "name": "201st Military Base Dushanbe",
+        "operator": "RU",
+        "type": "army_base",
+        "country_host": "TJ",
+        "region": "asia_pacific"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [37.7876, 44.7169] },
+      "properties": {
+        "name": "Novorossiysk Naval Base",
+        "operator": "RU",
+        "type": "naval_base",
+        "country_host": "RU",
+        "region": "europe"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [38.0608, 55.7558] },
+      "properties": {
+        "name": "Western Military District HQ (Moscow)",
+        "operator": "RU",
+        "type": "hq",
+        "country_host": "RU",
+        "region": "europe"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [65.5272, 57.1522] },
+      "properties": {
+        "name": "Central Military District HQ (Yekaterinburg)",
+        "operator": "RU",
+        "type": "hq",
+        "country_host": "RU",
+        "region": "asia_pacific"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [43.1481, 11.5892] },
+      "properties": {
+        "name": "PLA Support Base Djibouti",
+        "operator": "CN",
+        "type": "logistics",
+        "country_host": "DJ",
+        "region": "africa"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [103.6299, 10.5009] },
+      "properties": {
+        "name": "Ream Naval Base",
+        "operator": "CN",
+        "type": "naval_base",
+        "country_host": "KH",
+        "region": "asia_pacific"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [112.3433, 16.8367] },
+      "properties": {
+        "name": "Woody Island (Yongxing)",
+        "operator": "CN",
+        "type": "combined",
+        "country_host": "CN",
+        "region": "asia_pacific"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [112.8917, 9.5500] },
+      "properties": {
+        "name": "Fiery Cross Reef",
+        "operator": "CN",
+        "type": "combined",
+        "country_host": "CN",
+        "region": "asia_pacific"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [115.5333, 9.9017] },
+      "properties": {
+        "name": "Mischief Reef",
+        "operator": "CN",
+        "type": "combined",
+        "country_host": "CN",
+        "region": "asia_pacific"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [114.0833, 9.7167] },
+      "properties": {
+        "name": "Subi Reef",
+        "operator": "CN",
+        "type": "combined",
+        "country_host": "CN",
+        "region": "asia_pacific"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [109.0867, 18.2278] },
+      "properties": {
+        "name": "Yulin Naval Base (Hainan)",
+        "operator": "CN",
+        "type": "naval_base",
+        "country_host": "CN",
+        "region": "asia_pacific"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [32.9861, 34.5906] },
+      "properties": {
+        "name": "RAF Akrotiri",
+        "operator": "UK",
+        "type": "air_base",
+        "country_host": "CY",
+        "region": "middle_east"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [33.7192, 34.9772] },
+      "properties": {
+        "name": "Dhekelia Cantonment",
+        "operator": "UK",
+        "type": "army_base",
+        "country_host": "CY",
+        "region": "middle_east"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-5.3464, 36.1441] },
+      "properties": {
+        "name": "Gibraltar Naval Base",
+        "operator": "UK",
+        "type": "naval_base",
+        "country_host": "GI",
+        "region": "europe"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-59.0061, -51.8222] },
+      "properties": {
+        "name": "Mount Pleasant Complex",
+        "operator": "UK",
+        "type": "combined",
+        "country_host": "FK",
+        "region": "americas"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [72.4111, -7.3133] },
+      "properties": {
+        "name": "Diego Garcia (UK Sovereign)",
+        "operator": "UK",
+        "type": "combined",
+        "country_host": "IO",
+        "region": "asia_pacific"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [50.8198, 25.4106] },
+      "properties": {
+        "name": "HMS Juffair (UK NSF Bahrain)",
+        "operator": "UK",
+        "type": "naval_base",
+        "country_host": "BH",
+        "region": "middle_east"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [57.0436, 21.3361] },
+      "properties": {
+        "name": "UK Joint Logistics Support Base Duqm",
+        "operator": "UK",
+        "type": "logistics",
+        "country_host": "OM",
+        "region": "middle_east"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [43.1456, 11.5569] },
+      "properties": {
+        "name": "FFDj (Forces Francaises a Djibouti)",
+        "operator": "FR",
+        "type": "combined",
+        "country_host": "DJ",
+        "region": "africa"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [54.3773, 24.4539] },
+      "properties": {
+        "name": "French Naval Base Abu Dhabi",
+        "operator": "FR",
+        "type": "naval_base",
+        "country_host": "AE",
+        "region": "middle_east"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-17.4902, 14.7397] },
+      "properties": {
+        "name": "EFS Dakar (Elements Francais au Senegal)",
+        "operator": "FR",
+        "type": "combined",
+        "country_host": "SN",
+        "region": "africa"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [9.4228, 0.4586] },
+      "properties": {
+        "name": "EFG Libreville (Elements Francais au Gabon)",
+        "operator": "FR",
+        "type": "combined",
+        "country_host": "GA",
+        "region": "africa"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [15.0340, 12.1348] },
+      "properties": {
+        "name": "French Forces N'Djamena",
+        "operator": "FR",
+        "type": "air_base",
+        "country_host": "TD",
+        "region": "africa"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-3.9261, 5.2552] },
+      "properties": {
+        "name": "FFCI Abidjan (43e BIMa)",
+        "operator": "FR",
+        "type": "army_base",
+        "country_host": "CI",
+        "region": "africa"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [55.4711, -21.3389] },
+      "properties": {
+        "name": "FAZSOI La Reunion",
+        "operator": "FR",
+        "type": "combined",
+        "country_host": "RE",
+        "region": "africa"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [33.3193, 35.3378] },
+      "properties": {
+        "name": "TRNC Turkish Forces (Kyrenia)",
+        "operator": "TR",
+        "type": "army_base",
+        "country_host": "CY",
+        "region": "middle_east"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [12.0203, 31.8711] },
+      "properties": {
+        "name": "Al-Watiya Air Base",
+        "operator": "TR",
+        "type": "air_base",
+        "country_host": "LY",
+        "region": "africa"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [45.3043, 2.0130] },
+      "properties": {
+        "name": "TURKSOM Mogadishu",
+        "operator": "TR",
+        "type": "combined",
+        "country_host": "SO",
+        "region": "africa"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [51.3210, 25.1120] },
+      "properties": {
+        "name": "Turkish Military Base Qatar",
+        "operator": "TR",
+        "type": "combined",
+        "country_host": "QA",
+        "region": "middle_east"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [45.4122, 39.2089] },
+      "properties": {
+        "name": "Nakhchivan Turkish Military Facility",
+        "operator": "TR",
+        "type": "army_base",
+        "country_host": "AZ",
+        "region": "middle_east"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [39.7231, 43.3614] },
+      "properties": {
+        "name": "Turkish Monitoring Center (Idlib area)",
+        "operator": "TR",
+        "type": "army_base",
+        "country_host": "SY",
+        "region": "middle_east"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [3.7686, 50.5036] },
+      "properties": {
+        "name": "SHAPE (Supreme HQ Allied Powers Europe)",
+        "operator": "NATO",
+        "type": "hq",
+        "country_host": "BE",
+        "region": "europe"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [5.9814, 50.9422] },
+      "properties": {
+        "name": "JFC Brunssum",
+        "operator": "NATO",
+        "type": "hq",
+        "country_host": "NL",
+        "region": "europe"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [14.2469, 40.8558] },
+      "properties": {
+        "name": "JFC Naples",
+        "operator": "NATO",
+        "type": "hq",
+        "country_host": "IT",
+        "region": "europe"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [60.6421, 25.2854] },
+      "properties": {
+        "name": "Chabahar Port Facility",
+        "operator": "IN",
+        "type": "logistics",
+        "country_host": "IR",
+        "region": "middle_east"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [56.6167, -10.4222] },
+      "properties": {
+        "name": "Agalega Island Facility",
+        "operator": "IN",
+        "type": "combined",
+        "country_host": "MU",
+        "region": "africa"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [62.3225, 25.1264] },
+      "properties": {
+        "name": "Gwadar Port Facility",
+        "operator": "PK",
+        "type": "naval_base",
+        "country_host": "PK",
+        "region": "asia_pacific"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [144.7937, 13.5839] },
+      "properties": {
+        "name": "Andersen Air Force Base",
+        "operator": "US",
+        "type": "air_base",
+        "country_host": "GU",
+        "region": "asia_pacific"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [144.6531, 13.4443] },
+      "properties": {
+        "name": "Naval Base Guam",
+        "operator": "US",
+        "type": "naval_base",
+        "country_host": "GU",
+        "region": "asia_pacific"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [120.5572, 15.1861] },
+      "properties": {
+        "name": "Clark Air Base (EDCA site)",
+        "operator": "US",
+        "type": "air_base",
+        "country_host": "PH",
+        "region": "asia_pacific"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [103.8758, 1.3000] },
+      "properties": {
+        "name": "Sembawang Naval Facility",
+        "operator": "US",
+        "type": "logistics",
+        "country_host": "SG",
+        "region": "asia_pacific"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-112.3811, 34.6511] },
+      "properties": {
+        "name": "Camp Navajo (Prescott)",
+        "operator": "US",
+        "type": "logistics",
+        "country_host": "US",
+        "region": "americas"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [8.5622, 49.4133] },
+      "properties": {
+        "name": "Coleman Barracks Mannheim",
+        "operator": "US",
+        "type": "army_base",
+        "country_host": "DE",
+        "region": "europe"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [9.1178, 49.3517] },
+      "properties": {
+        "name": "USAG Stuttgart (Patch Barracks)",
+        "operator": "US",
+        "type": "hq",
+        "country_host": "DE",
+        "region": "europe"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [24.0833, 56.9489] },
+      "properties": {
+        "name": "Lielvarde Air Base (NATO rotational)",
+        "operator": "NATO",
+        "type": "air_base",
+        "country_host": "LV",
+        "region": "europe"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [24.0819, 54.6356] },
+      "properties": {
+        "name": "Siauliai Air Base (NATO Baltic Air Policing)",
+        "operator": "NATO",
+        "type": "air_base",
+        "country_host": "LT",
+        "region": "europe"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [24.8319, 59.4133] },
+      "properties": {
+        "name": "Amari Air Base (NATO rotational)",
+        "operator": "NATO",
+        "type": "air_base",
+        "country_host": "EE",
+        "region": "europe"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [20.9772, 52.1675] },
+      "properties": {
+        "name": "Redzikowo Aegis Ashore",
+        "operator": "US",
+        "type": "army_base",
+        "country_host": "PL",
+        "region": "europe"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [24.1211, 44.1033] },
+      "properties": {
+        "name": "Deveselu Aegis Ashore",
+        "operator": "US",
+        "type": "army_base",
+        "country_host": "RO",
+        "region": "europe"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [27.9117, 43.2075] },
+      "properties": {
+        "name": "Novo Selo Training Area",
+        "operator": "US",
+        "type": "army_base",
+        "country_host": "BG",
+        "region": "europe"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [134.1572, 7.3306] },
+      "properties": {
+        "name": "COFA Compact Palau (US access)",
+        "operator": "US",
+        "type": "logistics",
+        "country_host": "PW",
+        "region": "asia_pacific"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-131.6722, 55.3422] },
+      "properties": {
+        "name": "USCG Base Ketchikan",
+        "operator": "US",
+        "type": "logistics",
+        "country_host": "US",
+        "region": "americas"
+      }
+    }
+  ]
+}

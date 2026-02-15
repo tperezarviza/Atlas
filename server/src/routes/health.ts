@@ -17,6 +17,9 @@ const CACHE_KEYS = [
   'cii',
   'focal_points',
   'anomalies',
+  'layer_bases',
+  'layer_cables',
+  'layer_pipelines',
 ];
 
 // Map cache keys to human-readable service names and categories
@@ -58,6 +61,9 @@ const SERVICE_META: Record<string, { name: string; category: string }> = {
   cii: { name: 'Country Instability Index', category: 'Intelligence' },
   focal_points: { name: 'Focal Point Detection', category: 'Intelligence' },
   anomalies: { name: 'Anomaly Detection', category: 'System' },
+  layer_bases: { name: 'Military Bases Layer', category: 'Map Layers' },
+  layer_cables: { name: 'Undersea Cables Layer', category: 'Map Layers' },
+  layer_pipelines: { name: 'Pipelines Layer', category: 'Map Layers' },
 };
 
 const startTime = Date.now();

@@ -40,8 +40,10 @@ import { registerPolymarketRoutes } from './routes/polymarket.js';
 import { registerCIIRoutes } from './routes/cii.js';
 import { registerFocalPointsRoutes } from './routes/focal-points.js';
 import { registerAnomalyRoutes } from './routes/anomalies.js';
+import { registerLayerRoutes } from './routes/layers.js';
 import { startCronJobs } from './cron.js';
 import { warmUpCache } from './services/warmup.js';
+import { loadStaticLayers } from './services/static-layers.js';
 import { initRedis } from './redis.js';
 import fastifyStatic from '@fastify/static';
 import path from 'path';
@@ -121,6 +123,7 @@ registerPolymarketRoutes(app);
 registerCIIRoutes(app);
 registerFocalPointsRoutes(app);
 registerAnomalyRoutes(app);
+registerLayerRoutes(app);
 
 // SPA fallback — serve index.html for non-API routes
 app.setNotFoundHandler((request, reply) => {
@@ -135,6 +138,9 @@ app.setNotFoundHandler((request, reply) => {
 try {
   await app.listen({ port: PORT, host: '0.0.0.0' });
   console.log(`ATLAS API server running on port ${PORT}`);
+
+  // Load static GeoJSON layers (sync, from disk)
+  loadStaticLayers();
 
   // Initialize Redis connection
   initRedis();

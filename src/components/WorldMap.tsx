@@ -16,6 +16,10 @@ import ArmedGroupMarkers from './map/ArmedGroupMarkers';
 import VesselMarkers from './map/VesselMarkers';
 import NaturalEventMarkers from './map/NaturalEventMarkers';
 import EarthquakeMarkers from './map/EarthquakeMarkers';
+import BasesMarkers from './map/BasesMarkers';
+import CableLines from './map/CableLines';
+import PipelineLines from './map/PipelineLines';
+import type { GeoJSONCollection } from '../services/api';
 import type { Conflict, NewsPoint, Connection, MapLayerId, MilitaryFlight, Chokepoint, InternetIncident, ArmedGroup, Vessel, NaturalEvent, Earthquake } from '../types';
 
 const NEWS_INTERVAL = 900_000;        // 15 min
@@ -43,6 +47,9 @@ const DEFAULT_LAYERS: Record<MapLayerId, boolean> = {
   vessels: false,
   naturalEvents: false,
   earthquakes: false,
+  bases: false,
+  cables: false,
+  pipelines: false,
 };
 
 const ALLOWED_SEVERITIES = new Set(['critical', 'high', 'medium', 'low']);
@@ -211,6 +218,9 @@ export default function WorldMap({ selectedConflictId, onSelectConflict, onCount
   const { data: vesselsData } = useApiData<Vessel[]>(api.vessels, 120_000, { enabled: layers.vessels });
   const { data: naturalEventsData } = useApiData<NaturalEvent[]>(api.naturalEvents, 900_000, { enabled: layers.naturalEvents });
   const { data: earthquakesData } = useApiData<Earthquake[]>(api.earthquakes, 600_000, { enabled: layers.earthquakes });
+  const { data: basesData } = useApiData<GeoJSONCollection>(api.layerBases, 3_600_000, { enabled: layers.bases });
+  const { data: cablesData } = useApiData<GeoJSONCollection>(api.layerCables, 3_600_000, { enabled: layers.cables });
+  const { data: pipelinesData } = useApiData<GeoJSONCollection>(api.layerPipelines, 3_600_000, { enabled: layers.pipelines });
 
   // Lazy-load GeoJSON with abort cleanup
   useEffect(() => {
@@ -387,6 +397,9 @@ export default function WorldMap({ selectedConflictId, onSelectConflict, onCount
         <VesselMarkers data={vesselsData} visible={layers.vessels} zoomLevel={zoomLevel} />
         <NaturalEventMarkers data={naturalEventsData} visible={layers.naturalEvents} />
         <EarthquakeMarkers data={earthquakesData} visible={layers.earthquakes} />
+        <BasesMarkers data={basesData} visible={layers.bases} />
+        <CableLines data={cablesData} visible={layers.cables} />
+        <PipelineLines data={pipelinesData} visible={layers.pipelines} />
       </MapContainer>
 
       {/* News count badge - top left */}
@@ -418,6 +431,9 @@ export default function WorldMap({ selectedConflictId, onSelectConflict, onCount
           vessels: vesselsData?.length ?? 0,
           naturalEvents: naturalEventsData?.length ?? 0,
           earthquakes: earthquakesData?.length ?? 0,
+          bases: basesData?.features?.length ?? 0,
+          cables: cablesData?.features?.length ?? 0,
+          pipelines: pipelinesData?.features?.length ?? 0,
         }}
       />
 

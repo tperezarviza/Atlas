@@ -108,6 +108,17 @@ export interface HealthResponse {
   services: HealthService[];
 }
 
+export interface GeoJSONFeature {
+  type: string;
+  geometry: { type: string; coordinates: number[] | number[][] };
+  properties: Record<string, unknown>;
+}
+
+export interface GeoJSONCollection {
+  type: string;
+  features: GeoJSONFeature[];
+}
+
 const VALID_BRIEF_FOCUS = new Set(['mideast', 'ukraine', 'domestic', 'intel']);
 
 // ── API functions ──
@@ -190,4 +201,8 @@ export const api = {
   cii:                 () => fetchJSON<any[]>('/api/cii'),
   polymarket:          () => fetchJSON<any[]>('/api/polymarket'),
   focalPoints:         () => fetchJSON<any[]>('/api/focal-points'),
+  // Static GeoJSON Layers
+  layerBases:          () => fetchJSON<GeoJSONCollection>('/api/layers/bases'),
+  layerCables:         () => fetchJSON<GeoJSONCollection>('/api/layers/cables'),
+  layerPipelines:      () => fetchJSON<GeoJSONCollection>('/api/layers/pipelines'),
 };
