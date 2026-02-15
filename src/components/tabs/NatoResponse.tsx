@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { motion } from 'framer-motion';
 import { PurpleBadge } from '../DataBadge';
 
@@ -30,7 +31,7 @@ const BAR_MAX = 4.5;
 const TARGET_PCT = 2.0;
 const TARGET_BAR_POSITION = (TARGET_PCT / BAR_MAX) * 100;
 
-export default function NatoResponse() {
+export default memo(function NatoResponse() {
   return (
     <div className="h-full flex flex-col rounded-[14px] overflow-hidden" style={{ background: '#000000', border: '1px solid rgba(255,200,50,0.10)' }}>
       {/* Header */}
@@ -153,4 +154,4 @@ export default function NatoResponse() {
       </div>
     </div>
   );
-}
+});

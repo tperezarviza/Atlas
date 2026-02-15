@@ -1,4 +1,4 @@
-import { AnimatePresence, motion } from 'framer-motion';
+import { useRef, useEffect, useState } from 'react';
 
 interface TabPanelProps {
   tabKey: string;
@@ -6,18 +6,28 @@ interface TabPanelProps {
 }
 
 export default function TabPanel({ tabKey, children }: TabPanelProps) {
+  const [visible, setVisible] = useState(true);
+  const prevKey = useRef(tabKey);
+
+  useEffect(() => {
+    if (prevKey.current !== tabKey) {
+      prevKey.current = tabKey;
+      setVisible(false);
+      // Force a single frame at opacity 0, then fade in
+      requestAnimationFrame(() => setVisible(true));
+    }
+  }, [tabKey]);
+
   return (
-    <AnimatePresence mode="wait">
-      <motion.div
-        key={tabKey}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.2 }}
-        className="h-full w-full" style={{ willChange: "opacity" }}
-      >
-        {children}
-      </motion.div>
-    </AnimatePresence>
+    <div
+      className="h-full w-full"
+      style={{
+        opacity: visible ? 1 : 0,
+        transition: 'opacity 0.12s ease-out',
+        willChange: 'opacity',
+      }}
+    >
+      {children}
+    </div>
   );
 }

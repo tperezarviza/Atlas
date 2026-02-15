@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { useApiData } from '../hooks/useApiData';
 import { api } from '../services/api';
 import DataBadge from './DataBadge';
@@ -27,7 +28,7 @@ interface GlobalNarrativesProps {
   title?: string;
 }
 
-export default function GlobalNarratives({ propagandaFilter, hostilityFilter, title }: GlobalNarrativesProps = {}) {
+export default memo(function GlobalNarratives({ propagandaFilter, hostilityFilter, title }: GlobalNarrativesProps = {}) {
   const { data: propData, loading: propLoading, error: propError, lastUpdate: propLast } =
     useApiData<PropagandaEntry[]>(api.propaganda, 3_600_000);
   const { data: hostData, loading: hostLoading, error: hostError, lastUpdate: hostLast } =
@@ -170,4 +171,4 @@ export default function GlobalNarratives({ propagandaFilter, hostilityFilter, ti
       </div>
     </div>
   );
-}
+});

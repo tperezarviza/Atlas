@@ -1,4 +1,4 @@
-import { useRef, useEffect } from 'react';
+import { memo, useRef, useEffect } from 'react';
 import { useApiData } from '../hooks/useApiData';
 import { api } from '../services/api';
 import { bulletColors } from '../utils/colors';
@@ -15,7 +15,7 @@ interface NewsWireProps {
   title?: string;
 }
 
-export default function NewsWire({ filter, title }: NewsWireProps = {}) {
+export default memo(function NewsWire({ filter, title }: NewsWireProps = {}) {
   const { data, loading, error, lastUpdate } = useApiData<NewsWireItem[]>(api.newswire, REFRESH_MS);
   const allItems = data ?? [];
   const wire = filter ? allItems.filter(filter) : allItems;
@@ -88,4 +88,4 @@ export default function NewsWire({ filter, title }: NewsWireProps = {}) {
       )}
     </div>
   );
-}
+});

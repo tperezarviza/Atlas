@@ -165,7 +165,7 @@ export default function CriticalEventPopup() {
             className="fixed inset-0"
             style={{ background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(10px)', zIndex: 9996 }}
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
+            transition={{ duration: 0.2 }}
             onClick={dismiss}
           />
 

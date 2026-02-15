@@ -99,7 +99,7 @@ export default function CountryProfilePanel({ countryCode, onClose, conflicts }:
           initial={{ x: 480 }}
           animate={{ x: 0 }}
           exit={{ x: 480 }}
-          transition={{ duration: 0.3, ease: 'easeOut' }}
+          transition={{ duration: 0.2, ease: 'easeOut' }}
           className="fixed right-0 z-[900] overflow-hidden flex flex-col"
           style={{
             top: 48,

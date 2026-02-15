@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
+import { memo, useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useApiData } from '../hooks/useApiData';
 import { api } from '../services/api';
@@ -37,7 +37,7 @@ interface LeaderFeedProps {
   title?: string;
 }
 
-export default function LeaderFeed({ filter, title }: LeaderFeedProps = {}) {
+export default memo(function LeaderFeed({ filter, title }: LeaderFeedProps = {}) {
   const { data, loading, error, lastUpdate } = useApiData<FeedItem[]>(api.leaders, REFRESH_MS);
   const { data: twitterData } = useApiData<TwitterIntelItem[]>(
     api.twitterIntel,
@@ -104,7 +104,7 @@ export default function LeaderFeed({ filter, title }: LeaderFeedProps = {}) {
       )}
     </div>
   );
-}
+});
 
 function FeedItemRow({ item }: { item: FeedItem }) {
   const [expanded, setExpanded] = useState(false);

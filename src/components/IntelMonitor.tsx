@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { memo, useMemo } from 'react';
 import { useApiData } from '../hooks/useApiData';
 import { api } from '../services/api';
 import { getSensitiveDateEvents } from '../utils/sensitiveDateEvents';
@@ -33,7 +33,7 @@ interface IntelMonitorProps {
   title?: string;
 }
 
-export default function IntelMonitor({ filter, title }: IntelMonitorProps = {}) {
+export default memo(function IntelMonitor({ filter, title }: IntelMonitorProps = {}) {
   const { data: calData, loading: calLoading, error: calError, lastUpdate: calLast } =
     useApiData<CalendarEvent[]>(api.calendar, 3_600_000);
   const { data: econData, loading: econLoading, error: econError, lastUpdate: econLast } =
@@ -154,4 +154,4 @@ export default function IntelMonitor({ filter, title }: IntelMonitorProps = {}) 
       </div>
     </div>
   );
-}
+});

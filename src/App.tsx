@@ -135,14 +135,14 @@ export default function App() {
           <DashboardLayout
             kioskActive={kioskActive}
             r2c1={
-              <motion.div className="h-full" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05, duration: 0.3 }}>
+              <motion.div className="h-full" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.02, duration: 0.15, ease: 'easeOut' }}>
                 <TabPanel tabKey={`${activeView}-r2c1`}>
                   {renderSlot('r2c1')}
                 </TabPanel>
               </motion.div>
             }
             map={
-              <motion.div className="h-full" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1, duration: 0.3 }}>
+              <motion.div className="h-full" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.04, duration: 0.15, ease: 'easeOut' }}>
                 <WorldMap
                   selectedConflictId={selectedConflictId}
                   onSelectConflict={handleSelectConflict}
@@ -158,35 +158,35 @@ export default function App() {
               </motion.div>
             }
             r2c3={
-              <motion.div className="h-full" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15, duration: 0.3 }}>
+              <motion.div className="h-full" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.06, duration: 0.15, ease: 'easeOut' }}>
                 <TabPanel tabKey={`${activeView}-r2c3`}>
                   {renderSlot('r2c3')}
                 </TabPanel>
               </motion.div>
             }
             r3c1={
-              <motion.div className="h-full" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, duration: 0.3 }}>
+              <motion.div className="h-full" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08, duration: 0.15, ease: 'easeOut' }}>
                 <TabPanel tabKey={`${activeView}-r3c1`}>
                   {renderSlot('r3c1')}
                 </TabPanel>
               </motion.div>
             }
             r3c2Left={
-              <motion.div className="h-full" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25, duration: 0.3 }}>
+              <motion.div className="h-full" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.10, duration: 0.15, ease: 'easeOut' }}>
                 <TabPanel tabKey={`${activeView}-r3c2-left`}>
                   {renderSlot('r3c2-left')}
                 </TabPanel>
               </motion.div>
             }
             r3c2Right={
-              <motion.div className="h-full" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.28, duration: 0.3 }}>
+              <motion.div className="h-full" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12, duration: 0.15, ease: 'easeOut' }}>
                 <TabPanel tabKey={`${activeView}-r3c2-right`}>
                   {renderSlot('r3c2-right')}
                 </TabPanel>
               </motion.div>
             }
             r3c3={
-              <motion.div className="h-full" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3, duration: 0.3 }}>
+              <motion.div className="h-full" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.14, duration: 0.15, ease: 'easeOut' }}>
                 <TabPanel tabKey={`${activeView}-r3c3`}>
                   {renderSlot('r3c3')}
                 </TabPanel>

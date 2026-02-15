@@ -1,4 +1,4 @@
-import { useRef, useEffect } from 'react';
+import { memo, useRef, useEffect } from 'react';
 import { useApiData } from '../hooks/useApiData';
 import { api } from '../services/api';
 import type { MarketsResponse } from '../services/api';
@@ -59,7 +59,7 @@ function SectionHeader({ title, icon }: { title: string; icon?: string }) {
   );
 }
 
-export default function MarketsDashboard() {
+export default memo(function MarketsDashboard() {
   const { data, loading, error, lastUpdate } = useApiData<MarketsResponse>(api.markets, REFRESH_MS);
   const hasShownData = useRef(false);
   useEffect(() => { if (data) hasShownData.current = true; }, [data]);
@@ -153,4 +153,4 @@ export default function MarketsDashboard() {
       )}
     </div>
   );
-}
+});
