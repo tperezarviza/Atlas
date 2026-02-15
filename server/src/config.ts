@@ -13,12 +13,13 @@ export const OPENSKY_CLIENT_SECRET = process.env.OPENSKY_CLIENT_SECRET ?? '';
 export const X_BEARER_TOKEN = process.env.X_BEARER_TOKEN ?? '';
 export const ALIENVAULT_API_KEY = process.env.ALIENVAULT_API_KEY ?? '';
 export const FIRMS_API_KEY = process.env.FIRMS_API_KEY ?? '';
+export const CLOUDFLARE_API_TOKEN = process.env.CLOUDFLARE_API_TOKEN ?? '';
 export const REDIS_URL = process.env.REDIS_URL ?? 'redis://localhost:6379';
 
 // All secret values for error sanitization
 const ALL_SECRETS: string[] = [
   ACLED_PASSWORD, EIA_API_KEY, FRED_API_KEY, ANTHROPIC_API_KEY,
-  CONGRESS_API_KEY, OPENSKY_CLIENT_SECRET, X_BEARER_TOKEN, ALIENVAULT_API_KEY,
+  CONGRESS_API_KEY, OPENSKY_CLIENT_SECRET, X_BEARER_TOKEN, ALIENVAULT_API_KEY, CLOUDFLARE_API_TOKEN,
 ].filter(Boolean);
 
 /** Redact any secret values from an error message. */

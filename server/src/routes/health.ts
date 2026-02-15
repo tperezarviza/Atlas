@@ -4,7 +4,7 @@ import { isRedisConnected } from '../redis.js';
 
 const CACHE_KEYS = [
   'conflicts', 'news', 'feed', 'markets', 'forex',
-  'macro', 'border', 'calendar', 'brief', 'connections', 'ticker', 'topbar',
+  'macro', 'border', 'calendar', 'brief', 'connections', 'ticker',
   'countries', 'ofac_sanctions', 'armed_groups', 'shipping', 'ooni', 'hostility', 'propaganda', 'acled_actors',
   'congress_bills', 'congress_nominations', 'executive_orders', 'flights', 'ukraine_front',
   'twitter', 'cyber_threats', 'natural_events', 'economic_calendar', 'alerts',
@@ -31,7 +31,6 @@ const SERVICE_META: Record<string, { name: string; category: string }> = {
   brief: { name: 'AI Brief', category: 'Intelligence' },
   connections: { name: 'Connections', category: 'Intelligence' },
   ticker: { name: 'News Ticker', category: 'Intelligence' },
-  topbar: { name: 'TopBar Data', category: 'System' },
   countries: { name: 'Country Profiles', category: 'Intelligence' },
   ofac_sanctions: { name: 'OFAC Sanctions', category: 'Intelligence' },
   armed_groups: { name: 'Armed Groups', category: 'Intelligence' },

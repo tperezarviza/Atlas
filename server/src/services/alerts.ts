@@ -236,6 +236,8 @@ export function analyzeAlerts(): void {
   checkAnomalies();
   pruneOld();
 
+  cache.set('alerts', alertStore, 60_000);
+
   console.log(`[ALERTS] ${alertStore.length} alerts in store (${alertStore.filter(a => !a.read).length} unread)`);
 }
 

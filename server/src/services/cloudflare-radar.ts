@@ -1,4 +1,4 @@
-import { FETCH_TIMEOUT_API, TTL } from '../config.js';
+import { FETCH_TIMEOUT_API, TTL, CLOUDFLARE_API_TOKEN } from '../config.js';
 import { cache } from '../cache.js';
 
 export interface CloudflareOutage {
@@ -13,13 +13,9 @@ export interface CloudflareOutage {
   description: string;
 }
 
-const CF_API_TOKEN = process.env.CF_API_TOKEN ?? '';
-
 export async function fetchCloudflareOutages(): Promise<void> {
-  if (!CF_API_TOKEN) {
-    // TODO: Cloudflare Radar annotations API requires auth (X-Auth-Email + X-Auth-Key or Bearer token).
-    // Set CF_API_TOKEN in .env once we have a Cloudflare API token.
-    console.warn('[CLOUDFLARE] No CF_API_TOKEN set, skipping outage fetch');
+  if (!CLOUDFLARE_API_TOKEN) {
+    console.warn('[CLOUDFLARE] No CLOUDFLARE_API_TOKEN set, skipping outage fetch');
     return;
   }
 
@@ -30,7 +26,7 @@ export async function fetchCloudflareOutages(): Promise<void> {
     const res = await fetch(url, {
       headers: {
         'Accept': 'application/json',
-        'Authorization': `Bearer ${CF_API_TOKEN}`,
+        'Authorization': `Bearer ${CLOUDFLARE_API_TOKEN}`,
       },
       signal: AbortSignal.timeout(FETCH_TIMEOUT_API),
     });
