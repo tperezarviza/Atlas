@@ -18,10 +18,10 @@ export interface PolymarketEvent {
 const MIN_VOLUME = 50000; // $50K minimum to filter noise
 
 // Keywords to classify into our categories
-const GEO_KW = /iran|china|russia|ukraine|taiwan|nato|nuclear|war|missile|sanction|israel|gaza|houthi|yemen/i;
-const US_KW = /trump|biden|congress|senate|election|president|gop|democrat|republican|border|impeach/i;
-const ECON_KW = /fed|interest rate|inflation|gdp|recession|bitcoin|crypto|stock|s&p|nasdaq|tariff/i;
-const CONFLICT_KW = /war|invasion|attack|strike|ceasefire|peace deal|troops|military/i;
+const GEO_KW = /iran|china|russia|ukraine|taiwan|nato|nuclear|north korea|missile|sanction|israel|gaza|houthi|yemen|syria|hezbollah|india.pak|pakistan.india|south china sea|arctic|venezuela/i;
+const US_KW = /trump|biden|harris|congress|senate|us election|us president|american|united states|gop|democrat|republican|border wall|immigration.*us|doj|fbi|cia|pentagon|white house|doge|rfk|jd vance|desantis/i;
+const ECON_KW = /fed rate|federal reserve|interest rate|inflation|gdp|recession|bitcoin|btc|ethereum|crypto|s&p 500|nasdaq|dow jones|tariff|trade war|debt ceiling/i;
+const CONFLICT_KW = /war\b|invasion|attack|strike|ceasefire|peace deal|troops deploy|military operation|casualties|bombing/i;
 
 function classify(title: string): string {
   if (CONFLICT_KW.test(title)) return 'conflict';
@@ -35,7 +35,7 @@ export async function fetchPolymarket(): Promise<void> {
   console.log('[POLYMARKET] Fetching prediction markets...');
 
   try {
-    const url = 'https://gamma-api.polymarket.com/markets?closed=false&limit=100&order=volume&ascending=false';
+    const url = 'https://gamma-api.polymarket.com/markets?closed=false&limit=200&order=volume&ascending=false';
 
     const res = await fetch(url, {
       headers: { 'Accept': 'application/json' },
@@ -79,7 +79,11 @@ export async function fetchPolymarket(): Promise<void> {
           category: classify(m.question ?? m.title ?? ''),
         };
       })
-      .filter(e => e.category !== 'other')
+      .filter(e => {
+        if (e.category !== 'other') return true;
+        // Keep "other" if high volume — likely significant
+        return e.volume >= 500_000;
+      })
       .sort((a, b) => b.volume - a.volume)
       .slice(0, 30);
 
