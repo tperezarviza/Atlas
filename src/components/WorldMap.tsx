@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useRef, Fragment } from 'react';
-import { MapContainer, TileLayer, Marker, Tooltip, Polyline, GeoJSON, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Tooltip, Popup, Polyline, GeoJSON, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import { useApiData } from '../hooks/useApiData';
 import { useCluster, type MapBounds } from '../hooks/useCluster';
@@ -23,6 +23,7 @@ import CableLines from './map/CableLines';
 import PipelineLines from './map/PipelineLines';
 import ConvergenceMarkers from './map/ConvergenceMarkers';
 import SurgeMarkers from './map/SurgeMarkers';
+import NewsPopup from './map/NewsPopup';
 import type { GeoJSONCollection } from '../services/api';
 import type { Conflict, NewsPoint, Connection, MapLayerId, MilitaryFlight, Chokepoint, InternetIncident, ArmedGroup, Vessel, NaturalEvent, Earthquake, ConvergenceHotspot, SurgeAlert } from '../types';
 
@@ -453,10 +454,16 @@ export default function WorldMap({ selectedConflictId, onSelectConflict, onCount
               zIndexOffset={item.point.tone < -5 ? 500 : 0}
             >
               <Tooltip direction="top" offset={[0, -6]} className="map-tooltip">
-                <div className="tt-title">📍 {item.point.source}</div>
+                <div className="tt-title">{item.point.source}</div>
                 <div className="tt-meta">Tone: {item.point.tone} · {item.point.category.toUpperCase()}</div>
                 <div className="tt-headline">{item.point.headline}</div>
               </Tooltip>
+              <Popup className="map-popup" closeButton maxWidth={320} minWidth={220}>
+                <div className="tt-title">{item.point.source}</div>
+                <div className="tt-meta">Tone: {item.point.tone} · {item.point.category.toUpperCase()}</div>
+                <div className="tt-headline">{item.point.headline}</div>
+                <NewsPopup headline={item.point.headline} category={item.point.category} lat={item.lat} lng={item.lng} />
+              </Popup>
             </Marker>
           ) : null
         )}

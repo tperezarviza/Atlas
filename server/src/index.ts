@@ -41,6 +41,7 @@ import { registerCIIRoutes } from './routes/cii.js';
 import { registerFocalPointsRoutes } from './routes/focal-points.js';
 import { registerAnomalyRoutes } from './routes/anomalies.js';
 import { registerLayerRoutes } from './routes/layers.js';
+import { registerWhyItMattersRoutes } from './routes/why-it-matters.js';
 import { startCronJobs } from './cron.js';
 import { warmUpCache } from './services/warmup.js';
 import { loadStaticLayers } from './services/static-layers.js';
@@ -126,6 +127,7 @@ registerCIIRoutes(app);
 registerFocalPointsRoutes(app);
 registerAnomalyRoutes(app);
 registerLayerRoutes(app);
+registerWhyItMattersRoutes(app);
 
 // Geo-convergence route (BQ-powered)
 app.get('/api/geo-convergence', async () => cache.get('geo_convergence') ?? []);

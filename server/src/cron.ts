@@ -100,8 +100,8 @@ export function startCronJobs() {
   // 15,45 * * * * -> Shipping (every 30 min offset)
   cron.schedule('15,45 * * * *', safeRun('shipping', fetchShippingData));
 
-  // 0 */12 * * * -> Propaganda (every 12h)
-  cron.schedule('30 */12 * * *', safeRun('propaganda', fetchPropaganda));
+  // 0 7 * * * -> Propaganda (1x/day at 7am)
+  cron.schedule('0 7 * * *', safeRun('propaganda', fetchPropaganda));
 
   // 0 3 * * * -> Sanctions (daily 3am)
   cron.schedule('0 3 * * *', safeRun('sanctions', fetchSanctions));

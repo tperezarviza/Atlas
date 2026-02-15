@@ -61,7 +61,7 @@ export const TTL = {
   SHIPPING:   30 * 60 * 1000,      // 30 min
   OONI:       60 * 60 * 1000,      // 1 h
   HOSTILITY:  6 * 60 * 60 * 1000,  // 6 h
-  PROPAGANDA: 12 * 60 * 60 * 1000, // 12 h
+  PROPAGANDA: 24 * 60 * 60 * 1000, // 24 h
   CONGRESS:        2 * 60 * 60 * 1000,  // 2 h
   EXECUTIVE_ORDERS:12 * 60 * 60 * 1000, // 12 h
   FLIGHTS:         2 * 60 * 1000,       // 2 min

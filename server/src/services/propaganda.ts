@@ -5,6 +5,8 @@ import { stripHTML } from '../utils.js';
 import { translateTexts } from './translate.js';
 import { redisGet, redisSet } from '../redis.js';
 import { aiComplete } from '../utils/ai-client.js';
+import { isBigQueryAvailable, bqQuery } from './bigquery.js';
+import { trackQueryBytes } from './bq-cost-tracker.js';
 import type { PropagandaEntry } from '../types.js';
 
 const parser = new RSSParser({ timeout: FETCH_TIMEOUT_RSS });
@@ -73,6 +75,49 @@ function parseNarrativesJSON(text: string): string[] | null {
   return null;
 }
 
+// Fetch headlines from BigQuery GKG by state media domain
+async function fetchHeadlinesBQ(media: typeof STATE_MEDIA[number]): Promise<{ headlines: string[]; articleCount: number; avgTone: number } | null> {
+  if (!isBigQueryAvailable()) return null;
+
+  try {
+    const domainPattern = media.outlets.map(o => o.domain.replace(/\./g, '\\\\.')).join('|');
+
+    const rows = await bqQuery<{ url: string; tone: number }>(`
+      SELECT
+        DocumentIdentifier as url,
+        SAFE_CAST(SPLIT(V2Tone, ',')[SAFE_OFFSET(0)] AS FLOAT64) as tone
+      FROM \`gdelt-bq.gdeltv2.gkg\`
+      WHERE _PARTITIONTIME >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 48 HOUR)
+        AND REGEXP_CONTAINS(DocumentIdentifier, r'${domainPattern}')
+      ORDER BY _PARTITIONTIME DESC
+      LIMIT 30
+    `);
+
+    // Estimate ~500MB per query
+    trackQueryBytes(500_000_000);
+
+    if (rows.length === 0) return null;
+
+    // Extract headline-like text from URLs (last path segment, cleaned)
+    const headlines = rows
+      .map(r => {
+        const path = new URL(r.url).pathname;
+        const slug = path.split('/').pop() ?? '';
+        return slug.replace(/[-_]/g, ' ').replace(/\.\w+$/, '').trim();
+      })
+      .filter(h => h.length > 10)
+      .slice(0, 15);
+
+    const avgTone = rows.reduce((sum, r) => sum + (r.tone ?? 0), 0) / rows.length;
+
+    console.log(`[PROPAGANDA-BQ] ${media.country}: ${rows.length} GKG articles, ${headlines.length} usable headlines`);
+    return { headlines, articleCount: rows.length, avgTone: Math.round(avgTone * 100) / 100 };
+  } catch (err) {
+    console.warn(`[PROPAGANDA-BQ] ${media.country} failed:`, err instanceof Error ? err.message : err);
+    return null;
+  }
+}
+
 export async function fetchPropaganda(): Promise<void> {
   console.log('[PROPAGANDA] Analyzing state media narratives...');
 
@@ -81,24 +126,39 @@ export async function fetchPropaganda(): Promise<void> {
 
     for (const media of STATE_MEDIA) {
       try {
-        // Use Google News RSS to get headlines from state media domains
-        const siteQueries = media.outlets.map((o) => `site:${o.domain}`).join('+OR+');
-        const rssUrl = `https://news.google.com/rss/search?q=when:3d+${siteQueries}&ceid=US:en&hl=en-US&gl=US`;
+        let headlines: string[] = [];
+        let articleCount = 0;
+        let avgTone = 0;
 
-        const feed = await parser.parseURL(rssUrl);
-        const articles = (feed.items ?? []).slice(0, 20);
+        // Try BigQuery GKG first for more precise domain matching
+        const bqResult = await fetchHeadlinesBQ(media);
 
-        if (articles.length === 0) {
-          console.warn(`[PROPAGANDA] No articles for ${media.country}`);
-          await delay(1000);
-          continue;
+        if (bqResult && bqResult.headlines.length >= 3) {
+          headlines = bqResult.headlines;
+          articleCount = bqResult.articleCount;
+          avgTone = bqResult.avgTone;
+        } else {
+          // Fallback: Google News RSS
+          const siteQueries = media.outlets.map((o) => `site:${o.domain}`).join('+OR+');
+          const rssUrl = `https://news.google.com/rss/search?q=when:3d+${siteQueries}&ceid=US:en&hl=en-US&gl=US`;
+
+          const feed = await parser.parseURL(rssUrl);
+          const articles = (feed.items ?? []).slice(0, 20);
+
+          if (articles.length === 0) {
+            console.warn(`[PROPAGANDA] No articles for ${media.country}`);
+            await delay(1000);
+            continue;
+          }
+
+          headlines = articles
+            .map((a) => stripHTML(a.title ?? ''))
+            .filter(Boolean)
+            .slice(0, 10)
+            .map((h) => h.replace(/[<>{}[\]]/g, '').slice(0, 200));
+
+          articleCount = articles.length;
         }
-
-        let headlines = articles
-          .map((a) => stripHTML(a.title ?? ''))
-          .filter(Boolean)
-          .slice(0, 10)
-          .map((h) => h.replace(/[<>{}[\]]/g, '').slice(0, 200));
 
         // Translate non-English headlines before AI analysis
         headlines = await translateTexts(headlines, `PROPAGANDA:${media.country}`);
@@ -162,14 +222,14 @@ export async function fetchPropaganda(): Promise<void> {
           domain: media.outlets[0].domain,
           narratives,
           sampleHeadlines: headlines.slice(0, 5),
-          toneAvg: 0, // Google News RSS doesn't provide tone
-          articleCount: articles.length,
+          toneAvg: avgTone,
+          articleCount,
           analysisDate: new Date().toISOString(),
           narrativeShifts: shiftAnalysis.shifts,
           narrativeDirection: shiftAnalysis.direction as PropagandaEntry['narrativeDirection'],
         });
 
-        console.log(`[PROPAGANDA] ${media.country}: ${articles.length} articles, ${narratives.length} narratives, direction: ${shiftAnalysis.direction}`);
+        console.log(`[PROPAGANDA] ${media.country}: ${articleCount} articles, ${narratives.length} narratives, direction: ${shiftAnalysis.direction}`);
       } catch (err) {
         console.warn(`[PROPAGANDA] ${media.country} failed:`, err instanceof Error ? err.message : err);
       }
