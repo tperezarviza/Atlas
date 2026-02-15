@@ -95,16 +95,24 @@ async function fetchDogeSavings(): Promise<string | null> {
   return null;
 }
 
+const ADDITIONAL_FRED: { id: string; label: string; suffix: string; fallback: string; color?: string }[] = [
+  { id: 'DGS10', label: '10Y Treasury Yield', suffix: '%', fallback: '4.50%' },
+  { id: 'VIXCLS', label: 'VIX (Volatility)', suffix: '', fallback: '18.0', color: '#e8a33b' },
+  { id: 'DTWEXBGS', label: 'Dollar Index (TW)', suffix: '', fallback: '126.0' },
+  { id: 'TEDRATE', label: 'TED Spread', suffix: '%', fallback: '0.15%', color: '#e8a33b' },
+];
+
 export async function fetchMacro(): Promise<void> {
   console.log('[MACRO] Fetching macro indicators...');
 
   try {
-    const [debt, fedRate, cpi, unemployment, doge] = await Promise.allSettled([
+    const [debt, fedRate, cpi, unemployment, doge, ...additionalResults] = await Promise.allSettled([
       fetchNationalDebt(),
       fetchFredSeries('FEDFUNDS'),
       fetchBLSSeries('CUSR0000SA0'), // CPI All Urban Consumers
       fetchBLSSeries('LNS14000000'), // Unemployment Rate
       fetchDogeSavings(),
+      ...ADDITIONAL_FRED.map(s => fetchFredSeries(s.id)),
     ]);
 
     const items: MacroItem[] = [];
@@ -133,8 +141,17 @@ export async function fetchMacro(): Promise<void> {
     const unemplVal = unemployment.status === 'fulfilled' ? unemployment.value : null;
     items.push({ label: 'Unemployment', value: unemplVal ? `${unemplVal}%` : '4.0%' });
 
+    // Additional FRED series
+    for (let i = 0; i < ADDITIONAL_FRED.length; i++) {
+      const spec = ADDITIONAL_FRED[i];
+      const result = additionalResults[i];
+      const val = result?.status === 'fulfilled' ? result.value : null;
+      const display = val ? `${val}${spec.suffix}` : spec.fallback;
+      items.push({ label: spec.label, value: display, ...(spec.color ? { color: spec.color } : {}) });
+    }
+
     cache.set('macro', items, TTL.MACRO);
-    console.log('[MACRO] Macro data cached');
+    console.log(`[MACRO] Macro data cached (${items.length} indicators)`);
   } catch (err) {
     console.error('[MACRO] Fetch failed:', err);
   }

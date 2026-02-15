@@ -62,6 +62,11 @@ const MILITARY_CALLSIGN_PREFIXES = [
   'SAM', 'EXEC', 'VENUS', 'ATOM', 'KING', 'BISON',
   'NCHO', 'ORDER', 'CASA', 'MIDAS', 'YANK', 'SHARK',
   'WOLF', 'COBRA', 'TEAL', 'IRON',
+  'IAF',   // Israel Air Force
+  'THK',   // Turkish Air Force
+  'RJAF',  // Royal Jordanian Air Force
+  'RSD',   // Royal Saudi Air Force
+  'AMR',   // Italian Air Force
 ];
 
 // Known military ICAO24 prefixes by country (narrowed to avoid civilian overlap)
@@ -75,6 +80,19 @@ const MILITARY_ICAO_PREFIXES = [
   '3f8',  // Germany military (Luftwaffe)
   '3f9',  // Germany military
   '3fc',  // Germany military
+  '738',  // Israel Air Force
+  '739',  // Israel Air Force
+  '4b8',  // Turkish Air Force
+  '4b9',  // Turkish Air Force
+  '7cf',  // Royal Australian Air Force
+  '7c0',  // Royal Australian Air Force
+  'c0d',  // Royal Canadian Air Force
+  'c0e',  // Royal Canadian Air Force
+  '33e',  // Italian Air Force
+  '33f',  // Italian Air Force
+  '840',  // Japan Air Self-Defense Force
+  '841',  // Japan Air Self-Defense Force
+  '478',  // NATO
 ];
 
 function isMilitaryCallsign(callsign: string): boolean {
