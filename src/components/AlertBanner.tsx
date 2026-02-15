@@ -74,7 +74,7 @@ function BannerItem({ alert, onDismiss }: { alert: Alert; onDismiss: (id: string
         background: style.bg,
         borderLeft: `3px solid ${style.border}`,
         borderRadius: 3,
-        backdropFilter: 'blur(12px)',
+        backdropFilter: 'blur(12px)', animation: 'alert-glow 0.6s ease-out', '--glow-color': style.border + '99' as any,
       }}
     >
       <div className="flex items-center gap-3 px-4 py-2">

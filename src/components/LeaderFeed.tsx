@@ -120,12 +120,11 @@ function FeedItemRow({ item }: { item: FeedItem }) {
 
   return (
     <motion.div
-      initial={{ opacity: 0, height: 0 }}
-      animate={{ opacity: 1, height: 'auto' }}
+      initial={{ opacity: 0, y: -8 }}
+      animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.15 }}
       className="cursor-pointer transition-colors duration-150 hover:bg-bg-card-hover"
       style={{
-        overflow: 'hidden',
         borderBottom: '1px solid rgba(255,200,50,0.10)',
         borderLeft: `3px solid ${borderColors[item.category] || '#ffc832'}`,
         padding: '10px 18px 10px 14px',
@@ -157,7 +156,6 @@ function FeedItemRow({ item }: { item: FeedItem }) {
           display: '-webkit-box',
           WebkitLineClamp: 4,
           WebkitBoxOrient: 'vertical' as const,
-          overflow: 'hidden',
           maxHeight: `calc(13px * 1.45 * 4)`,
         } : undefined}
       >

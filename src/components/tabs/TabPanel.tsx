@@ -14,7 +14,7 @@ export default function TabPanel({ tabKey, children }: TabPanelProps) {
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         transition={{ duration: 0.2 }}
-        className="h-full w-full"
+        className="h-full w-full" style={{ willChange: "opacity" }}
       >
         {children}
       </motion.div>

@@ -85,15 +85,8 @@ body::before {
 }
 
 /* Panel glow */
-.panel-glow {
-  scroll-behavior: smooth;
-  transition: box-shadow 0.15s;
-  box-shadow: 0 0 6px rgba(255,200,50,0.03);
-}
-.panel-glow:hover {
-  scroll-behavior: smooth;
-  box-shadow: 0 0 16px rgba(255,200,50,0.08);
-}
+.panel-glow {  will-change: box-shadow;  contain: layout style;  transition: box-shadow 0.15s;  box-shadow: 0 0 6px rgba(255,200,50,0.03);}
+.panel-glow:hover {  box-shadow: 0 0 16px rgba(255,200,50,0.08);}
 
 /* Flash keyframes */
 @keyframes flash-green {
@@ -139,10 +132,7 @@ html.kiosk ::-webkit-scrollbar {
 ::-webkit-scrollbar-thumb:hover { background: #ffc832; }
 
 /* Pulse animations */
-@keyframes pulse-dot {
-  0%, 100% { opacity: 1; box-shadow: 0 0 4px #ff3b3b; }
-  50% { opacity: 0.3; box-shadow: 0 0 8px #ff3b3b; }
-}
+@keyframes alert-glow {  0% { box-shadow: 0 0 0 0 transparent; }  25% { box-shadow: 0 0 20px 2px var(--glow-color, rgba(255,59,59,0.6)); }  100% { box-shadow: 0 0 0 0 transparent; }}
 
 @keyframes pulse-critical {
   0% { box-shadow: 0 0 0 0 rgba(255, 59, 59, 0.7); }
@@ -216,12 +206,14 @@ html.kiosk ::-webkit-scrollbar {
 .conflict-marker.critical {
   background: #ff3b3b;
   box-shadow: 0 0 14px rgba(255, 59, 59, 1), 0 0 40px rgba(255, 59, 59, 0.35);
+will-change: box-shadow;
   animation: pulse-critical 2s infinite;
 }
 
 .conflict-marker.high {
   background: #ff8c00;
   box-shadow: 0 0 10px rgba(255, 140, 0, 0.6);
+will-change: box-shadow;
   animation: pulse-high 2.5s infinite;
 }
 
@@ -683,6 +675,4 @@ html.kiosk .atlas-resize-handle-vertical {
 }
 
 /* Smooth scroll for panel content */
-.overflow-y-auto {
-  scroll-behavior: smooth;
-}
+.overflow-y-auto {  scroll-behavior: smooth;}
