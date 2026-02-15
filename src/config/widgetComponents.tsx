@@ -1,19 +1,22 @@
-import type { ComponentType } from 'react';
+import { lazy, Suspense, type ComponentType } from 'react';
 import type { FeedItem, NewsWireItem, PropagandaEntry, HostilityPair } from '../types';
 import type { ViewId } from '../types/views';
 
+// ── Eager imports (GLOBAL tab — needed on first paint) ──
 import LeaderFeed from '../components/LeaderFeed';
 import MarketsDashboard from '../components/MarketsDashboard';
 import NewsWire from '../components/NewsWire';
 import IntelMonitor from '../components/IntelMonitor';
 import AIBrief from '../components/AIBrief';
 import GlobalNarratives from '../components/GlobalNarratives';
-import UkraineWarMetrics from '../components/tabs/UkraineWarMetrics';
-import RussianMilitaryActivity from '../components/tabs/RussianMilitaryActivity';
-import NatoResponse from '../components/tabs/NatoResponse';
-import ExecutiveOrdersList from '../components/tabs/ExecutiveOrdersList';
-import CongressTracker from '../components/tabs/CongressTracker';
-import InternetFreedomPanel from '../components/tabs/InternetFreedomPanel';
+
+// ── Lazy imports (tab-specific — loaded on demand) ──
+const UkraineWarMetrics = lazy(() => import('../components/tabs/UkraineWarMetrics'));
+const RussianMilitaryActivity = lazy(() => import('../components/tabs/RussianMilitaryActivity'));
+const NatoResponse = lazy(() => import('../components/tabs/NatoResponse'));
+const ExecutiveOrdersList = lazy(() => import('../components/tabs/ExecutiveOrdersList'));
+const CongressTracker = lazy(() => import('../components/tabs/CongressTracker'));
+const InternetFreedomPanel = lazy(() => import('../components/tabs/InternetFreedomPanel'));
 
 // ── Filter functions ──
 
@@ -71,21 +74,37 @@ export interface WidgetContext {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type WidgetEntry = ComponentType<any>;
 
+// ── Suspense wrapper for lazy components ──
+function withSuspense(LazyComponent: WidgetEntry): WidgetEntry {
+  return function SuspenseWrapper(props) {
+    return (
+      <Suspense fallback={<div className="h-full w-full animate-pulse" style={{ background: 'rgba(255,200,50,0.03)' }} />}>
+        <LazyComponent {...props} />
+      </Suspense>
+    );
+  };
+}
+
 const WIDGET_MAP: Record<string, WidgetEntry> = {
+  // Eager (GLOBAL tab)
   'leader-feed': LeaderFeed,
   'markets': MarketsDashboard,
   'newswire': NewsWire,
   'intel-monitor': IntelMonitor,
   'ai-brief': AIBrief,
   'global-narratives': GlobalNarratives,
+  // Lazy (UKRAINE tab)
   'ukraine-leader': LeaderFeed,
-  'ukraine-metrics': UkraineWarMetrics,
-  'russian-military': RussianMilitaryActivity,
-  'nato-response': NatoResponse,
+  'ukraine-metrics': withSuspense(UkraineWarMetrics),
+  'russian-military': withSuspense(RussianMilitaryActivity),
+  'nato-response': withSuspense(NatoResponse),
+  // Lazy (DOMESTIC tab)
   'trump-feed': LeaderFeed,
-  'executive-orders': ExecutiveOrdersList,
-  'congress-tracker': CongressTracker,
-  'internet-freedom': InternetFreedomPanel,
+  'executive-orders': withSuspense(ExecutiveOrdersList),
+  'congress-tracker': withSuspense(CongressTracker),
+  // Lazy (INTEL tab)
+  'internet-freedom': withSuspense(InternetFreedomPanel),
+  // Filtered variants (reuse eager components)
   'newswire-me': NewsWire,
   'newswire-ua': NewsWire,
   'newswire-domestic': NewsWire,

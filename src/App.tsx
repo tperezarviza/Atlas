@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef, useMemo } from 'react'
+import { useState, useCallback, useEffect, useRef, useMemo, lazy, Suspense } from 'react'
 import { motion } from 'framer-motion'
 import { useApiData } from './hooks/useApiData'
 import { api } from './services/api'
@@ -6,16 +6,18 @@ import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts'
 import { useKioskMode } from './hooks/useKioskMode'
 import { useLayoutConfig } from './hooks/useLayoutConfig'
 import ErrorBoundary from './components/ErrorBoundary'
-import BootSequence from './components/BootSequence'
 import TopBar from './components/TopBar'
 import WorldMap from './components/WorldMap'
 import Ticker from './components/Ticker'
 import AlertBanner from './components/AlertBanner'
-import CountryProfilePanel from './components/CountryProfilePanel'
-import TrumpNewsPopup from './components/TrumpNewsPopup'
-import CriticalEventPopup from './components/CriticalEventPopup'
 import TabPanel from './components/tabs/TabPanel'
 import DashboardLayout from './components/layout/DashboardLayout'
+
+// Lazy-loaded overlays (not needed on initial paint)
+const BootSequence = lazy(() => import('./components/BootSequence'))
+const CountryProfilePanel = lazy(() => import('./components/CountryProfilePanel'))
+const TrumpNewsPopup = lazy(() => import('./components/TrumpNewsPopup'))
+const CriticalEventPopup = lazy(() => import('./components/CriticalEventPopup'))
 import { getWidgetComponent, getWidgetProps } from './config/widgetComponents'
 import type { WidgetContext } from './config/widgetComponents'
 import { VIEW_LAYOUT_PRESETS } from './config/viewPresets'
@@ -112,10 +114,12 @@ export default function App() {
 
   if (!booted) {
     return (
-      <BootSequence onComplete={() => {
-        sessionStorage.setItem('atlas-booted', '1')
-        setBooted(true)
-      }} />
+      <Suspense fallback={<div className="h-screen w-screen" style={{ background: '#000' }} />}>
+        <BootSequence onComplete={() => {
+          sessionStorage.setItem('atlas-booted', '1')
+          setBooted(true)
+        }} />
+      </Suspense>
     )
   }
 
@@ -208,18 +212,16 @@ export default function App() {
         onDismiss={handleDismissAlert}
       />
 
-      {/* Country Profile Panel — slide-in from right */}
-      <CountryProfilePanel
-        countryCode={selectedCountryCode}
-        onClose={() => setSelectedCountryCode(null)}
-        conflicts={conflicts ?? []}
-      />
-
-      {/* Trump News Flash Popup */}
-      <TrumpNewsPopup />
-
-      {/* Critical Event Popup (military, earthquake, natural disaster) */}
-      <CriticalEventPopup />
+      {/* Lazy-loaded overlays */}
+      <Suspense fallback={null}>
+        <CountryProfilePanel
+          countryCode={selectedCountryCode}
+          onClose={() => setSelectedCountryCode(null)}
+          conflicts={conflicts ?? []}
+        />
+        <TrumpNewsPopup />
+        <CriticalEventPopup />
+      </Suspense>
     </ErrorBoundary>
   )
 }
