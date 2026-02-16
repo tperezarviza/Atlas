@@ -84,8 +84,8 @@ export function startCronJobs() {
   // 0 6 * * * -> Border stats (1x/day)
   cron.schedule('0 6 * * *', safeRun('border', fetchBorderStats));
 
-  // 0 */4 * * * -> Hostility Index (BQ: all 15 pairs in one query)
-  cron.schedule('0 */4 * * *', safeRun('hostility', fetchHostilityIndex));
+  // 0 */12 * * * -> Hostility Index (BQ: 107GB/query, 2x/day)
+  cron.schedule('0 */12 * * *', safeRun('hostility', fetchHostilityIndex));
 
   // 0 * * * * (offset 30) -> OONI + Countries + Armed Groups
   cron.schedule('30 * * * *', safeRun('intel', async () => {
@@ -145,14 +145,14 @@ export function startCronJobs() {
   // 7 */6 * * * -> Focal Point Detection (BQ GKG entities or Claude NER fallback)
   cron.schedule('7 */6 * * *', safeRun('focal-points', detectFocalPoints));
 
-  // 12,27,42,57 * * * * -> Anomaly Detection (every 15 min, offset 12)
-  cron.schedule('12,27,42,57 * * * *', safeRun('anomaly-detection', runAnomalyDetection));
+  // 12 */4 * * * -> Anomaly Detection (BQ: 21GB/query, 6x/day)
+  cron.schedule('12 */4 * * *', safeRun('anomaly-detection', runAnomalyDetection));
 
-  // 10,40 * * * * -> Country tone for CII (BQ, every 30 min)
-  cron.schedule('10,40 * * * *', safeRun('cii-bq-tone', fetchCountryToneBQ));
+  // 40 */4 * * * -> Country tone for CII (BQ: 20GB/query, 6x/day)
+  cron.schedule('40 */4 * * *', safeRun('cii-bq-tone', fetchCountryToneBQ));
 
-  // 15,45 * * * * -> Geographic convergence detection (BQ, every 30 min)
-  cron.schedule('15,45 * * * *', safeRun('geo-convergence', detectGeoConvergence));
+  // 15 */6 * * * -> Geographic convergence detection (BQ: 31GB/query, 4x/day)
+  cron.schedule('15 */6 * * *', safeRun('geo-convergence', detectGeoConvergence));
 
   // 0 */6 * * * -> Google Trends (BQ, 4x/day — data updates daily)
   cron.schedule('0 */6 * * *', safeRun('google-trends', fetchGoogleTrends));

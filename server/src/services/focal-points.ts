@@ -1,8 +1,6 @@
 import { TTL } from '../config.js';
 import { cache } from '../cache.js';
 import { redisGet, redisSet } from '../redis.js';
-import { isBigQueryAvailable } from './bigquery.js';
-import { detectFocalPointsBQ } from './focal-points-bq.js';
 import { aiComplete } from '../utils/ai-client.js';
 import type { NewsPoint, FeedItem, TwitterIntelItem, Conflict, HostilityPair, InternetIncident } from '../types.js';
 
@@ -69,10 +67,7 @@ function escapeRegex(str: string): string {
 }
 
 export async function detectFocalPoints(): Promise<void> {
-  // Prefer BQ GKG when available (billing attached — ~1GB/query, runs every 6h)
-  if (isBigQueryAvailable()) {
-    return detectFocalPointsBQ();
-  }
+  // BQ GKG disabled: 1.28 TB/query = $32/day. Claude NER fallback is $0.005/call.
 
   console.log('[FOCAL] Detecting focal points...');
 
