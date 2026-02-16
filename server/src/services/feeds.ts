@@ -143,7 +143,8 @@ const UNFILTERED_HANDLES = new Set([
 ]);
 
 // Headline keywords that indicate irrelevant content for an intel dashboard
-const NOISE_PATTERNS = /\b(olympi|medal|athlet|quarterback|touchdown|nfl|nba|mlb|nhl|super bowl|world series|playoffs|slam dunk|home run|batting|pitching|soccer goal|premier league|champions league|la liga|serie a|bundesliga|tennis|golf|swimming|gymnast|skating|curling|bobsled|ski|snowboard|sprint|relay race|marathon runner|halfpipe|slalom|biathlon|figure skat|volleyball|rowing|fencing|wrestling match|boxing ring|ufc|mma|formula.?1|nascar|grand prix|copa america|world cup|euro 2|super bowl|playoff|finals game|stanley cup|draft pick|free agent sign|transfer window|recipe|cookbook|cooking|bake|chef|restaurant review|food recall|dining|nutrition tip|kitchen hack|fashion|runway|designer|couture|red carpet|beauty|makeup|skincare|hairstyle|fragrance|celebrity|kardashian|hollywood|box office|movie review|tv show|streaming|netflix|hulu|disney\+|emmy|oscar|grammy|golden globe|spirit award|billboard|album|concert|tour date|pop star|broadway|reality tv|bachelor|bachelorette|survivor|big brother|idol|talent show|housewives|dating show|wedding plan|baby shower|gender reveal|home renovation|hgtv|diy project|garden tip|pet care|dog breed|cat video|horoscope|zodiac|psychic|lottery|jackpot|casino|betting odds|fantasy sport|prop bet|crossword|puzzle|trivia|viral video|tiktok trend|influencer|yoga|pilates|workout|weight loss|diet plan|keto|paleo|vegan recipe|juice cleanse)\b/i;
+// Note: no trailing \b — allows prefix matching (e.g. "olympi" matches "Olympics")
+const NOISE_PATTERNS = /\b(olympi|medal\b|athlet|quarterback|touchdown|nfl\b|nba\b|mlb\b|nhl\b|super bowl|world series|slam dunk|home run\b|batting|pitching|soccer goal|premier league|champions league|la liga|serie a\b|bundesliga|tennis\b|golf\b|swimming|gymnast|skating|curling|bobsled|ski jump|snowboard|relay race|marathon run|halfpipe|slalom|biathlon|figure skat|volleyball|rowing\b|fencing\b|wrestling match|boxing ring|ufc\b|mma\b|formula.?1|nascar|grand prix|copa america|world cup|euro 2\d|stanley cup|draft pick|free agent sign|transfer window|recipe|cookbook|cooking\b|baked?\b|chef\b|restaurant review|food recall|dining\b|nutrition tip|kitchen hack|fashion\b|runway\b|designer\b|couture|red carpet|beauty\b|makeup|skincare|hairstyle|fragrance|celebrity|kardashian|hollywood|box office|movie review|tv show|streaming\b|netflix|hulu\b|disney\+|emmy\b|oscar\b|grammy|golden globe|spirit award|billboard\b|album\b|concert\b|tour date|pop star|broadway|reality tv|bachelor\b|bachelorette|survivor\b|big brother|idol\b|talent show|housewives|dating show|wedding plan|baby shower|gender reveal|home renovation|hgtv|diy project|garden tip|pet care|dog breed|cat video|horoscope|zodiac|psychic|lottery|jackpot|casino\b|betting odds|fantasy sport|prop bet|crossword|puzzle\b|trivia\b|viral video|tiktok trend|influencer|yoga\b|pilates|workout|weight loss|diet plan|keto\b|paleo\b|vegan recipe|juice cleanse|hiker die|hiker found|summit.*(peak|mountain)|preacher.*kid|meth addict|kiosk.smash|airport.*rampage)/i;
 
 function isRelevantHeadline(text: string, handle: string): boolean {
   if (UNFILTERED_HANDLES.has(handle)) return true;
@@ -240,8 +241,7 @@ export async function fetchFeeds(): Promise<void> {
     });
 
     cache.set('feed', allItems, TTL.FEEDS);
-    const filtered = allItems.filter(i => !UNFILTERED_HANDLES.has(i.handle)).length;
-    console.log(`[FEEDS] ${allItems.length} feed items cached (${filtered} from filtered sources)`);
+    console.log(`[FEEDS] ${allItems.length} feed items cached`);
   } else {
     console.warn('[FEEDS] No feed items received, keeping cache/mock');
   }
