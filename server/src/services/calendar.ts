@@ -23,7 +23,8 @@ function determineUrgency(dateStr: string): CalendarUrgency | 'past' {
   const eventDate = new Date(dateStr);
   const diffMs = eventDate.getTime() - now.getTime();
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-  if (diffDays < -1) return 'past';
+  if (diffDays < -7) return 'past';
+  if (diffDays < -1) return 'soon';   // 2-7 days ago → recent
   if (diffDays < 1) return 'today';
   if (diffDays <= 7) return 'soon';
   return 'future';

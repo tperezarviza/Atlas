@@ -72,6 +72,7 @@ function getUrgency(eventDate: Date): CalendarUrgency | 'past' {
   const diffMs = eventDate.getTime() - Date.now();
   const diffDays = Math.floor(diffMs / 86400000);
   if (diffDays < -7) return 'past';
+  if (diffDays < -1) return 'soon';   // 2-7 days ago → "soon" (recent but not today)
   if (diffDays < 1) return 'today';
   if (diffDays <= 3) return 'soon';
   return 'future';
