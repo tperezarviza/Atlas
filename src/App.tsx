@@ -97,7 +97,7 @@ export default function App() {
           <div style={{ position: 'relative', overflow: 'hidden', borderRight: '1px solid rgba(255,200,50,0.12)' }}>
             <Suspense fallback={<div style={{ width: '100%', height: '100%', background: '#080c14' }} />}>
               <WorldMap
-                selectedConflictId={undefined}
+                selectedConflictId={null}
                 onSelectConflict={() => {}}
                 onCountryClick={setSelectedCountryCode}
                 conflicts={conflicts}
