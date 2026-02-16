@@ -22,12 +22,15 @@ const GEO_KW = /iran|china|russia|ukraine|taiwan|nato|nuclear|north korea|missil
 const US_KW = /trump|biden|harris|congress|senate|us election|us president|american|united states|\bgop\b|democrat|republican|border wall|immigration.*us|\bdoj\b|\bfbi\b|\bcia\b|pentagon|white house|\bdoge\b|\brfk\b|jd vance|desantis/i;
 const ECON_KW = /fed rate|federal reserve|interest rate|inflation|gdp|recession|bitcoin|btc|ethereum|crypto|s&p 500|nasdaq|dow jones|tariff|trade war|debt ceiling/i;
 const CONFLICT_KW = /\bwar\b|invasion|\battack\b|\bstrike\b|ceasefire|peace deal|troops deploy|military operation|casualties|bombing/i;
-const SPORTS_KW = /counter.strike|esports|e-sports|\bbo[1-5]\b|league of legends|\blol\b|dota|valorant|overwatch|\bnfl\b|\bnba\b|\bmlb\b|\bnhl\b|super bowl|world series|premier league|champions league|la liga|serie a|bundesliga|\bufc\b|\bmma\b|formula.?1|nascar|grand prix|copa america|\bfifa\b|world cup|\bolympic\b|medal count|\bgolf\b|\btennis\b|wimbledon|us open|french open|australian open|\bpga\b|\batp\b|\bwta\b|boxing match|college football|march madness|\bncaa\b|stanley cup|playoff game|draft pick|batting average|rushing yard|touchdown|quarterback|home run/i;
-const ENTERTAINMENT_KW = /\bwho will win.*award|best picture|best actor|best actress|\boscar\b|\bemmy\b|\bgrammy\b|\bgolden globe\b|box office|opening weekend|album.*chart|billboard|streaming record|netflix|reality.?tv|bachelor|bachelorette|survivor|big brother|american idol|talent show|housewives|celebrity|kardashian|jenner|influencer/i;
+const SPORTS_KW = /counter.strike|esports|e-sports|\bbo[1-5]\b|league of legends|\blol\b|dota|valorant|overwatch|\bnfl\b|\bnba\b|\bmlb\b|\bnhl\b|super bowl|world series|premier league|champions league|la liga|serie a\b|bundesliga|\bufc\b|\bmma\b|formula.?1|nascar|grand prix|copa america|\bfifa\b|world cup|\bolympi|medal|most gold|\bgolf\b|\btennis\b|wimbledon|us open|french open|australian open|\bpga\b|\batp\b|\bwta\b|boxing match|college football|march madness|\bncaa\b|stanley cup|playoff game|draft pick|batting average|rushing yard|touchdown|quarterback|home run/i;
+const ENTERTAINMENT_KW = /\bwho will win.*award|best picture|best actor|best actress|\boscar\b|\bemmy\b|\bgrammy\b|\bgolden globe\b|box office|opening weekend|album.*chart|billboard|streaming record|netflix|stranger things|reality.?tv|bachelor|bachelorette|survivor|big brother|american idol|talent show|housewives|celebrity|kardashian|jenner|influencer|episode released|new season/i;
+
+const TRIVIAL_KW = /\btweet|post \d+.*tweet|follower|\bsubscriber|how many.*post|temperature.*record|weather.*record|rain.*inches|\bsnow.*inch/i;
 
 function classify(title: string): string {
   if (SPORTS_KW.test(title)) return 'sports';
   if (ENTERTAINMENT_KW.test(title)) return 'entertainment';
+  if (TRIVIAL_KW.test(title)) return 'trivial';
   if (CONFLICT_KW.test(title)) return 'conflict';
   if (GEO_KW.test(title)) return 'geopolitical';
   if (US_KW.test(title)) return 'us_politics';
@@ -84,7 +87,7 @@ export async function fetchPolymarket(): Promise<void> {
         };
       })
       .filter(e => {
-        if (e.category === 'sports' || e.category === 'entertainment') return false;
+        if (e.category === 'sports' || e.category === 'entertainment' || e.category === 'trivial') return false;
         if (e.category !== 'other') return true;
         // Keep "other" if high volume — likely significant
         return e.volume >= 500_000;
