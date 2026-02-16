@@ -3,8 +3,6 @@ import { cache } from '../cache.js';
 import { translateTexts } from './translate.js';
 import { withCircuitBreaker } from '../utils/circuit-breaker.js';
 import { isInPermanentZone } from '../utils/permanentZones.js';
-import { isBigQueryAvailable } from './bigquery.js';
-import { fetchGdeltNewsBQ } from './gdelt-bq.js';
 import type { NewsPoint, NewsWireItem, NewsBullet } from '../types.js';
 
 interface GdeltFeature {
