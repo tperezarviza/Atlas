@@ -3,6 +3,23 @@ import { cache } from '../cache.js';
 import { COUNTRY_PROFILES } from '../data/countries.js';
 import type { CountryProfile, Conflict, ArmedGroup } from '../types.js';
 
+// Map conflict names to ALL countries involved (not just the named country)
+const CONFLICT_PARTICIPANTS: Record<string, string[]> = {
+  'Ukraine': ['Ukraine', 'Russia'],
+  'Palestine': ['Palestine', 'Israel'],
+  'Syria': ['Syria', 'Turkey', 'Iran'],
+  'Yemen': ['Yemen', 'Saudi Arabia', 'Iran'],
+  'Sudan': ['Sudan'],
+  'Myanmar': ['Myanmar'],
+  'Somalia': ['Somalia'],
+  'Mali': ['Mali'],
+  'Burkina Faso': ['Burkina Faso'],
+  'Ethiopia': ['Ethiopia'],
+  'Nigeria': ['Nigeria'],
+  'Haiti': ['Haiti'],
+  'Democratic Republic of Congo': ['Democratic Republic of Congo'],
+};
+
 export async function fetchCountries(): Promise<void> {
   console.log('[COUNTRIES] Enriching country profiles from cache...');
 
@@ -11,12 +28,15 @@ export async function fetchCountries(): Promise<void> {
     const conflicts = cache.get<Conflict[]>('conflicts');
     const actorCounts = cache.get<Record<string, number>>('acled_actors');
 
-    // Build lookup maps for O(1) enrichment
+    // Build lookup: country name → number of conflicts it's involved in
     const conflictsByCountry = new Map<string, number>();
     if (conflicts) {
       for (const c of conflicts) {
-        const existing = conflictsByCountry.get(c.name) ?? 0;
-        conflictsByCountry.set(c.name, existing + 1);
+        // Use participant map if available, otherwise just the conflict name
+        const participants = CONFLICT_PARTICIPANTS[c.name] ?? [c.name];
+        for (const country of participants) {
+          conflictsByCountry.set(country, (conflictsByCountry.get(country) ?? 0) + 1);
+        }
       }
     }
 

@@ -12,11 +12,13 @@ const CALENDAR_FEEDS = [
   { url: 'https://news.un.org/feed/subscribe/en/news/topic/peace-and-security/feed/rss.xml', prefix: 'UN' },
 ];
 
-function determineUrgency(dateStr: string): CalendarUrgency {
+function determineUrgency(dateStr: string): CalendarUrgency | 'past' {
   const now = new Date();
   const eventDate = new Date(dateStr);
-  const diffDays = Math.floor((eventDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-  if (diffDays <= 0) return 'today';
+  const diffMs = eventDate.getTime() - now.getTime();
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  if (diffDays < -1) return 'past';
+  if (diffDays < 1) return 'today';
   if (diffDays <= 7) return 'soon';
   return 'future';
 }
@@ -24,12 +26,18 @@ function determineUrgency(dateStr: string): CalendarUrgency {
 function formatEventDate(dateStr: string): string {
   const date = new Date(dateStr);
   const now = new Date();
-  const diffDays = Math.floor((date.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+  const diffMs = date.getTime() - now.getTime();
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  const formatted = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 
-  if (diffDays <= 0) {
-    return `TODAY · ${date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
+  if (diffDays < -1) {
+    const daysAgo = Math.abs(diffDays);
+    return daysAgo <= 7 ? `${daysAgo}d ago · ${formatted}` : formatted;
   }
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  if (diffDays < 1) return `TODAY · ${formatted}`;
+  if (diffDays === 1) return `TOMORROW · ${formatted}`;
+  if (diffDays <= 7) return `In ${diffDays}d · ${formatted}`;
+  return formatted;
 }
 
 export async function fetchCalendar(): Promise<void> {
@@ -59,13 +67,16 @@ export async function fetchCalendar(): Promise<void> {
       if (r.status === 'fulfilled') events.push(...r.value);
     });
 
-    if (events.length > 0) {
+    // Drop events older than 7 days
+    const filtered = events.filter(e => e.urgency !== 'past');
+
+    if (filtered.length > 0) {
       // Sort: today first, then soon, then future
       const urgencyOrder: Record<CalendarUrgency, number> = { today: 0, soon: 1, future: 2 };
-      events.sort((a, b) => urgencyOrder[a.urgency] - urgencyOrder[b.urgency]);
+      filtered.sort((a, b) => urgencyOrder[a.urgency] - urgencyOrder[b.urgency]);
 
-      cache.set('calendar', events, TTL.CALENDAR);
-      console.log(`[CALENDAR] ${events.length} events cached`);
+      cache.set('calendar', filtered, TTL.CALENDAR);
+      console.log(`[CALENDAR] ${filtered.length} events cached (${events.length - filtered.length} past events dropped)`);
     } else {
       console.warn('[CALENDAR] No events found, keeping cache/mock');
     }
