@@ -158,11 +158,34 @@ const CATEGORY_BULLET: Record<string, NewsBullet> = {
 
 function newsToWire(news: NewsPoint[], fetchedAt: number): NewsWireItem[] {
   const hasTone = news.some(n => n.tone !== 0);
-  const sorted = hasTone
-    ? [...news].sort((a, b) => a.tone - b.tone)
-    : [...news].sort((a, b) => (CATEGORY_PRIORITY[a.category] ?? 9) - (CATEGORY_PRIORITY[b.category] ?? 9));
 
-  return sorted.slice(0, 25).map((n, i) => {
+  let selected: NewsPoint[];
+  if (hasTone) {
+    selected = [...news].sort((a, b) => a.tone - b.tone).slice(0, 25);
+  } else {
+    // Round-robin categories to ensure diversity (max 4 per category)
+    const byCategory = new Map<string, NewsPoint[]>();
+    for (const n of news) {
+      const arr = byCategory.get(n.category) ?? [];
+      arr.push(n);
+      byCategory.set(n.category, arr);
+    }
+    const cats = [...byCategory.keys()].sort(
+      (a, b) => (CATEGORY_PRIORITY[a] ?? 9) - (CATEGORY_PRIORITY[b] ?? 9)
+    );
+    selected = [];
+    const MAX_PER_CAT = 4;
+    for (let round = 0; round < MAX_PER_CAT && selected.length < 25; round++) {
+      for (const cat of cats) {
+        const items = byCategory.get(cat)!;
+        if (round < items.length && selected.length < 25) {
+          selected.push(items[round]);
+        }
+      }
+    }
+  }
+
+  return selected.map((n, i) => {
     let bullet: NewsBullet;
     if (hasTone) {
       bullet = 'medium';
