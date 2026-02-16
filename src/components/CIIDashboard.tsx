@@ -36,6 +36,13 @@ function scoreColor(s: number): string {
   return '#00ff88';
 }
 
+function scoreLabel(s: number): string {
+  if (s >= 70) return 'CRIT';
+  if (s >= 50) return 'HIGH';
+  if (s >= 30) return 'MOD';
+  return 'LOW';
+}
+
 function trendArrow(t: string): { symbol: string; color: string } {
   if (t === 'rising') return { symbol: '↑', color: '#ff3b3b' };
   if (t === 'falling') return { symbol: '↓', color: '#00ff88' };
@@ -135,16 +142,17 @@ export default memo(function CIIDashboard({ contextId }: CIIDashboardProps) {
                 {trend.symbol}
               </span>
 
-              {/* Score */}
+              {/* Score + Label */}
               <span
                 className="font-data font-bold text-right"
                 style={{
                   fontSize: 'var(--text-mono)',
                   color: scoreColor(entry.score),
-                  minWidth: 32,
+                  minWidth: 64,
                 }}
               >
-                {Math.round(entry.score)}
+                {Math.round(entry.score)}{' '}
+                <span style={{ fontSize: 9, opacity: 0.7, letterSpacing: 0.5 }}>{scoreLabel(entry.score)}</span>
               </span>
             </div>
           );

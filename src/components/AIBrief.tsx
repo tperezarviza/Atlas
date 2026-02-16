@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import DOMPurify from 'dompurify';
 import { useApiData } from '../hooks/useApiData';
-import { useTypingEffect } from '../hooks/useTypingEffect';
 import { api } from '../services/api';
 import type { BriefResponse } from '../services/api';
 
@@ -59,8 +58,6 @@ export default function AIBrief({ focus }: AIBriefProps) {
 
   const brief = data;
 
-  const [typingActive, setTypingActive] = useState(false);
-
   const handleRegenerate = useCallback(async () => {
     abortRef.current?.abort();
     const controller = new AbortController();
@@ -76,7 +73,6 @@ export default function AIBrief({ focus }: AIBriefProps) {
         return;
       }
       await refetch(controller.signal);
-      if (!controller.signal.aborted) setTypingActive(true);
     } catch (err) {
       if (controller.signal.aborted) return;
       setRegenError(err instanceof Error ? err.message : 'Regeneration failed');
@@ -86,9 +82,6 @@ export default function AIBrief({ focus }: AIBriefProps) {
   }, [focus, refetch]);
 
   const sanitizedHtml = brief ? sanitizeBriefHTML(brief.html) : '';
-  const displayHtml = useTypingEffect(sanitizedHtml, typingActive, {
-    onComplete: () => setTypingActive(false),
-  });
 
   const headerLabel = focus && FOCUS_LABELS[focus]
     ? `🤖 AI Brief: ${FOCUS_LABELS[focus]}`
@@ -116,8 +109,9 @@ export default function AIBrief({ focus }: AIBriefProps) {
         ) : brief ? (
           <div
             className="text-[14px] leading-[1.65] brief-content"
-            style={CONTENT_PAD_FULL}
-            dangerouslySetInnerHTML={{ __html: displayHtml }}
+            style={{ ...CONTENT_PAD_FULL, animation: 'fade-in 0.4s ease-out' }}
+            key={brief.generatedAt}
+            dangerouslySetInnerHTML={{ __html: sanitizedHtml }}
           />
         ) : (
           <div style={CONTENT_PAD} className="text-[14px] text-text-muted">Loading brief...</div>

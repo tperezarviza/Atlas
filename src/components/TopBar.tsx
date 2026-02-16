@@ -9,7 +9,7 @@ import ApiHealthPanel from './ApiHealthPanel';
 
 const REFRESH_MS = 30_000;
 const HEALTH_REFRESH_MS = 30_000;
-const CLOCK_FILTER = new Set(['BUE', 'DC']);
+const CLOCK_FILTER = new Set(['DC', 'UTC', 'LON', 'MSK', 'BEI', 'TEH']);
 
 // Extracted inline style constants (avoid object recreation on every render)
 const TOPBAR_STYLE = { background: '#000000', borderBottom: '1px solid rgba(255,200,50,0.10)', padding: '0 20px', gap: 0 };
@@ -128,11 +128,11 @@ export default memo(function TopBar({ contextId, contextIndex, progress, onConte
       <div className="shrink-0" style={DIVIDER_STYLE} />
 
       {/* ── GROUP 3: Clocks ── */}
-      <div className="flex-1 flex items-center justify-center gap-[28px]" style={{ padding: '0 16px' }}>
+      <div className="flex-1 flex items-center justify-center gap-[16px]" style={{ padding: '0 12px' }}>
         {filteredZones.map((z) => (
           <div key={z.label} className="flex flex-col items-center">
-            <span className="font-data text-[12px] tracking-[1px]" style={MUTED_COLOR}>{z.label}</span>
-            <span className="font-data text-[15px] font-medium" style={{ color: '#ffc832' }}>{z.time}</span>
+            <span className="font-data text-[10px] tracking-[1px]" style={MUTED_COLOR}>{z.label}</span>
+            <span className="font-data text-[14px] font-medium" style={{ color: '#ffc832' }}>{z.time}</span>
           </div>
         ))}
       </div>
@@ -141,14 +141,15 @@ export default memo(function TopBar({ contextId, contextIndex, progress, onConte
       <div className="shrink-0" style={DIVIDER_STYLE} />
 
       {/* ── GROUP 4: Stats ── */}
-      <div className="flex items-center gap-[20px] shrink-0" style={{ padding: '0 16px' }}>
+      <div className="flex items-center gap-[14px] shrink-0" style={{ padding: '0 12px' }}>
         {kpis.length > 0
-          ? kpis.slice(0, 2).map(kpi => (
+          ? kpis.map(kpi => (
               <KPI key={kpi.label} label={kpi.label} value={kpi.value} colorClass={kpi.colorClass} />
             ))
           : <>
-              <KPI label="ACTIVE CONFLICTS" value="—" colorClass="text-text-muted" />
+              <KPI label="CONFLICTS" value="—" colorClass="text-text-muted" />
               <KPI label="CRITICAL" value="—" colorClass="text-text-muted" />
+              <KPI label="BTC" value="—" colorClass="text-text-muted" />
             </>
         }
       </div>
@@ -202,11 +203,11 @@ const ALLOWED_COLOR_CLASSES = new Set([
 function KPI({ label, value, colorClass }: { label: string; value: string; colorClass?: string }) {
   const safeColor = colorClass && ALLOWED_COLOR_CLASSES.has(colorClass) ? colorClass : 'text-text-primary';
   return (
-    <div className="flex flex-col items-center px-[4px] py-[2px]">
-      <div className="text-[12px] uppercase tracking-[1.5px] font-data font-medium" style={MUTED_COLOR}>
+    <div className="flex flex-col items-center px-[2px] py-[2px]">
+      <div className="text-[10px] uppercase tracking-[1px] font-data font-medium" style={MUTED_COLOR}>
         {label}
       </div>
-      <div className={`font-data text-[15px] font-semibold ${safeColor}`}>
+      <div className={`font-data text-[14px] font-semibold ${safeColor}`}>
         {value}
       </div>
     </div>
