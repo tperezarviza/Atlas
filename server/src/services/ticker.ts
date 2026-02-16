@@ -11,6 +11,15 @@ function toneToColor(tone: number): string {
   return '#2d7aed';                // neutral blue
 }
 
+const CATEGORY_COLORS: Record<string, string> = {
+  terrorism: '#e83b3b',
+  russia_ukraine: '#e8842b',
+  middle_east: '#e8842b',
+  us_politics: '#9b59e8',
+  energy: '#d4a72c',
+  general: '#2d7aed',
+};
+
 export function composeTicker(): void {
   console.log('[TICKER] Compositing ticker from caches...');
 
@@ -31,14 +40,31 @@ export function composeTicker(): void {
     }
   }
 
-  // 2. Breaking news (most negative tone)
+  // 2. Breaking news — use tone when available, category colors when GDELT returns no tone
   const news = cache.get<NewsPoint[]>('news');
   if (news) {
-    const critical = [...news].sort((a, b) => a.tone - b.tone).slice(0, 8);
-    for (const n of critical) {
+    const hasTone = news.some(n => n.tone !== 0);
+    let selected: NewsPoint[];
+    if (hasTone) {
+      selected = [...news].sort((a, b) => a.tone - b.tone).slice(0, 8);
+    } else {
+      // Round-robin categories for diversity
+      const byCategory = new Map<string, NewsPoint[]>();
+      for (const n of news) {
+        const arr = byCategory.get(n.category) ?? [];
+        arr.push(n);
+        byCategory.set(n.category, arr);
+      }
+      selected = [];
+      for (const [, arr] of byCategory) {
+        selected.push(...arr.slice(0, 2));
+      }
+      selected = selected.slice(0, 8);
+    }
+    for (const n of selected) {
       items.push({
         id: `tk-${idCounter++}`,
-        bulletColor: toneToColor(n.tone),
+        bulletColor: hasTone ? toneToColor(n.tone) : (CATEGORY_COLORS[n.category] ?? '#2d7aed'),
         source: n.source.replace(/\.(com|org|net|gov)$/i, '').toUpperCase(),
         text: n.headline,
       });

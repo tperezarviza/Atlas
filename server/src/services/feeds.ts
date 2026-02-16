@@ -136,6 +136,20 @@ const FEED_SOURCES: FeedSource[] = [
     sourceName: 'Al Mayadeen', category: 'state_media', tags: ['Lebanon', 'Iran-aligned'], tier: 4 },
 ];
 
+// Sources that bypass relevance filtering (government, institutional, think tanks)
+const UNFILTERED_HANDLES = new Set([
+  'TruthSocial', 'WhiteHouse', 'Pentagon', 'StateDept', 'NATO', 'UN', 'IAEA',
+  'Kremlin', 'CSIS', 'ISW',
+]);
+
+// Headline keywords that indicate irrelevant content for an intel dashboard
+const NOISE_PATTERNS = /\b(olympi|medal|athlet|quarterback|touchdown|nfl|nba|mlb|nhl|super bowl|world series|playoffs|slam dunk|home run|batting|pitching|soccer goal|premier league|champions league|la liga|serie a|bundesliga|tennis|golf|swimming|gymnast|skating|curling|bobsled|ski|snowboard|sprint|relay race|marathon runner|halfpipe|slalom|biathlon|figure skat|volleyball|rowing|fencing|wrestling match|boxing ring|ufc|mma|formula.?1|nascar|grand prix|copa america|world cup|euro 2|super bowl|playoff|finals game|stanley cup|draft pick|free agent sign|transfer window|recipe|cookbook|cooking|bake|chef|restaurant review|food recall|dining|nutrition tip|kitchen hack|fashion|runway|designer|couture|red carpet|beauty|makeup|skincare|hairstyle|fragrance|celebrity|kardashian|hollywood|box office|movie review|tv show|streaming|netflix|hulu|disney\+|emmy|oscar|grammy|golden globe|spirit award|billboard|album|concert|tour date|pop star|broadway|reality tv|bachelor|bachelorette|survivor|big brother|idol|talent show|housewives|dating show|wedding plan|baby shower|gender reveal|home renovation|hgtv|diy project|garden tip|pet care|dog breed|cat video|horoscope|zodiac|psychic|lottery|jackpot|casino|betting odds|fantasy sport|prop bet|crossword|puzzle|trivia|viral video|tiktok trend|influencer|yoga|pilates|workout|weight loss|diet plan|keto|paleo|vegan recipe|juice cleanse)\b/i;
+
+function isRelevantHeadline(text: string, handle: string): boolean {
+  if (UNFILTERED_HANDLES.has(handle)) return true;
+  return !NOISE_PATTERNS.test(text);
+}
+
 function relativeTime(dateStr: string | undefined): string {
   if (!dateStr) return '?';
   const date = new Date(dateStr);
@@ -152,19 +166,28 @@ function relativeTime(dateStr: string | undefined): string {
 async function fetchSingleFeed(source: FeedSource): Promise<FeedItem[]> {
   try {
     const feed = await parser.parseURL(source.url);
-    return (feed.items ?? []).slice(0, 5).map((item, i) => ({
-      id: `rss-${source.handle.replace(/[^a-zA-Z]/g, '')}-${i}`,
-      flag: source.flag,
-      handle: source.handle,
-      role: source.role,
-      source: source.sourceName,
-      time: relativeTime(item.pubDate ?? item.isoDate),
-      category: source.category,
-      text: stripHTML(item.title ?? ''),
-      engagement: '',
-      tags: source.tags,
-      tier: source.tier,
-    }));
+    const items: FeedItem[] = [];
+    let idx = 0;
+    for (const item of (feed.items ?? []).slice(0, 10)) {
+      const text = stripHTML(item.title ?? '');
+      if (!isRelevantHeadline(text, source.handle)) continue;
+      items.push({
+        id: `rss-${source.handle.replace(/[^a-zA-Z]/g, '')}-${idx}`,
+        flag: source.flag,
+        handle: source.handle,
+        role: source.role,
+        source: source.sourceName,
+        time: relativeTime(item.pubDate ?? item.isoDate),
+        category: source.category,
+        text,
+        engagement: '',
+        tags: source.tags,
+        tier: source.tier,
+      });
+      idx++;
+      if (items.length >= 5) break;
+    }
+    return items;
   } catch (err) {
     console.warn(`[FEEDS] Failed to fetch ${source.sourceName}:`, err instanceof Error ? err.message : err);
     return [];
@@ -217,7 +240,8 @@ export async function fetchFeeds(): Promise<void> {
     });
 
     cache.set('feed', allItems, TTL.FEEDS);
-    console.log(`[FEEDS] ${allItems.length} feed items cached`);
+    const filtered = allItems.filter(i => !UNFILTERED_HANDLES.has(i.handle)).length;
+    console.log(`[FEEDS] ${allItems.length} feed items cached (${filtered} from filtered sources)`);
   } else {
     console.warn('[FEEDS] No feed items received, keeping cache/mock');
   }

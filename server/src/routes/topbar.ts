@@ -30,12 +30,12 @@ function computeTopbar(tab?: string): TopBarData {
   switch (tab) {
     case 'mideast': {
       const oilPrice = findMarketPrice(sections, 'Energy', 'WTI OIL', '—');
-      const goldPrice = findMarketPrice(sections, 'Commodities', 'GOLD', '—');
-      const natGasPrice = findMarketPrice(sections, 'Energy', 'NAT GAS', '—');
+      const goldPrice = findMarketPrice(sections, 'Precious Metals', 'GOLD', '—');
+      const silverPrice = findMarketPrice(sections, 'Precious Metals', 'SILVER', '—');
       kpis = [
         { label: 'WTI Oil', value: oilPrice, colorClass: 'text-medium' },
         { label: 'Gold', value: goldPrice, colorClass: 'text-positive' },
-        { label: 'Nat Gas', value: natGasPrice, colorClass: 'text-medium' },
+        { label: 'Silver', value: silverPrice, colorClass: 'text-medium' },
       ];
       break;
     }
@@ -56,7 +56,7 @@ function computeTopbar(tab?: string): TopBarData {
     case 'domestic': {
       const encounterStat = border.find(b => b.label.includes('Encounters'));
       const encounters = encounterStat?.value ?? '—';
-      const sp500 = findMarketPrice(sections, 'Indices', 'S&P 500', '—');
+      const sp500 = findMarketPrice(sections, 'Americas', 'S&P 500', '—');
       const dogeSavings = macro.find(m => m.label.includes('DOGE'))?.value ?? '—';
       kpis = [
         { label: 'Border', value: encounters, colorClass: 'text-high' },
