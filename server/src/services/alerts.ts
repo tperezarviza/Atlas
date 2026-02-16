@@ -129,7 +129,7 @@ function checkExecutiveOrders(): void {
   for (const eo of orders) {
     const signed = new Date(eo.signing_date).getTime();
     if (signed > cutoff) {
-      addAlert('routine', 'executive_orders', `New Executive Order: EO ${eo.number} — ${eo.title}`, `Topics: ${eo.topics.join(', ')}`);
+      addAlert('priority', 'executive_orders', `New Executive Order: EO ${eo.number} — ${eo.title}`, `Topics: ${eo.topics.join(', ')}`);
     }
   }
 }
@@ -224,19 +224,6 @@ function checkSurges(): void {
   }
 }
 
-function checkAnomalies(): void {
-  const anomalies = cache.get<any[]>('anomalies');
-  if (!anomalies) return;
-
-  for (const a of anomalies) {
-    if (a.severity === 'critical') {
-      addAlert('urgent', 'anomaly', `ANOMALY: ${a.description}`);
-    } else if (a.severity === 'elevated') {
-      addAlert('priority', 'anomaly', `ANOMALY: ${a.description}`);
-    }
-  }
-}
-
 // ── Public API ──
 
 export function analyzeAlerts(): void {
@@ -251,7 +238,6 @@ export function analyzeAlerts(): void {
   checkNaturalEvents();
   checkTwitterIntel();
   checkRssFeeds();
-  checkAnomalies();
   checkSurges();
   pruneOld();
 

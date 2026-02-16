@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { MapContainer, TileLayer, Marker, Tooltip, Popup, GeoJSON, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import { useApiData } from '../hooks/useApiData';
@@ -14,17 +14,16 @@ import ChokepointMarkers from './map/ChokepointMarkers';
 import InternetShutdownMarkers from './map/InternetShutdownMarkers';
 import NuclearMarkers from './map/NuclearMarkers';
 import ArmedGroupMarkers from './map/ArmedGroupMarkers';
-import VesselMarkers from './map/VesselMarkers';
 import NaturalEventMarkers from './map/NaturalEventMarkers';
 import EarthquakeMarkers from './map/EarthquakeMarkers';
 import BasesMarkers from './map/BasesMarkers';
 import CableLines from './map/CableLines';
 import PipelineLines from './map/PipelineLines';
-import ConvergenceMarkers from './map/ConvergenceMarkers';
+import FireMarkers from './map/FireMarkers';
 import SurgeMarkers from './map/SurgeMarkers';
 import NewsPopup from './map/NewsPopup';
 import type { GeoJSONCollection } from '../services/api';
-import type { Conflict, NewsPoint, MapLayerId, MilitaryFlight, Chokepoint, InternetIncident, ArmedGroup, Vessel, NaturalEvent, Earthquake, ConvergenceHotspot, SurgeAlert } from '../types';
+import type { Conflict, NewsPoint, MapLayerId, MilitaryFlight, Chokepoint, InternetIncident, ArmedGroup, NaturalEvent, Earthquake, SurgeAlert, FireHotspot } from '../types';
 
 const NEWS_INTERVAL = 900_000;        // 15 min
 
@@ -47,13 +46,12 @@ const DEFAULT_LAYERS: Record<MapLayerId, boolean> = {
   internet: false,
   nuclear: false,
   armedGroups: false,
-  vessels: false,
   naturalEvents: false,
   earthquakes: false,
   bases: false,
   cables: false,
   pipelines: false,
-  convergence: false,
+  fires: false,
   surges: false,
 };
 
@@ -260,15 +258,37 @@ export default function WorldMap({ selectedConflictId, onSelectConflict, onCount
   // Conditional data fetching
   const { data: flights } = useApiData<MilitaryFlight[]>(() => api.militaryFlights(), 60_000, { enabled: layers.flights });
   const { data: chokepoints } = useApiData<Chokepoint[]>(api.shipping, 300_000, { enabled: layers.shipping });
-  const { data: shutdowns } = useApiData<InternetIncident[]>(api.internetIncidents, 900_000, { enabled: layers.internet });
+  const { data: ooniData } = useApiData<InternetIncident[]>(api.internetIncidents, 900_000, { enabled: layers.internet });
+  const { data: cfData } = useApiData<any[]>(api.cloudflareOutages, 900_000, { enabled: layers.internet });
+
+  // Merge OONI + Cloudflare into unified internet freedom data
+  const shutdowns = useMemo(() => {
+    const combined: InternetIncident[] = [...(ooniData ?? [])];
+    if (cfData) {
+      for (const cf of cfData) {
+        for (const loc of (cf.locations ?? [])) {
+          combined.push({
+            id: `cf-${cf.id}-${loc}`,
+            country: loc,
+            countryCode: loc,
+            title: `Cloudflare: ${cf.description || cf.eventType}`,
+            startDate: cf.startDate,
+            endDate: cf.endDate ?? undefined,
+            shortDescription: `${cf.scope} ${cf.eventType}${cf.asName ? ` (${cf.asName})` : ''}`,
+            eventType: cf.eventType ?? 'OUTAGE',
+          });
+        }
+      }
+    }
+    return combined;
+  }, [ooniData, cfData]);
   const { data: armedGroupsData } = useApiData<ArmedGroup[]>(api.armedGroups, 3_600_000, { enabled: layers.armedGroups });
-  const { data: vesselsData } = useApiData<Vessel[]>(api.vessels, 120_000, { enabled: layers.vessels });
   const { data: naturalEventsData } = useApiData<NaturalEvent[]>(api.naturalEvents, 900_000, { enabled: layers.naturalEvents });
   const { data: earthquakesData } = useApiData<Earthquake[]>(api.earthquakes, 600_000, { enabled: layers.earthquakes });
   const { data: basesData } = useApiData<GeoJSONCollection>(api.layerBases, 3_600_000, { enabled: layers.bases });
   const { data: cablesData } = useApiData<GeoJSONCollection>(api.layerCables, 3_600_000, { enabled: layers.cables });
   const { data: pipelinesData } = useApiData<GeoJSONCollection>(api.layerPipelines, 3_600_000, { enabled: layers.pipelines });
-  const { data: convergenceData } = useApiData<ConvergenceHotspot[]>(api.geoConvergence, 1_800_000, { enabled: layers.convergence });
+  const { data: fireData } = useApiData<FireHotspot[]>(api.fireHotspots, 1_800_000, { enabled: layers.fires });
   const { data: surgeData } = useApiData<SurgeAlert[]>(api.surgeAlerts, 900_000, { enabled: layers.surges });
 
   // Lazy-load GeoJSON with abort cleanup
@@ -424,13 +444,12 @@ export default function WorldMap({ selectedConflictId, onSelectConflict, onCount
         <InternetShutdownMarkers data={shutdowns} visible={layers.internet} />
         <NuclearMarkers visible={layers.nuclear} />
         <ArmedGroupMarkers data={armedGroupsData} visible={layers.armedGroups} />
-        <VesselMarkers data={vesselsData} visible={layers.vessels} zoomLevel={zoomLevel} />
         <NaturalEventMarkers data={naturalEventsData} visible={layers.naturalEvents} />
         <EarthquakeMarkers data={earthquakesData} visible={layers.earthquakes} />
         <BasesMarkers data={basesData} visible={layers.bases} />
         <CableLines data={cablesData} visible={layers.cables} />
         <PipelineLines data={pipelinesData} visible={layers.pipelines} />
-        <ConvergenceMarkers data={convergenceData} visible={layers.convergence} />
+        <FireMarkers data={fireData} visible={layers.fires} />
         <SurgeMarkers data={surgeData} visible={layers.surges} />
       </MapContainer>
 
@@ -456,16 +475,15 @@ export default function WorldMap({ selectedConflictId, onSelectConflict, onCount
         counts={{
           flights: flights?.filter(f => !f.on_ground).length ?? 0,
           shipping: chokepoints?.length ?? 0,
-          internet: shutdowns?.length ?? 0,
+          internet: shutdowns.length,
           nuclear: nuclearFacilities.length,
           armedGroups: armedGroupsData?.length ?? 0,
-          vessels: vesselsData?.length ?? 0,
           naturalEvents: naturalEventsData?.length ?? 0,
           earthquakes: earthquakesData?.length ?? 0,
           bases: basesData?.features?.length ?? 0,
           cables: cablesData?.features?.length ?? 0,
           pipelines: pipelinesData?.features?.length ?? 0,
-          convergence: convergenceData?.length ?? 0,
+          fires: fireData?.filter(f => f.confidence >= 80).length ?? 0,
           surges: surgeData?.length ?? 0,
         }}
       />
@@ -487,11 +505,6 @@ export default function WorldMap({ selectedConflictId, onSelectConflict, onCount
         <span>
           Refresh: <b className="text-text-secondary">15m</b>
         </span>
-        {zoomLevel > 8 && layers.vessels && (
-          <span>
-            Vessels: <b className="text-text-secondary">{vesselsData?.length ?? 0}</b>
-          </span>
-        )}
         {hasErrors && (
           <span className="text-critical font-bold">
             FEED ERROR

@@ -2,12 +2,12 @@ import { TTL } from '../config.js';
 import { cache } from '../cache.js';
 import { translateTexts } from './translate.js';
 import { withCircuitBreaker } from '../utils/circuit-breaker.js';
-import { isBigQueryAvailable } from './bigquery.js';
-import { fetchHostilityBQ } from './hostility-bq.js';
 import type { HostilityPair, Severity } from '../types.js';
 
 const GDELT_TIMEOUT = 25_000;  // GDELT is slow — 25s timeout
-const PAIR_DELAY   = 3_000;    // 3s between pairs to avoid 429
+const PAIR_DELAY   = 1_500;    // 1.5s between pairs (retry backoff compensates)
+const MAX_RETRIES  = 3;
+const MIN_ARTICLES = 5;        // Skip pairs with < 5 articles
 
 const HOSTILITY_PAIRS = [
   { id: 'hp-us-cn', countryA: 'United States', codeA: 'US', countryB: 'China', codeB: 'CN' },
@@ -39,9 +39,6 @@ function delay(ms: number): Promise<void> {
 }
 
 export async function fetchHostilityIndex(): Promise<void> {
-  if (isBigQueryAvailable()) {
-    return fetchHostilityBQ();
-  }
   console.log('[HOSTILITY] Fetching hostility index for 15 country pairs...');
 
   try {
@@ -78,11 +75,19 @@ export async function fetchHostilityIndex(): Promise<void> {
           return text;
         };
 
-        let text: string;
-        try {
-          text = await withCircuitBreaker(`gdelt-hostility`, fetchToneData);
-        } catch {
-          console.warn(`[HOSTILITY] GDELT ${pair.id}: circuit breaker or fetch failed`);
+        let text: string | null = null;
+        for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+          try {
+            text = await withCircuitBreaker(`gdelt-hostility`, fetchToneData);
+            break;
+          } catch (retryErr) {
+            const backoff = 1000 * Math.pow(2, attempt); // 1s, 2s, 4s
+            console.warn(`[HOSTILITY] ${pair.id} attempt ${attempt + 1}/${MAX_RETRIES} failed: ${retryErr instanceof Error ? retryErr.message : retryErr} — retrying in ${backoff}ms`);
+            await delay(backoff);
+          }
+        }
+        if (!text) {
+          console.error(`[HOSTILITY] ${pair.id}: all ${MAX_RETRIES} retries exhausted`);
           await delay(PAIR_DELAY);
           continue;
         }
@@ -97,6 +102,10 @@ export async function fetchHostilityIndex(): Promise<void> {
 
         const totalWeightedTone = toneData.reduce((sum, d) => sum + d.bin * d.count, 0);
         const totalCount = toneData.reduce((sum, d) => sum + d.count, 0);
+        if (totalCount < MIN_ARTICLES) {
+          await delay(PAIR_DELAY);
+          continue;
+        }
         const avgTone = totalCount > 0 ? totalWeightedTone / totalCount : 0;
 
         // Rate limit between GDELT requests
@@ -160,10 +169,10 @@ export async function fetchHostilityIndex(): Promise<void> {
     }
 
     if (pairs.length > 0) {
-      await cache.setWithRedis('hostility', pairs, TTL.HOSTILITY, 12 * 3600);
+      await cache.setWithRedis('hostility', pairs, TTL.HOSTILITY, 24 * 3600);
       console.log(`[HOSTILITY] ${pairs.length} hostility pairs cached`);
     } else {
-      console.warn('[HOSTILITY] No pairs fetched, keeping cache/mock');
+      console.warn('[HOSTILITY] No pairs fetched — serving stale data (24h Redis TTL)');
     }
   } catch (err) {
     console.error('[HOSTILITY] Fetch failed:', err);

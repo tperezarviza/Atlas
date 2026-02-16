@@ -10,16 +10,15 @@ interface MapLegendProps {
 const LAYER_META: { id: MapLayerId; icon: string; label: string }[] = [
   { id: 'flights', icon: '✈', label: 'Military Flights' },
   { id: 'shipping', icon: '⚓', label: 'Shipping Chokepoints' },
-  { id: 'internet', icon: '📡', label: 'Internet Shutdowns' },
+  { id: 'internet', icon: '📡', label: 'Internet Freedom' },
   { id: 'nuclear', icon: '☢', label: 'Nuclear Facilities' },
   { id: 'armedGroups', icon: '🎯', label: 'Armed Groups' },
-  { id: 'vessels', icon: '🚢', label: 'Vessel Traffic' },
   { id: 'naturalEvents', icon: '🌍', label: 'Natural Events' },
   { id: 'earthquakes', icon: '🔴', label: 'Earthquakes (M4.5+)' },
   { id: 'bases', icon: '🏛', label: 'Military Bases' },
   { id: 'cables', icon: '🔗', label: 'Undersea Cables' },
   { id: 'pipelines', icon: '🛢', label: 'Pipelines' },
-  { id: 'convergence', icon: '◉', label: 'Convergence Zones' },
+  { id: 'fires', icon: '🔥', label: 'Fire Hotspots' },
   { id: 'surges', icon: '⚡', label: 'Flight Surges' },
 ];
 

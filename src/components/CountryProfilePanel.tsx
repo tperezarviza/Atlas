@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, memo } from 'react';
 import { api } from '../services/api';
 import StrategicDepsViz from './StrategicDepsViz';
-import type { CountryProfile, Conflict, ArmedGroup, StrategicDependency } from '../types';
+import type { CountryProfile, Conflict, ArmedGroup, StrategicDependency, OFACSanction } from '../types';
 
 const ALLIANCE_COLORS: Record<string, string> = {
   NATO: '#ffc832',
@@ -45,6 +45,7 @@ interface CountryProfilePanelProps {
 export default memo(function CountryProfilePanel({ countryCode, onClose, conflicts }: CountryProfilePanelProps) {
   const [profile, setProfile] = useState<CountryProfile | null>(null);
   const [armedGroups, setArmedGroups] = useState<ArmedGroup[]>([]);
+  const [sanctions, setSanctions] = useState<OFACSanction[]>([]);
   const [dependencies, setDependencies] = useState<StrategicDependency[]>([]);
   const [loading, setLoading] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
@@ -54,6 +55,7 @@ export default memo(function CountryProfilePanel({ countryCode, onClose, conflic
     if (!countryCode) {
       setProfile(null);
       setArmedGroups([]);
+      setSanctions([]);
       setDependencies([]);
       setFetchError(null);
       return;
@@ -67,7 +69,8 @@ export default memo(function CountryProfilePanel({ countryCode, onClose, conflic
       api.country(countryCode),
       api.armedGroups(),
       api.dependencies(),
-    ]).then(([profileResult, groupsResult, depsResult]) => {
+      api.sanctions(),
+    ]).then(([profileResult, groupsResult, depsResult, sanctionsResult]) => {
       if (thisId !== fetchIdRef.current) return;
 
       if (profileResult.status === 'fulfilled') {
@@ -81,6 +84,9 @@ export default memo(function CountryProfilePanel({ countryCode, onClose, conflic
       }
       if (depsResult.status === 'fulfilled') {
         setDependencies(depsResult.value);
+      }
+      if (sanctionsResult.status === 'fulfilled') {
+        setSanctions(sanctionsResult.value);
       }
       setLoading(false);
     });
@@ -235,6 +241,26 @@ export default memo(function CountryProfilePanel({ countryCode, onClose, conflic
                       <div className="font-data text-[9px] text-text-muted mt-1">
                         Programs: {profile.sanctionPrograms.join(', ')}
                       </div>
+                      {(() => {
+                        const countrySanctions = sanctions.filter(s =>
+                          s.title?.toLowerCase().includes(profile.name.toLowerCase()) ||
+                          s.program?.toLowerCase().includes(profile.name.toLowerCase()) ||
+                          s.summary?.toLowerCase().includes(profile.name.toLowerCase())
+                        ).slice(0, 5);
+                        if (countrySanctions.length === 0) return null;
+                        return (
+                          <div className="mt-2 space-y-1">
+                            {countrySanctions.map(s => (
+                              <div key={s.id} className="py-[2px]" style={{ borderTop: '1px solid rgba(255,200,50,0.04)' }}>
+                                <div className="font-data text-[9px] text-text-primary">{s.title}</div>
+                                <div className="font-data text-[8px] text-text-muted">
+                                  {s.program} · {s.date}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        );
+                      })()}
                     </div>
                   ) : (
                     <span className="font-data text-[9px] px-[5px] py-[2px] rounded-[2px] bg-positive/15 text-positive">

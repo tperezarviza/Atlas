@@ -9,6 +9,7 @@ import ApiHealthPanel from './ApiHealthPanel';
 
 const REFRESH_MS = 30_000;
 const HEALTH_REFRESH_MS = 30_000;
+const TRENDING_REFRESH_MS = 30_000;
 const CLOCK_FILTER = new Set(['DC', 'UTC', 'LON', 'MSK', 'BEI', 'TEH']);
 
 // Extracted inline style constants (avoid object recreation on every render)
@@ -33,6 +34,7 @@ export default memo(function TopBar({ contextId, contextIndex, progress, onConte
   const healthContainerRef = useRef<HTMLDivElement>(null);
 
   const { data: healthData } = useApiData<HealthResponse>(api.health, HEALTH_REFRESH_MS);
+  const { data: trendingData } = useApiData<{ keyword: string; count: number }[]>(api.twitterTrending, TRENDING_REFRESH_MS);
 
   useEffect(() => {
     if (!healthOpen) return;
@@ -157,7 +159,20 @@ export default memo(function TopBar({ contextId, contextIndex, progress, onConte
       {/* DIVIDER */}
       <div className="shrink-0" style={DIVIDER_STYLE} />
 
-      {/* ── GROUP 5: Health btn ── */}
+      {/* ── GROUP 5: Trending ── */}
+      {trendingData && trendingData.length > 0 && (
+        <>
+          <div className="flex items-center gap-[6px] shrink-0 overflow-hidden" style={{ padding: '0 12px', maxWidth: 320 }}>
+            <span className="font-data text-[9px] tracking-[1px] uppercase shrink-0" style={MUTED_COLOR}>TREND</span>
+            <span className="font-data text-[12px] truncate" style={{ color: '#c8a020' }}>
+              {trendingData.slice(0, 5).map(t => `${t.keyword} ×${t.count}`).join(' · ')}
+            </span>
+          </div>
+          <div className="shrink-0" style={DIVIDER_STYLE} />
+        </>
+      )}
+
+      {/* ── GROUP 6: Health btn ── */}
       <div className="flex items-center gap-[12px] shrink-0" style={{ padding: '0 0 0 16px' }}>
         <div ref={healthContainerRef} className="relative">
           <div
@@ -172,9 +187,9 @@ export default memo(function TopBar({ contextId, contextIndex, progress, onConte
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={healthColor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
             </svg>
-            {healthSummary && !allOk && (
-              <span className="font-data text-[12px] font-bold" style={{ color: "#ff8c00" }}>
-                {healthSummary.total - healthSummary.ok}
+            {healthSummary && (
+              <span className="font-data text-[12px] font-bold" style={{ color: healthColor }}>
+                {healthSummary.ok}/{healthSummary.total}
               </span>
             )}
           </div>

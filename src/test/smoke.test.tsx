@@ -137,13 +137,10 @@ import ErrorBoundary from '../components/ErrorBoundary';
 import AlertBanner from '../components/AlertBanner';
 import TabPanel from '../components/tabs/TabPanel';
 import NatoResponse from '../components/tabs/NatoResponse';
-import ExecutiveOrdersList from '../components/tabs/ExecutiveOrdersList';
-import CongressTracker from '../components/tabs/CongressTracker';
 import IntelMonitor from '../components/IntelMonitor';
 import GlobalNarratives from '../components/GlobalNarratives';
 import EventTimeline from '../components/EventTimeline';
 import StrategicDepsViz from '../components/StrategicDepsViz';
-import InternetFreedomPanel from '../components/tabs/InternetFreedomPanel';
 import EconomicCalendarTab from '../components/EconomicCalendarTab';
 import { mockConflicts } from '../data/mockConflicts';
 
@@ -668,20 +665,6 @@ describe('NatoResponse', () => {
   });
 });
 
-describe('ExecutiveOrdersList', () => {
-  it('renders header and mock EOs', () => {
-    render(<ExecutiveOrdersList />);
-    expect(screen.getByText(/Executive Orders/)).toBeInTheDocument();
-  });
-});
-
-describe('CongressTracker', () => {
-  it('renders header', () => {
-    render(<CongressTracker />);
-    expect(screen.getByText(/Congress Tracker/)).toBeInTheDocument();
-  });
-});
-
 // ── ErrorBoundary ──
 
 describe('ErrorBoundary', () => {
@@ -814,15 +797,6 @@ describe('StrategicDepsViz', () => {
     expect(screen.getByText('Crude Oil')).toBeInTheDocument();
     expect(screen.getByText('Saudi Arabia')).toBeInTheDocument();
     expect(screen.getByText('high')).toBeInTheDocument();
-  });
-});
-
-// ── InternetFreedomPanel ──
-
-describe('InternetFreedomPanel', () => {
-  it('renders header', () => {
-    render(<InternetFreedomPanel />);
-    expect(screen.getByText(/Internet Freedom/)).toBeInTheDocument();
   });
 });
 

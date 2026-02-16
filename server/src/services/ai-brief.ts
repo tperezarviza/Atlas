@@ -4,7 +4,7 @@ import { aiComplete } from '../utils/ai-client.js';
 import type {
   BriefResponse, Conflict, NewsPoint, FeedItem, MarketSection,
   TwitterIntelItem, Alert, ExecutiveOrder, CongressBill, SenateNomination,
-  BorderStat, MacroItem, EconomicEvent, CyberThreatPulse, PropagandaEntry,
+  MacroItem, EconomicEvent, CyberThreatPulse, PropagandaEntry,
   HostilityPair, InternetIncident, ArmedGroup, UkraineFrontData,
   NaturalEvent,
 } from '../types.js';
@@ -243,7 +243,7 @@ INTELLIGENCE TWEETS: ${JSON.stringify(meTweets.map(t => ({ text: t.text.substrin
 
 HOSTILITY INDICES: ${JSON.stringify(meHostility.map(h => ({ countryA: h.countryA, countryB: h.countryB, avgTone: h.avgTone, trend: h.trend })))}
 
-STATE MEDIA NARRATIVES (Iran, Turkey): ${JSON.stringify(mePropaganda.map(p => ({ country: p.country, narratives: p.narratives, direction: p.narrativeDirection ?? 'unknown', shifts: p.narrativeShifts ?? [], headlines: p.sampleHeadlines.slice(0, 3) })))}
+STATE MEDIA NARRATIVES (Iran, Turkey): ${JSON.stringify(mePropaganda.map(p => ({ country: p.country, narratives: p.narratives, headlines: p.sampleHeadlines.slice(0, 3) })))}
 
 Current UTC: ${new Date().toISOString()}`;
 }
@@ -282,7 +282,7 @@ MILITARY TWEETS: ${JSON.stringify(uaTweets.map(t => ({ text: t.text.substring(0,
 
 HOSTILITY INDICES: ${JSON.stringify(uaHostility.map(h => ({ countryA: h.countryA, countryB: h.countryB, avgTone: h.avgTone, trend: h.trend })))}
 
-RUSSIAN STATE MEDIA NARRATIVES: ${JSON.stringify(ruPropaganda.map(p => ({ narratives: p.narratives, direction: p.narrativeDirection ?? 'unknown', shifts: p.narrativeShifts ?? [], headlines: p.sampleHeadlines.slice(0, 3) })))}
+RUSSIAN STATE MEDIA NARRATIVES: ${JSON.stringify(ruPropaganda.map(p => ({ narratives: p.narratives, headlines: p.sampleHeadlines.slice(0, 3) })))}
 
 Current UTC: ${new Date().toISOString()}`;
 }
@@ -291,7 +291,6 @@ function gatherDomesticData(): string {
   const orders = cache.get<ExecutiveOrder[]>('executive_orders') ?? [];
   const bills = cache.get<CongressBill[]>('congress_bills') ?? [];
   const noms = cache.get<SenateNomination[]>('congress_nominations') ?? [];
-  const border = cache.get<BorderStat[]>('border') ?? [];
   const macro = cache.get<MacroItem[]>('macro') ?? [];
   const markets = cache.get<MarketSection[]>('markets') ?? [];
   const econ = cache.get<EconomicEvent[]>('economic_calendar') ?? [];
@@ -305,8 +304,6 @@ function gatherDomesticData(): string {
 CONGRESS BILLS: ${JSON.stringify(bills.slice(0, 10).map(b => ({ number: b.number, title: b.title, status: b.status, relevance: b.relevance, latest_action: b.latest_action })))}
 
 NOMINATIONS: ${JSON.stringify(noms.slice(0, 8).map(n => ({ name: n.name, position: n.position, status: n.status })))}
-
-BORDER STATS: ${JSON.stringify(border)}
 
 ECONOMIC INDICATORS: ${JSON.stringify(macro)}
 
@@ -335,7 +332,7 @@ function gatherIntelData(): string {
 
   return `CYBER THREATS: ${JSON.stringify(criticalCyber.map(c => ({ name: c.name, description: c.description.substring(0, 150), adversary: c.adversary, targeted_countries: c.targeted_countries, severity: c.severity, malware_families: c.malware_families })))}
 
-STATE MEDIA PROPAGANDA: ${JSON.stringify(propaganda.map(p => ({ country: p.country, outlet: p.outlet, narratives: p.narratives, direction: p.narrativeDirection ?? 'unknown', shifts: p.narrativeShifts ?? [], headlines: p.sampleHeadlines.slice(0, 3) })))}
+STATE MEDIA PROPAGANDA: ${JSON.stringify(propaganda.map(p => ({ country: p.country, outlet: p.outlet, narratives: p.narratives, headlines: p.sampleHeadlines.slice(0, 3) })))}
 
 HOSTILITY INDEX: ${JSON.stringify(hostility.slice(0, 10).map(h => ({ countryA: h.countryA, countryB: h.countryB, avgTone: h.avgTone, articleCount: h.articleCount, trend: h.trend })))}
 
@@ -362,7 +359,7 @@ const SOURCE_LABELS: Record<string, string[]> = {
   global: ['ACLED', 'GDELT', 'Markets', 'USGS', 'EONET', 'X/Twitter', 'Alerts', 'Google Trends'],
   mideast: ['ACLED', 'GDELT', 'X/Twitter', 'Hostility Index', 'Propaganda Monitor', 'Google Trends'],
   ukraine: ['ACLED', 'GDELT', 'ISW', 'X/Twitter', 'Hostility Index', 'RU Propaganda', 'Google Trends'],
-  domestic: ['Executive Orders', 'Congress', 'Border Stats', 'Macro', 'Markets', 'Econ Calendar', 'Google Trends'],
+  domestic: ['Executive Orders', 'Congress', 'Macro', 'Markets', 'Econ Calendar', 'Google Trends'],
   intel: ['Cyber OTX', 'Propaganda Monitor', 'Hostility Index', 'OONI', 'X/Twitter', 'Armed Groups', 'Google Trends'],
 };
 
@@ -462,5 +459,66 @@ export async function generateAllBriefs(): Promise<void> {
     } catch (err) {
       console.error(`[AI-BRIEF] ${focus ?? 'global'} failed:`, err instanceof Error ? err.message : err);
     }
+  }
+}
+
+/** Generate an emergency surge brief focused on a keyword. */
+export async function generateSurgeBrief(keyword: string): Promise<void> {
+  console.log(`[AI-BRIEF] Generating SURGE brief for keyword: "${keyword}"...`);
+
+  const tweets = cache.get<TwitterIntelItem[]>('twitter') ?? [];
+  const news = cache.get<NewsPoint[]>('news') ?? [];
+  const feed = cache.get<FeedItem[]>('feed') ?? [];
+  const conflicts = cache.get<Conflict[]>('conflicts') ?? [];
+
+  const kw = new RegExp(keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+  const matchedTweets = tweets.filter(t => kw.test(t.text)).slice(0, 10);
+  const matchedNews = news.filter(n => kw.test(n.headline)).slice(0, 10);
+  const matchedFeed = feed.filter(f => kw.test(f.text)).slice(0, 5);
+  const matchedConflicts = conflicts.filter(c => kw.test(c.name) || kw.test(c.region)).slice(0, 5);
+
+  const userData = `SURGE KEYWORD: "${keyword}"
+
+MATCHING TWEETS: ${JSON.stringify(matchedTweets.map(t => ({ text: t.text.substring(0, 150), author: t.author.username, category: t.category })))}
+
+MATCHING NEWS: ${JSON.stringify(matchedNews.map(n => ({ headline: n.headline, tone: n.tone, source: n.source })))}
+
+MATCHING LEADER FEEDS: ${JSON.stringify(matchedFeed.map(f => ({ handle: f.handle, text: f.text.substring(0, 150) })))}
+
+MATCHING CONFLICTS: ${JSON.stringify(matchedConflicts.map(c => ({ name: c.name, severity: c.severity, trend: c.trend })))}
+
+Current UTC: ${new Date().toISOString()}`;
+
+  const systemPrompt = `You are ATLAS EMERGENCY DESK. A surge in mentions of "${keyword}" has been detected across intelligence feeds. Analyze what is happening based on the available data.
+
+RULES:
+- Write in English only
+- Be direct, concise, urgent
+- Lead with the most likely explanation for the surge
+- Separate confirmed facts from speculation
+
+FORMAT (use HTML tags):
+<h2>■ SURGE ANALYSIS: ${keyword.toUpperCase()}</h2>
+<p>What is happening and why mentions are surging</p>
+<h2>■ KEY DEVELOPMENTS</h2>
+<ul><li>Confirmed events driving the surge</li></ul>
+<h2>■ ASSESSMENT</h2>
+<p>Threat level and recommended actions</p>`;
+
+  try {
+    const response = await aiComplete(systemPrompt, userData, { maxTokens: 1500 });
+    const html = sanitizeServerHtml(response.text || '<p>Surge brief generation failed</p>');
+
+    const brief: BriefResponse = {
+      html,
+      generatedAt: new Date().toISOString(),
+      model: response.provider,
+      sources: ['Twitter Surge', 'GDELT', 'RSS Feeds', 'ACLED'],
+    };
+
+    await cache.setWithRedis('brief:emergency', brief, 3600_000, 3600); // 1h TTL
+    console.log(`[AI-BRIEF] SURGE brief for "${keyword}" generated via ${response.provider}`);
+  } catch (err) {
+    console.error(`[AI-BRIEF] Surge brief failed:`, err instanceof Error ? err.message : err);
   }
 }

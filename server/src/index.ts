@@ -9,7 +9,7 @@ import { registerMarketsRoutes } from './routes/markets.js';
 import { registerNewswireRoutes } from './routes/newswire.js';
 import { registerCalendarRoutes } from './routes/calendar.js';
 import { registerBriefRoutes } from './routes/brief.js';
-import { registerBorderRoutes } from './routes/border.js';
+
 
 import { registerTickerRoutes } from './routes/ticker.js';
 import { registerTopbarRoutes } from './routes/topbar.js';
@@ -32,14 +32,14 @@ import { registerCyberRoutes } from './routes/cyber.js';
 import { registerEonetRoutes } from './routes/eonet.js';
 import { registerEconomicCalendarRoutes } from './routes/economic-calendar.js';
 import { registerAlertsRoutes } from './routes/alerts.js';
-import { registerVesselsRoutes } from './routes/vessels.js';
+
 import { registerEarthquakeRoutes } from './routes/earthquakes.js';
 import { registerCloudflareRoutes } from './routes/cloudflare.js';
 import { registerFirmsRoutes } from './routes/firms.js';
 import { registerPolymarketRoutes } from './routes/polymarket.js';
 import { registerCIIRoutes } from './routes/cii.js';
 import { registerFocalPointsRoutes } from './routes/focal-points.js';
-import { registerAnomalyRoutes } from './routes/anomalies.js';
+
 import { registerLayerRoutes } from './routes/layers.js';
 import { registerWhyItMattersRoutes } from './routes/why-it-matters.js';
 import { startCronJobs } from './cron.js';
@@ -109,8 +109,6 @@ registerMarketsRoutes(app);
 registerNewswireRoutes(app);
 registerCalendarRoutes(app);
 registerBriefRoutes(app);
-registerBorderRoutes(app);
-
 registerTickerRoutes(app);
 registerTopbarRoutes(app);
 registerDependenciesRoutes(app);
@@ -132,19 +130,14 @@ registerCyberRoutes(app);
 registerEonetRoutes(app);
 registerEconomicCalendarRoutes(app);
 registerAlertsRoutes(app);
-registerVesselsRoutes(app);
 registerEarthquakeRoutes(app);
 registerCloudflareRoutes(app);
 registerFirmsRoutes(app);
 registerPolymarketRoutes(app);
 registerCIIRoutes(app);
 registerFocalPointsRoutes(app);
-registerAnomalyRoutes(app);
 registerLayerRoutes(app);
 registerWhyItMattersRoutes(app);
-
-// Geo-convergence route (BQ-powered)
-app.get('/api/geo-convergence', async () => cache.get('geo_convergence') ?? []);
 
 // Google Trends route (BQ-powered)
 app.get('/api/google-trends', async () => cache.get('google_trends') ?? null);

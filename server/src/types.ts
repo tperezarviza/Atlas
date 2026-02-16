@@ -283,8 +283,6 @@ export interface PropagandaEntry {
   toneAvg: number;
   articleCount: number;
   analysisDate: string;
-  narrativeShifts?: string[];
-  narrativeDirection?: 'escalating' | 'de-escalating' | 'stable' | 'pivoting';
 }
 
 export interface ArmsTransfer {

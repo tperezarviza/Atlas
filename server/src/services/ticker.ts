@@ -1,6 +1,6 @@
 import { cache } from '../cache.js';
 import { TTL } from '../config.js';
-import type { TickerItem, NewsPoint, FeedItem, MarketSection } from '../types.js';
+import type { TickerItem, NewsPoint, FeedItem, MarketSection, EconomicEvent } from '../types.js';
 import type { Earthquake } from './earthquakes.js';
 
 function toneToColor(tone: number): string {
@@ -101,6 +101,27 @@ export function composeTicker(): void {
         bulletColor: q.tsunami ? '#e83b3b' : q.magnitude >= 7 ? '#e8842b' : '#d4a72c',
         source: 'USGS',
         text: `M${q.magnitude} ${q.place}${q.tsunami ? ' ⚠ TSUNAMI' : ''}`,
+      });
+    }
+  }
+
+  // 5. Economic calendar — high-impact events in next 24h
+  const econEvents = cache.get<EconomicEvent[]>('economic_calendar');
+  if (econEvents) {
+    const now = Date.now();
+    const in24h = now + 24 * 60 * 60 * 1000;
+    const highImpact = econEvents.filter(e => {
+      if (e.impact !== 'high') return false;
+      const eventTime = new Date(`${e.date}T${e.time || '00:00'}:00Z`).getTime();
+      return eventTime > now && eventTime < in24h;
+    }).slice(0, 3);
+
+    for (const e of highImpact) {
+      items.push({
+        id: `tk-econ-${idCounter++}`,
+        bulletColor: '#d4a72c',
+        source: 'ECON',
+        text: `${e.currency} ${e.event_name} — ${e.time || 'TBD'}`,
       });
     }
   }

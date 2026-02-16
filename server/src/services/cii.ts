@@ -1,7 +1,6 @@
 import { cache } from '../cache.js';
 import { TTL } from '../config.js';
 import { redisGet, redisSet } from '../redis.js';
-import type { CountryToneBQ } from './cii-bq.js';
 import type { NewsPoint, Conflict, InternetIncident, HostilityPair } from '../types.js';
 import type { MilitaryFlight } from '../types.js';
 
@@ -108,19 +107,6 @@ function clamp(val: number, min: number, max: number): number {
 }
 
 function computeNewsFactor(news: NewsPoint[], countryCode: string): number {
-  // Try BQ-sourced country tone first (more accurate)
-  const bqTones = cache.get<CountryToneBQ[]>('country_tone_bq') ?? [];
-  const bqMatch = bqTones.find(t => t.isoCode === countryCode);
-
-  if (bqMatch && bqMatch.articleCount >= 5) {
-    const volumeScore = clamp(bqMatch.articleCount / 20, 0, 1) * 30;
-    const toneScore = clamp((-bqMatch.avgTone) / 8, 0, 1) * 40;
-    const negRatio = clamp(bqMatch.negativePct / 100, 0, 1) * 20;
-    const violenceScore = clamp(bqMatch.violenceCount / 10, 0, 1) * 10;
-    return clamp(Math.round(volumeScore + toneScore + negRatio + violenceScore), 0, 100);
-  }
-
-  // Fallback: existing geo-proximity logic
   const info = CODE_TO_INFO[countryCode];
   if (!info || !news.length) return 0;
 

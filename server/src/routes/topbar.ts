@@ -1,6 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { cache } from '../cache.js';
-import type { Conflict, MarketSection, BorderStat, MacroItem, TopBarData, TopBarKPI, CyberThreatPulse } from '../types.js';
+import type { Conflict, MarketSection, MacroItem, TopBarData, TopBarKPI, CyberThreatPulse } from '../types.js';
 
 function findMarketPrice(sections: MarketSection[], sectionTitle: string, itemName: string, fallback: string): string {
   const section = sections.find(s => s.title === sectionTitle);
@@ -20,7 +20,6 @@ function computeTopbar(tab?: string): TopBarData {
   const conflicts = cache.get<Conflict[]>('conflicts') ?? [];
   const sections = cache.get<MarketSection[]>('markets') ?? [];
   const forex = cache.get<MarketSection[]>('forex') ?? [];
-  const border = cache.get<BorderStat[]>('border') ?? [];
   const macro = cache.get<MacroItem[]>('macro') ?? [];
   const criticalConflicts = conflicts.filter(c => c.severity === 'critical').length;
   const threatLevel = criticalConflicts >= 3 ? 'HIGH' : criticalConflicts >= 2 ? 'ELEVATED' : 'GUARDED';
@@ -54,13 +53,12 @@ function computeTopbar(tab?: string): TopBarData {
       break;
     }
     case 'domestic': {
-      const encounterStat = border.find(b => b.label.includes('Encounters'));
-      const encounters = encounterStat?.value ?? '—';
       const sp500 = findMarketPrice(sections, 'Americas', 'S&P 500', '—');
+      const dji = findMarketPrice(sections, 'Americas', 'DOW JONES', '—');
       const dogeSavings = macro.find(m => m.label.includes('DOGE'))?.value ?? '—';
       kpis = [
-        { label: 'Border', value: encounters, colorClass: 'text-high' },
         { label: 'S&P 500', value: sp500, colorClass: 'text-positive' },
+        { label: 'DOW', value: dji, colorClass: 'text-positive' },
         { label: 'DOGE Savings', value: dogeSavings, colorClass: 'text-medium' },
       ];
       break;

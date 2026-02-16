@@ -3,7 +3,6 @@ import { FETCH_TIMEOUT_RSS, TTL } from '../config.js';
 import { cache } from '../cache.js';
 import { stripHTML } from '../utils.js';
 import { translateTexts } from './translate.js';
-import { redisGet, redisSet } from '../redis.js';
 import { aiComplete } from '../utils/ai-client.js';
 import { isBigQueryAvailable, bqQuery } from './bigquery.js';
 import { trackQueryBytes } from './bq-cost-tracker.js';
@@ -163,14 +162,14 @@ export async function fetchPropaganda(): Promise<void> {
         // Translate non-English headlines before AI analysis
         headlines = await translateTexts(headlines, `PROPAGANDA:${media.country}`);
 
-        // Use AI to extract narratives (Haiku — mechanical extraction)
+        // Use AI to extract current narratives (Haiku — mechanical extraction)
         let narratives: string[] = [];
 
         if (headlines.length >= 3) {
           try {
             const response = await aiComplete(
-              'You are an information warfare analyst working from a Western democratic security perspective. Given headlines from state media, identify the top 3-5 propaganda narratives being pushed that undermine US interests, NATO cohesion, or Western democratic institutions. Focus on: anti-US messaging, wedge narratives targeting Western alliances, nuclear/military threatening rhetoric, and disinformation campaigns. Return ONLY a JSON array of short narrative descriptions (strings). No markdown, no explanation.',
-              `Identify propaganda narratives from these ${media.country} state media headlines:\n\n${headlines.join('\n')}`,
+              'You are an information warfare analyst. Given headlines from state media, extract the 3-5 main narratives being pushed. Return ONLY a JSON array of short narrative descriptions (strings). No markdown, no explanation.',
+              `Extract propaganda narratives from these ${media.country} state media headlines:\n\n${headlines.join('\n')}`,
               { preferHaiku: true, maxTokens: 500 },
             );
             narratives = parseNarrativesJSON(response.text) ?? [];
@@ -178,40 +177,6 @@ export async function fetchPropaganda(): Promise<void> {
             console.warn(`[PROPAGANDA] AI analysis failed for ${media.country}:`, aiErr instanceof Error ? aiErr.message : aiErr);
           }
         }
-
-        // Compare with previous narratives for shift detection
-        const prevKey = `narratives:prev:${media.code}`;
-        const previousNarratives = await redisGet<string[]>(prevKey) ?? [];
-
-        let shiftAnalysis: { shifts: string[]; direction: string } = { shifts: [], direction: 'stable' };
-
-        if (previousNarratives.length > 0 && narratives.length > 0) {
-          try {
-            const shiftResponse = await aiComplete(
-              'You are an information warfare analyst tracking propaganda shifts. Compare current narratives with previous ones. Return ONLY JSON: { "shifts": ["description of each change"], "direction": "escalating" | "de-escalating" | "stable" | "pivoting" }',
-              `PREVIOUS ${media.country} narratives:\n${previousNarratives.join('\n')}\n\nCURRENT ${media.country} narratives:\n${narratives.join('\n')}\n\nIdentify what changed, what's new, what disappeared.`,
-              { preferHaiku: true, maxTokens: 400 },
-            );
-
-            let cleaned = shiftResponse.text.trim();
-            const fm = cleaned.match(/```(?:json)?\s*([\s\S]*?)```/);
-            if (fm) cleaned = fm[1].trim();
-            const fb = cleaned.indexOf('{');
-            const lb = cleaned.lastIndexOf('}');
-            if (fb !== -1 && lb > fb) cleaned = cleaned.slice(fb, lb + 1);
-
-            const parsed = JSON.parse(cleaned);
-            shiftAnalysis = {
-              shifts: Array.isArray(parsed.shifts) ? parsed.shifts.map(String) : [],
-              direction: parsed.direction ?? 'stable',
-            };
-          } catch (err) {
-            console.warn(`[PROPAGANDA] Shift analysis failed for ${media.country}:`, err instanceof Error ? err.message : err);
-          }
-        }
-
-        // Store current narratives for next comparison
-        await redisSet(prevKey, narratives, 7 * 24 * 3600);
 
         const outletName = media.outlets.map((o) => o.name).join(' / ');
         entries.push({
@@ -225,11 +190,9 @@ export async function fetchPropaganda(): Promise<void> {
           toneAvg: avgTone,
           articleCount,
           analysisDate: new Date().toISOString(),
-          narrativeShifts: shiftAnalysis.shifts,
-          narrativeDirection: shiftAnalysis.direction as PropagandaEntry['narrativeDirection'],
         });
 
-        console.log(`[PROPAGANDA] ${media.country}: ${articleCount} articles, ${narratives.length} narratives, direction: ${shiftAnalysis.direction}`);
+        console.log(`[PROPAGANDA] ${media.country}: ${articleCount} articles, ${narratives.length} narratives`);
       } catch (err) {
         console.warn(`[PROPAGANDA] ${media.country} failed:`, err instanceof Error ? err.message : err);
       }

@@ -35,7 +35,6 @@ import type {
   FeedItem,
   MarketSection,
   MacroItem,
-  BorderStat,
   NewsWireItem,
   CalendarEvent,
   Connection,
@@ -63,10 +62,9 @@ import type {
   NaturalEvent,
   EconomicEvent,
   Alert,
-  Vessel,
   Earthquake,
-  ConvergenceHotspot,
   SurgeAlert,
+  FireHotspot,
 } from '../types';
 
 export interface TopBarKPI {
@@ -92,7 +90,6 @@ export interface MarketsResponse {
   forex: MarketSection[];
   sessions: MarketSession[];
   macro: MacroItem[];
-  border: BorderStat[];
 }
 
 export interface HealthService {
@@ -192,8 +189,6 @@ export const api = {
   // Phase 3.5-A: Alerts
   alerts:        () => fetchJSON<Alert[]>('/api/alerts'),
   markAlertRead: (id: string) => postJSON<{ ok: boolean }>(`/api/alerts/${encodeURIComponent(id)}/read`),
-  // Phase 3.5-D: Vessels
-  vessels:             () => fetchJSON<Vessel[]>('/api/vessels'),
   // USGS Earthquakes
   earthquakes:         () => fetchJSON<Earthquake[]>('/api/earthquakes'),
   // System Health
@@ -206,8 +201,10 @@ export const api = {
   layerBases:          () => fetchJSON<GeoJSONCollection>('/api/layers/bases'),
   layerCables:         () => fetchJSON<GeoJSONCollection>('/api/layers/cables'),
   layerPipelines:      () => fetchJSON<GeoJSONCollection>('/api/layers/pipelines'),
-  // Geo Convergence
-  geoConvergence:      () => fetchJSON<ConvergenceHotspot[]>('/api/geo-convergence'),
+  // Fire Hotspots (NASA FIRMS)
+  fireHotspots:        () => fetchJSON<FireHotspot[]>('/api/fire-hotspots'),
+  // Cloudflare Outages
+  cloudflareOutages:   () => fetchJSON<any[]>('/api/cloudflare-outages'),
   // Surge Detection
   surgeAlerts:         () => fetchJSON<SurgeAlert[]>('/api/surge-alerts'),
 };

@@ -36,7 +36,7 @@ const RISING_QUERY = `
 WITH latest AS (
   SELECT country_code, MAX(refresh_date) as max_date
   FROM \`bigquery-public-data.google_trends.international_top_rising_terms\`
-  WHERE refresh_date >= DATE_SUB(CURRENT_DATE(), INTERVAL 3 DAY)
+  WHERE refresh_date >= DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY)
     AND country_code IN (${COUNTRY_LIST_SQL})
   GROUP BY country_code
 )
@@ -51,7 +51,7 @@ const TOP_QUERY = `
 WITH latest AS (
   SELECT country_code, MAX(refresh_date) as max_date
   FROM \`bigquery-public-data.google_trends.international_top_terms\`
-  WHERE refresh_date >= DATE_SUB(CURRENT_DATE(), INTERVAL 3 DAY)
+  WHERE refresh_date >= DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY)
     AND country_code IN (${COUNTRY_LIST_SQL})
   GROUP BY country_code
 )
@@ -104,13 +104,15 @@ export async function fetchGoogleTrends(): Promise<void> {
     return;
   }
 
-  console.log('[TRENDS] Fetching Google Trends from BigQuery...');
+  console.log('[TRENDS] Fetching Google Trends from BigQuery (7-day window)...');
 
   try {
     const [risingRows, topRows] = await Promise.all([
       bqQuery<TrendRow>(RISING_QUERY),
       bqQuery<TrendRow>(TOP_QUERY),
     ]);
+
+    console.log(`[TRENDS] BQ returned ${risingRows.length} rising rows, ${topRows.length} top rows`);
 
     // Build term → countries map
     const termMap = new Map<string, {

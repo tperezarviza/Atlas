@@ -7,10 +7,11 @@ import { fetchGdeltNews } from './services/gdelt.js';
 import { composeTicker } from './services/ticker.js';
 import { fetchConflicts } from './services/acled.js';
 import { fetchMacro } from './services/macro.js';
-import { generateAllBriefs } from './services/ai-brief.js';
+import { generateAllBriefs, generateSurgeBrief } from './services/ai-brief.js';
+import { cache } from './cache.js';
 
 import { fetchCalendar } from './services/calendar.js';
-import { fetchBorderStats } from './services/border.js';
+
 import { fetchOoniIncidents } from './services/ooni.js';
 import { fetchCountries } from './services/countries.js';
 import { fetchArmedGroups } from './services/terrorism.js';
@@ -34,9 +35,6 @@ import { fetchFirmsHotspots } from './services/firms.js';
 import { fetchPolymarket } from './services/polymarket.js';
 import { computeCII } from './services/cii.js';
 import { detectFocalPoints } from './services/focal-points.js';
-import { runAnomalyDetection } from './services/anomaly-detector.js';
-import { fetchCountryToneBQ } from './services/cii-bq.js';
-import { detectGeoConvergence } from './services/geo-convergence.js';
 import { flushDailyBytes } from './services/bq-cost-tracker.js';
 import { fetchGoogleTrends } from './services/google-trends-bq.js';
 import { detectSurges } from './services/surge-detection.js';
@@ -81,10 +79,7 @@ export function startCronJobs() {
   // 30 */6 * * * -> UNSC Security Council calendar (every 6h)
   cron.schedule('30 */6 * * *', safeRun('unsc', fetchUNSC));
 
-  // 0 6 * * * -> Border stats (1x/day)
-  cron.schedule('0 6 * * *', safeRun('border', fetchBorderStats));
-
-  // 0 */12 * * * -> Hostility Index (BQ: 107GB/query, 2x/day)
+  // 0 */12 * * * -> Hostility Index (GDELT API, 2x/day)
   cron.schedule('0 */12 * * *', safeRun('hostility', fetchHostilityIndex));
 
   // 0 * * * * (offset 30) -> OONI + Countries + Armed Groups
@@ -145,14 +140,6 @@ export function startCronJobs() {
   // 7 */6 * * * -> Focal Point Detection (BQ GKG entities or Claude NER fallback)
   cron.schedule('7 */6 * * *', safeRun('focal-points', detectFocalPoints));
 
-  // 12 */4 * * * -> Anomaly Detection (BQ: 21GB/query, 6x/day)
-  cron.schedule('12 */4 * * *', safeRun('anomaly-detection', runAnomalyDetection));
-
-  // 40 */4 * * * -> Country tone for CII (BQ: 20GB/query, 6x/day)
-  cron.schedule('40 */4 * * *', safeRun('cii-bq-tone', fetchCountryToneBQ));
-
-  // 15 */6 * * * -> Geographic convergence detection (BQ: 31GB/query, 4x/day)
-  cron.schedule('15 */6 * * *', safeRun('geo-convergence', detectGeoConvergence));
 
   // 0 */6 * * * -> Google Trends (BQ, 4x/day — data updates daily)
   cron.schedule('0 */6 * * *', safeRun('google-trends', fetchGoogleTrends));
@@ -165,6 +152,29 @@ export function startCronJobs() {
 
   // * * * * * -> Alerts analysis (every minute)
   cron.schedule('* * * * *', safeRun('alerts', analyzeAlerts));
+
+  // 3,8,13,18,23,28,33,38,43,48,53,58 * * * * -> Twitter trending surge check (every 5 min)
+  let prevTrendingCounts: Record<string, number> = {};
+  cron.schedule('3,8,13,18,23,28,33,38,43,48,53,58 * * * *', safeRun('twitter-surge', async () => {
+    const trending = cache.get<{ keyword: string; count: number }[]>('twitter_trending');
+    if (!trending || trending.length === 0) return;
+
+    const current: Record<string, number> = {};
+    for (const t of trending) current[t.keyword] = t.count;
+
+    // Detect surge: keyword jumps >200% or new keyword with count ≥ 10
+    for (const [kw, count] of Object.entries(current)) {
+      const prev = prevTrendingCounts[kw] ?? 0;
+      const isSurge = (prev > 0 && count / prev > 3) || (prev === 0 && count >= 10);
+      if (isSurge) {
+        console.log(`[SURGE] Detected surge: ${kw} ×${count} (was ${prev})`);
+        await generateSurgeBrief(kw);
+        break; // Only one surge brief per check
+      }
+    }
+
+    prevTrendingCounts = current;
+  }));
 
   // Daily 4am: Redis key count monitoring
   cron.schedule('0 4 * * *', safeRun('redis-monitor', async () => {

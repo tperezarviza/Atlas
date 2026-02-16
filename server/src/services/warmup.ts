@@ -5,7 +5,6 @@ import { composeTicker } from './ticker.js';
 import { fetchConflicts } from './acled.js';
 import { fetchMacro } from './macro.js';
 import { fetchCalendar } from './calendar.js';
-import { fetchBorderStats } from './border.js';
 import { generateAllBriefs } from './ai-brief.js';
 
 import { fetchOoniIncidents } from './ooni.js';
@@ -50,7 +49,7 @@ async function warmupFromRedis(): Promise<void> {
     'brief', 'brief:mideast', 'brief:ukraine', 'brief:domestic', 'brief:intel',
     'twitter', 'propaganda', 'hostility', 'focal_points',
     // BQ-derived caches — restored to avoid re-running expensive queries on redeploy
-    'country_tone_bq', 'google_trends', 'anomalies', 'geo_convergence',
+    'google_trends',
   ];
   let restored = 0;
   for (const key of keysToRestore) {
@@ -102,7 +101,6 @@ export async function warmUpCache(): Promise<void> {
   await Promise.allSettled([
     safeRun('ACLED', fetchConflicts),
     safeRun('Macro', fetchMacro),
-    safeRun('Border', fetchBorderStats),
     safeRun('Sanctions', fetchSanctions),
     safeRun('Shipping', fetchShippingData),
     safeRun('Congress', fetchCongress),
