@@ -62,6 +62,13 @@ function extractHeadline(html: string | undefined): string | undefined {
   return (plain && plain !== 'No Title') ? plain : undefined;
 }
 
+/** Extract domain from the first <a href="..."> in GDELT html. */
+function extractDomain(html: string | undefined): string | undefined {
+  if (!html) return undefined;
+  const match = html.match(/<a[^>]*href="https?:\/\/([^/"]+)/);
+  return match?.[1] ?? undefined;
+}
+
 /** Batch-translate non-English headlines using the shared translate utility. */
 async function translateHeadlines(points: NewsPoint[]): Promise<void> {
   const headlines = points.map((p) => p.headline);
@@ -110,7 +117,7 @@ async function fetchGdeltQuery(
       lng: f.geometry.coordinates[0],
       tone: f.properties.urltone ?? 0,
       headline,
-      source: formatDomain(f.properties.domain),
+      source: formatDomain(extractDomain(f.properties.html) ?? f.properties.domain),
       category,
       fetchedAt: now,
     });
@@ -119,22 +126,52 @@ async function fetchGdeltQuery(
 }
 
 function deduplicateNews(points: NewsPoint[]): NewsPoint[] {
-  const seen = new Set<string>();
+  const seenByLocation = new Set<string>();
+  const seenByHeadline = new Set<string>();
   return points.filter((p) => {
-    const key = `${p.lat.toFixed(1)}_${p.lng.toFixed(1)}_${p.headline.substring(0, 40).toLowerCase()}`;
-    if (seen.has(key)) return false;
-    seen.add(key);
+    // Dedup by location + headline prefix
+    const locKey = `${p.lat.toFixed(1)}_${p.lng.toFixed(1)}_${p.headline.substring(0, 40).toLowerCase()}`;
+    if (seenByLocation.has(locKey)) return false;
+    seenByLocation.add(locKey);
+    // Also dedup by headline alone (same story from different locations)
+    const headKey = p.headline.substring(0, 60).toLowerCase();
+    if (seenByHeadline.has(headKey)) return false;
+    seenByHeadline.add(headKey);
     return true;
   });
 }
 
+const CATEGORY_PRIORITY: Record<string, number> = {
+  conflict: 0, terrorism: 1, crisis: 2,
+  africa_crisis: 3, latam_crisis: 3, asia_crisis: 3,
+  nuclear: 4, china_threat: 4, russia_ukraine: 5, middle_east: 5,
+  us_politics: 6, energy: 7,
+};
+
+const CATEGORY_BULLET: Record<string, NewsBullet> = {
+  conflict: 'critical', terrorism: 'critical', crisis: 'high',
+  africa_crisis: 'high', latam_crisis: 'high', asia_crisis: 'high',
+  nuclear: 'high', china_threat: 'high',
+  russia_ukraine: 'medium', middle_east: 'medium',
+  us_politics: 'accent', energy: 'accent',
+};
+
 function newsToWire(news: NewsPoint[], fetchedAt: number): NewsWireItem[] {
-  const sorted = [...news].sort((a, b) => a.tone - b.tone);
-  return sorted.slice(0, 20).map((n, i) => {
-    let bullet: NewsBullet = 'medium';
-    if (n.tone < -7) bullet = 'critical';
-    else if (n.tone < -4) bullet = 'high';
-    else if (n.tone > 0) bullet = 'accent';
+  const hasTone = news.some(n => n.tone !== 0);
+  const sorted = hasTone
+    ? [...news].sort((a, b) => a.tone - b.tone)
+    : [...news].sort((a, b) => (CATEGORY_PRIORITY[a.category] ?? 9) - (CATEGORY_PRIORITY[b.category] ?? 9));
+
+  return sorted.slice(0, 25).map((n, i) => {
+    let bullet: NewsBullet;
+    if (hasTone) {
+      bullet = 'medium';
+      if (n.tone < -7) bullet = 'critical';
+      else if (n.tone < -4) bullet = 'high';
+      else if (n.tone > 0) bullet = 'accent';
+    } else {
+      bullet = CATEGORY_BULLET[n.category] ?? 'medium';
+    }
 
     const elapsedMin = Math.floor((Date.now() - fetchedAt) / 60_000);
     const time = elapsedMin < 1 ? 'now' : `${elapsedMin}m`;

@@ -393,7 +393,7 @@ export default function WorldMap({ selectedConflictId, onSelectConflict, onCount
             >
               <Tooltip direction="top" offset={[0, -10]} className="map-tooltip">
                 <div className="tt-title">{item.count} events in area</div>
-                <div className="tt-meta">Click to zoom · Worst tone: {item.worstTone.toFixed(1)}</div>
+                <div className="tt-meta">Click to zoom{item.worstTone !== 0 ? ` · Worst tone: ${item.worstTone.toFixed(1)}` : ''}</div>
               </Tooltip>
             </Marker>
           ) : item.point ? (
@@ -405,12 +405,12 @@ export default function WorldMap({ selectedConflictId, onSelectConflict, onCount
             >
               <Tooltip direction="top" offset={[0, -6]} className="map-tooltip">
                 <div className="tt-title">{item.point.source}</div>
-                <div className="tt-meta">Tone: {item.point.tone.toFixed(1)} · {item.point.category.toUpperCase()}</div>
+                <div className="tt-meta">{item.point.tone !== 0 ? `Tone: ${item.point.tone.toFixed(1)} · ` : ''}{item.point.category.toUpperCase()}</div>
                 <div className="tt-headline">{item.point.headline}</div>
               </Tooltip>
               <Popup className="map-popup" closeButton maxWidth={320} minWidth={220}>
                 <div className="tt-title">{item.point.source}</div>
-                <div className="tt-meta">Tone: {item.point.tone.toFixed(1)} · {item.point.category.toUpperCase()}</div>
+                <div className="tt-meta">{item.point.tone !== 0 ? `Tone: ${item.point.tone.toFixed(1)} · ` : ''}{item.point.category.toUpperCase()}</div>
                 <div className="tt-headline">{item.point.headline}</div>
                 <NewsPopup headline={item.point.headline} category={item.point.category} lat={item.lat} lng={item.lng} />
               </Popup>

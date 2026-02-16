@@ -71,15 +71,17 @@ export default memo(function NewsWire({ filter, title }: NewsWireProps = {}) {
                     <span className="font-data text-[12px] text-text-muted ml-auto">{item.time}</span>
                   </div>
                   <div className="text-[14px] leading-[1.4] text-text-primary">{item.headline}</div>
-                  <div className="font-data text-[12px] mt-[3px] flex items-center gap-1">
-                    <span
-                      className="inline-block h-[3px] rounded-[1px]"
-                      style={{ width: toneWidth, background: tColor }}
-                    />
-                    <span style={{ color: tColor }}>
-                      {item.tone > 0 ? '+' : ''}{item.tone.toFixed(1)}
-                    </span>
-                  </div>
+                  {item.tone !== 0 && (
+                    <div className="font-data text-[12px] mt-[3px] flex items-center gap-1">
+                      <span
+                        className="inline-block h-[3px] rounded-[1px]"
+                        style={{ width: toneWidth, background: tColor }}
+                      />
+                      <span style={{ color: tColor }}>
+                        {item.tone > 0 ? '+' : ''}{item.tone.toFixed(1)}
+                      </span>
+                    </div>
+                  )}
                 </div>
               );
             })}
