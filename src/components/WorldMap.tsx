@@ -306,8 +306,15 @@ export default function WorldMap({ selectedConflictId, onSelectConflict, onCount
     return () => controller.abort();
   }, []);
 
+  // Limit GDELT points to top 500 by tone severity to reduce clutter
+  const cappedNews = useMemo(() => {
+    const all = news ?? [];
+    if (all.length <= 500) return all;
+    return [...all].sort((a, b) => a.tone - b.tone).slice(0, 500);
+  }, [news]);
+
   // Cluster GDELT news points — NOT conflicts, earthquakes, flights
-  const newsClusters = useCluster(news ?? [], mapBounds, zoomLevel);
+  const newsClusters = useCluster(cappedNews, mapBounds, zoomLevel);
 
   const c = conflicts ?? [];
   const n = news ?? [];

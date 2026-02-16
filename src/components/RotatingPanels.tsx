@@ -9,7 +9,7 @@ const TAB_LABELS = ['INTEL WIRE', 'RRSS', 'CII', 'FOCAL'] as const;
 const ROTATION_SECONDS = 60;
 
 const SPORTS_ENTERTAINMENT_RE =
-  /sport|football|soccer|basketball|nba|nfl|mlb|tennis|golf|cricket|entertainment|celebrity|movie|music|album|grammy|oscar|emmy|fashion/i;
+  /\b(sport|football|soccer|basketball|nba|nfl|mlb|nhl|tennis|golf|cricket|f1|formula|baseball|boxing|ufc|mma|rugby|hockey|olympic|atletico|league|playoff|championship|tournament|coach|quarterback|pitcher|goalkeeper|roster|draft|halftime|overtime|touchdown|homerun|slam.dunk|entertainment|celebrity|movie|movies|film|music|album|grammy|oscar|emmy|fashion|kardashian|hollywood|netflix|disney|spotify|tiktok|broadway|reality.show|red.carpet|premiere|actor|actress|singer|rapper|pop.star|wellness|skincare|recipe|cookbook|dating|romance|wedding|divorce|baby|pregnant|puppy|kitten|pet|yoga|fitness|workout|marathon|triathlon|weight.loss|diet|vegan|restaurant|travel|vacation|tourism|hotel|resort|beach|cruise|roller.?coaster|theme.park|concert|festival|comic|anime|gaming|esports|streamer|influencer|viral|meme|selfie|outfit|makeup|hairstyle|tattoo|jewelry|perfume|fragrance|candle|decorat|gardening|crafts|diy|home.improvement|renovation|real.estate|mortgage|lottery|jackpot|slot|casino|betting|odds|handicap|parlay|fantasy.football|survivor|bachelor|idol|talent.show|decker|duvall|iconic.roles|remembering.*roles)\b/i;
 
 const CONTEXT_FILTERS: Record<string, RegExp> = {
   mideast:  /israel|iran|gaza|hamas|hezbollah|houthi|yemen|saudi|syria|iraq|lebanon|turkey|egypt|jordan|qatar|uae/i,
@@ -44,16 +44,23 @@ interface CIIEntry {
   factors: Record<string, number>;
 }
 
-// ── Focal Point types ──
+// ── Focal Point types (matches server FocalPoint) ──
+
+interface FocalPointSource {
+  type: string;
+  count: number;
+  sample: string;
+}
 
 interface FocalPoint {
-  id: string;
-  title: string;
-  description: string;
-  severity: string;
-  sourceCount: number;
+  entity: string;
+  entityType: 'country' | 'organization' | 'person' | 'event';
+  score: number;
+  sources: FocalPointSource[];
+  sourceTypeCount: number;
+  trend: 'new' | 'rising' | 'stable' | 'falling';
+  firstSeen: string;
   updatedAt: string;
-  region?: string;
 }
 
 // ── Helpers ──
@@ -93,7 +100,7 @@ const IntelWirePanel = memo(function IntelWirePanel({ contextId }: { contextId: 
     if (ctxRe) {
       filtered = filtered.filter((item) => ctxRe.test(item.headline));
     }
-    return filtered.slice(0, 4);
+    return filtered.slice(0, 8);
   }, [data, contextId]);
 
   if (!data) {
@@ -160,7 +167,7 @@ const IntelWirePanel = memo(function IntelWirePanel({ contextId }: { contextId: 
 const RRSSPanel = memo(function RRSSPanel() {
   const { data } = useApiData<FeedItem[]>(api.leaders, 120_000);
 
-  const items = useMemo(() => (data ?? []).slice(0, 3), [data]);
+  const items = useMemo(() => (data ?? []).slice(0, 6), [data]);
 
   if (!data) {
     return <div style={{ padding: '14px 20px', color: '#7a6418', fontSize: 14 }}>Loading feeds...</div>;
@@ -302,13 +309,22 @@ const FocalPanel = memo(function FocalPanel() {
     return <div style={{ padding: '14px 20px', color: '#7a6418', fontSize: 14 }}>No focal points.</div>;
   }
 
+  const TREND_ICONS: Record<string, { icon: string; color: string }> = {
+    new:     { icon: '★', color: '#a855f7' },
+    rising:  { icon: '▲', color: '#ff3b3b' },
+    stable:  { icon: '▬', color: '#c9a84c' },
+    falling: { icon: '▼', color: '#00ff88' },
+  };
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
       {items.map((fp) => {
-        const borderColor = fp.severity === 'critical' ? '#ff3b3b' : '#ff8c00';
+        const borderColor = fp.score >= 50 ? '#ff3b3b' : fp.score >= 25 ? '#ff8c00' : '#ffc832';
+        const trendInfo = TREND_ICONS[fp.trend] ?? TREND_ICONS.stable;
+        const topSample = fp.sources[0]?.sample ?? '';
         return (
           <div
-            key={fp.id}
+            key={fp.entity}
             style={{
               background: 'rgba(255,200,50,0.03)',
               border: '1px solid rgba(255,200,50,0.12)',
@@ -317,27 +333,53 @@ const FocalPanel = memo(function FocalPanel() {
               borderLeft: `3px solid ${borderColor}`,
             }}
           >
-            <div style={{ fontSize: 18, fontWeight: 700, color: '#ffffff', marginBottom: 6 }}>
-              {fp.title}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+              <div style={{ fontSize: 18, fontWeight: 700, color: '#ffffff' }}>
+                {fp.entity}
+              </div>
+              <span style={{
+                fontSize: 11, fontWeight: 600, letterSpacing: 1,
+                padding: '2px 6px', borderRadius: 4,
+                background: 'rgba(255,200,50,0.08)',
+                color: '#c9a84c', textTransform: 'uppercase',
+              }}>
+                {fp.entityType}
+              </span>
+              <span style={{ fontSize: 14, color: trendInfo.color, marginLeft: 'auto' }}>
+                {trendInfo.icon} {fp.trend.toUpperCase()}
+              </span>
             </div>
-            <div
-              style={{
-                fontSize: 16,
-                color: 'rgba(255,255,255,0.85)',
-                lineHeight: 1.45,
-                marginBottom: 8,
-              }}
-            >
-              {fp.description}
-            </div>
+            {topSample && (
+              <div
+                style={{
+                  fontSize: 16,
+                  color: 'rgba(255,255,255,0.85)',
+                  lineHeight: 1.45,
+                  marginBottom: 8,
+                }}
+              >
+                {topSample}
+              </div>
+            )}
             <div
               style={{
                 fontSize: 13,
                 fontFamily: "'IBM Plex Mono', monospace",
                 color: '#c9a84c',
+                display: 'flex',
+                gap: 8,
+                flexWrap: 'wrap',
+                alignItems: 'center',
               }}
             >
-              {fp.sourceCount} sources · Updated {relativeTime(fp.updatedAt)}
+              <span>Score {fp.score}</span>
+              <span style={{ color: '#7a6418' }}>·</span>
+              {fp.sources.map(s => (
+                <span key={s.type} style={{ color: '#7a6418' }}>
+                  {s.type.toUpperCase()} ×{s.count}
+                </span>
+              ))}
+              <span style={{ color: '#7a6418' }}>· Updated {relativeTime(fp.updatedAt)}</span>
             </div>
           </div>
         );

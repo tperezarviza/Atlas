@@ -72,8 +72,15 @@ export default function Ticker() {
     .slice(0, 3)
     .map((e: EconomicEvent) => `${e.currency} ${e.event_name} ${e.time} ET`);
 
-  // Tier 2 news (up to 5)
-  const tier2Items = (tickerData ?? []).slice(0, 5);
+  // Tier 2 news (up to 5) — filter out non-Latin text (untranslated items)
+  const tier2Items = (tickerData ?? [])
+    .filter(t => {
+      const letters = t.text.replace(/[\s\d\p{P}\p{S}]/gu, '');
+      if (letters.length === 0) return false;
+      const latin = letters.replace(/[^\u0000-\u024F\u1E00-\u1EFF]/g, '');
+      return latin.length / letters.length > 0.7;
+    })
+    .slice(0, 5);
 
   const renderItems = (keyPrefix: string): React.ReactElement[] => {
     const elements: React.ReactElement[] = [];
