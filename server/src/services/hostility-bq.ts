@@ -92,7 +92,7 @@ export async function fetchHostilityBQ(): Promise<void> {
     }));
 
     if (pairs.length > 0) {
-      cache.set('hostility', pairs, TTL.HOSTILITY);
+      await cache.setWithRedis('hostility', pairs, TTL.HOSTILITY, 24 * 3600);
       console.log(`[HOSTILITY-BQ] ${pairs.length} hostility pairs cached`);
     }
   } catch (err) {

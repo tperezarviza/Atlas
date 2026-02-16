@@ -163,7 +163,7 @@ export async function runAnomalyDetection(): Promise<void> {
   // Sort anomalies by absolute z-score descending
   anomalies.sort((a, b) => Math.abs(b.zScore) - Math.abs(a.zScore));
 
-  cache.set('anomalies', anomalies, TTL.ANOMALY);
+  await cache.setWithRedis('anomalies', anomalies, TTL.ANOMALY, 12 * 3600);
 
   if (anomalies.length > 0) {
     console.log(`[ANOMALY] ${anomalies.length} anomalies detected:`);

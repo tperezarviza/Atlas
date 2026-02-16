@@ -13,7 +13,6 @@ import { fetchSanctions } from './sanctions.js';
 import { fetchShippingData } from './shipping.js';
 import { fetchCountries } from './countries.js';
 import { fetchArmedGroups } from './terrorism.js';
-import { fetchHostilityIndex } from './hostility.js';
 import { fetchPropaganda } from './propaganda.js';
 import { fetchCongress } from './congress.js';
 import { fetchExecutiveOrders } from './executive-orders.js';
@@ -31,10 +30,8 @@ import { fetchFirmsHotspots } from './firms.js';
 import { fetchPolymarket } from './polymarket.js';
 import { computeCII } from './cii.js';
 import { detectFocalPoints } from './focal-points.js';
-import { runAnomalyDetection } from './anomaly-detector.js';
-import { fetchCountryToneBQ } from './cii-bq.js';
-import { detectGeoConvergence } from './geo-convergence.js';
-import { fetchGoogleTrends } from './google-trends-bq.js';
+// BQ services removed from warmup — too expensive (~180GB per redeploy).
+// Data restored from Redis or arrives at next cron cycle.
 import { detectSurges } from './surge-detection.js';
 import { cache } from '../cache.js';
 import { redisGet } from '../redis.js';
@@ -52,6 +49,8 @@ async function warmupFromRedis(): Promise<void> {
   const keysToRestore = [
     'brief', 'brief:mideast', 'brief:ukraine', 'brief:domestic', 'brief:intel',
     'twitter', 'propaganda', 'hostility', 'focal_points',
+    // BQ-derived caches — restored to avoid re-running expensive queries on redeploy
+    'country_tone_bq', 'google_trends', 'anomalies', 'geo_convergence',
   ];
   let restored = 0;
   for (const key of keysToRestore) {
@@ -119,18 +118,16 @@ export async function warmUpCache(): Promise<void> {
     safeRun('AI Briefs (all desks)', generateAllBriefs),
     safeRun('Countries', fetchCountries),
     safeRun('Armed Groups', fetchArmedGroups),
-    safeRun('Hostility', fetchHostilityIndex),
+    // Hostility skipped — BQ query costs 107GB. Restored from Redis or next cron (c/12h).
     safeRun('Alerts', analyzeAlerts),
   ]);
 
-  // Phase 3.5: CII + Focal Points + Anomaly Detection + BQ services
+  // Phase 3.5: CII + Focal Points + non-BQ services
+  // BQ queries skipped on warmup — they cost ~180GB ($1.12) per redeploy.
+  // Data arrives at next cron cycle (4-12h). Hostility/focal restored from Redis above.
   await Promise.allSettled([
-    safeRun('BQ Country Tone', fetchCountryToneBQ),
-    safeRun('Google Trends', fetchGoogleTrends),
     safeRun('CII', computeCII),
     safeRun('Focal Points', detectFocalPoints),
-    safeRun('Anomaly Detection', runAnomalyDetection),
-    safeRun('Geo Convergence', detectGeoConvergence),
     safeRun('Surge Detection', detectSurges),
   ]);
 

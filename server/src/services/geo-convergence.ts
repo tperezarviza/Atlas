@@ -153,7 +153,7 @@ export async function detectGeoConvergence(): Promise<void> {
         score: row.event_types.length * 10 + Math.min(row.total_events, 50),
       }));
 
-      cache.set('geo_convergence', hotspots, 30 * 60 * 1000);
+      await cache.setWithRedis('geo_convergence', hotspots, 30 * 60 * 1000, 12 * 3600);
       console.log(`[GEO-CONV] ${hotspots.length} convergence hotspots detected`);
       return;
     } catch (err) {

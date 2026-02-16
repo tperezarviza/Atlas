@@ -194,7 +194,7 @@ export async function fetchGoogleTrends(): Promise<void> {
       refreshDate: refreshStr,
     };
 
-    cache.set('google_trends', result, 12 * 60 * 60 * 1000); // 12h TTL
+    await cache.setWithRedis('google_trends', result, 12 * 60 * 60 * 1000, 24 * 3600); // 12h mem, 24h Redis
 
     // Store daily snapshot for historical comparison
     const today = new Date().toISOString().slice(0, 10);

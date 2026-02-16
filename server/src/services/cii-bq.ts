@@ -70,7 +70,7 @@ export async function fetchCountryToneBQ(): Promise<CountryToneBQ[]> {
       }));
 
     // Cache for CII to consume
-    cache.set('country_tone_bq', result, 60 * 60 * 1000); // 1h TTL
+    await cache.setWithRedis('country_tone_bq', result, 60 * 60 * 1000, 12 * 3600); // 1h mem, 12h Redis
     console.log(`[CII-BQ] ${result.length} country tones computed via BigQuery`);
     return result;
   } catch (err) {
