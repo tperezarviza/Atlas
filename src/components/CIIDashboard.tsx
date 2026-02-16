@@ -15,12 +15,12 @@ interface CIIEntry {
   factors: Record<string, number>;
 }
 
-const FLAG_MAP: Record<string, string> = {
-  AF: '🇦🇫', IQ: '🇮🇶', SY: '🇸🇾', YE: '🇾🇪', SO: '🇸🇴', LY: '🇱🇾', SD: '🇸🇩', SS: '🇸🇸',
-  CD: '🇨🇩', NG: '🇳🇬', ML: '🇲🇱', BF: '🇧🇫', MM: '🇲🇲', PK: '🇵🇰', UA: '🇺🇦', RU: '🇷🇺',
-  IR: '🇮🇷', KP: '🇰🇵', CN: '🇨🇳', VE: '🇻🇪', HT: '🇭🇹', ET: '🇪🇹', MZ: '🇲🇿', CF: '🇨🇫',
-  LB: '🇱🇧', IL: '🇮🇱', PS: '🇵🇸', NE: '🇳🇪', TD: '🇹🇩', CM: '🇨🇲', EG: '🇪🇬', SA: '🇸🇦', TR: '🇹🇷',
-};
+// Programmatic flag emoji from ISO 3166-1 alpha-2 code
+function codeToFlag(code: string): string {
+  if (code.length !== 2) return '🏳️';
+  const offset = 0x1F1E6 - 65; // Regional Indicator Symbol Letter A
+  return String.fromCodePoint(code.charCodeAt(0) + offset, code.charCodeAt(1) + offset);
+}
 
 const REGION_CODES: Record<string, Set<string>> = {
   mideast: new Set(['IR', 'IQ', 'SY', 'YE', 'LB', 'IL', 'PS', 'SA', 'EG', 'TR']),
@@ -106,7 +106,7 @@ export default memo(function CIIDashboard({ contextId }: CIIDashboardProps) {
       {/* List */}
       <div className="flex-1 overflow-y-auto min-h-0 scrollbar-thin">
         {sorted.map((entry) => {
-          const flag = FLAG_MAP[entry.code] ?? '🏳️';
+          const flag = codeToFlag(entry.code);
           const trend = trendArrow(entry.trend);
           const isHighlighted = highlightCodes.size > 0 && highlightCodes.has(entry.code);
 

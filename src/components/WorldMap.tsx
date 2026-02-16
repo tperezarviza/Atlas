@@ -239,7 +239,7 @@ export default function WorldMap({ selectedConflictId, onSelectConflict, onCount
   useEffect(() => {
     if (prevTabRef.current !== activeTab) {
       // Auto-enable internet layer on cyber tab
-      if (activeTab === 'cyber') {
+      if (activeTab === 'intel') {
         setLayers({ ...DEFAULT_LAYERS, internet: true });
       } else {
         setLayers(DEFAULT_LAYERS);
