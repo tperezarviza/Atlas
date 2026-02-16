@@ -1,3 +1,4 @@
+import { useRef } from 'react';
 import { useApiData } from '../hooks/useApiData';
 import { api } from '../services/api';
 import type { TickerItem } from '../types';
@@ -6,10 +7,13 @@ const REFRESH_MS = 300_000; // 5 min
 
 export default function Ticker() {
   const { data, error } = useApiData<TickerItem[]>(api.ticker, REFRESH_MS);
-  const items = data ?? [];
+  // Keep previous items on screen until new ones arrive — prevents flash
+  const stableItemsRef = useRef<TickerItem[]>([]);
+  if (data && data.length > 0) stableItemsRef.current = data;
+  const items = stableItemsRef.current;
 
-  const label = error && !data ? 'ERR' : data ? 'LIVE' : 'MOCK';
-  const labelColor = error && !data ? '#ff3b3b' : data && error ? '#d4a72c' : data ? '#00ff88' : '#ff3b3b';
+  const label = error && !data ? 'ERR' : data && error ? 'STALE' : data ? 'LIVE' : 'MOCK';
+  const labelColor = label === 'ERR' ? '#ff3b3b' : label === 'STALE' ? '#d4a72c' : label === 'LIVE' ? '#00ff88' : '#ff3b3b';
 
   return (
     <div
@@ -29,12 +33,12 @@ export default function Ticker() {
         {label}
       </div>
 
-      {/* Scrolling track */}
+      {/* Scrolling track — stable key prevents animation restart on data refresh */}
       <div
+        key="ticker-track"
         className="flex whitespace-nowrap"
         style={{ animation: 'scroll-ticker 120s linear infinite' }}
       >
-        {/* Duplicate items for seamless loop */}
         {[...items, ...items].map((item, i) => (
           <div key={`${item.id}-${i}`} className="flex items-center gap-[6px] px-6 text-[14px] shrink-0">
             <div
@@ -43,9 +47,7 @@ export default function Ticker() {
             />
             <span className="font-data text-[12px] text-text-muted shrink-0">{item.source}</span>
             <span className="text-text-secondary">{item.text}</span>
-            {i < items.length * 2 - 1 && (
-              <span className="text-text-muted ml-4">│</span>
-            )}
+            <span className="text-text-muted ml-4">│</span>
           </div>
         ))}
       </div>

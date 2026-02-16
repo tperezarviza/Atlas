@@ -115,7 +115,7 @@ export default memo(function TopBar({ contextId, contextIndex, progress, onConte
                   style={{
                     width: `${progress}%`,
                     background: 'linear-gradient(90deg, #ffc832, #ffe082)',
-                    transition: 'width 0.2s linear',
+                    transition: progress === 0 ? 'none' : 'width 180s linear',
                   }}
                 />
               )}
@@ -180,10 +180,10 @@ export default memo(function TopBar({ contextId, contextIndex, progress, onConte
 
           {healthOpen && (
             <div
-              className="absolute top-full right-0 mt-1 z-[960] rounded-[3px] overflow-hidden"
-              style={HEALTH_DROPDOWN}
+              className="fixed mt-1 z-[960] rounded-[3px] overflow-hidden"
+              style={{ ...HEALTH_DROPDOWN, top: 48, right: 8 }}
             >
-              <div style={{ height: 480, maxHeight: "70vh" }}>
+              <div style={{ maxHeight: "70vh" }}>
                 <ApiHealthPanel />
               </div>
             </div>

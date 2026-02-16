@@ -70,7 +70,7 @@ export default memo(function NewsWire({ filter, title }: NewsWireProps = {}) {
                     <span className="font-data text-[12px] text-text-muted">{item.source}</span>
                     <span className="font-data text-[12px] text-text-muted ml-auto">{item.time}</span>
                   </div>
-                  <div className="text-[14px] leading-[1.4] text-text-primary">{item.headline}</div>
+                  <div className="text-[14px] leading-[1.4] text-text-primary" style={{ display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{item.headline}</div>
                   {item.tone !== 0 && (
                     <div className="font-data text-[12px] mt-[3px] flex items-center gap-1">
                       <span

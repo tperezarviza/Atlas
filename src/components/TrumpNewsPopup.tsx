@@ -55,7 +55,6 @@ export default function TrumpNewsPopup() {
   const [visible, setVisible] = useState(false)
   const [mounted, setMounted] = useState(false)
   const [currentPage, setCurrentPage] = useState(0)
-  const [testMode, setTestMode] = useState(false)
   const dismissTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const pageTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const seenFingerprintsRef = useRef<Set<string>>(new Set())
@@ -148,41 +147,6 @@ export default function TrumpNewsPopup() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showPost])
 
-  const handleTest = useCallback(async () => {
-    try {
-      const tweets = await api.twitterIntel('trump')
-      const trump = tweets.find((t: TwitterIntelItem) =>
-        (t.author.username.toLowerCase() === 'realdonaldtrump' ||
-         t.author.username.toLowerCase() === 'potus') &&
-        hasValidText(t.text)
-      )
-      if (trump) {
-        showPost({
-          id: `test-${Date.now()}`,
-          text: trump.text,
-          source: 'X / Twitter',
-          handle: `@${trump.author.username}`,
-          time: trump.created_at,
-        })
-        return
-      }
-
-      const feeds = await api.leaders()
-      const truth = feeds.find((f: FeedItem) => f.category === 'trump' && hasValidText(f.text))
-      if (truth) {
-        showPost({
-          id: `test-${Date.now()}`,
-          text: truth.text,
-          source: 'Truth Social',
-          handle: truth.handle,
-          time: truth.time,
-        })
-      }
-    } catch (err) {
-      console.error('[TRUMP-TEST]', err)
-    }
-  }, [showPost])
-
   useEffect(() => {
     if (!visible) return
     const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') dismiss() }
@@ -197,37 +161,6 @@ export default function TrumpNewsPopup() {
 
   return (
     <>
-      {/* Dev test button */}
-      <button
-        onClick={() => setTestMode(prev => !prev)}
-        style={{
-          position: 'fixed', bottom: 8, right: 8, zIndex: 10001,
-          width: 28, height: 28, borderRadius: '50%',
-          background: testMode ? '#b91c1c' : 'rgba(255,200,50,0.06)',
-          border: '1px solid rgba(255,200,50,0.15)', color: testMode ? '#fff' : '#7a6418',
-          fontSize: 12, cursor: 'pointer', display: 'flex',
-          alignItems: 'center', justifyContent: 'center',
-        }}
-        title="Toggle Trump News test button"
-      >
-        T
-      </button>
-      {testMode && (
-        <button
-          onClick={handleTest}
-          style={{
-            position: 'fixed', bottom: 8, right: 44, zIndex: 10001,
-            padding: '4px 12px', borderRadius: 3,
-            background: '#b91c1c', border: '1px solid #d4af37',
-            color: '#d4af37', fontSize: 10, fontWeight: 700,
-            letterSpacing: 1, cursor: 'pointer', fontFamily: 'inherit',
-            textTransform: 'uppercase',
-          }}
-        >
-          Test Trump News (API)
-        </button>
-      )}
-
       {visible && post && (
         <>
           {/* Backdrop — NO blur, solid dark overlay */}

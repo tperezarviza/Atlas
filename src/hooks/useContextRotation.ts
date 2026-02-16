@@ -41,22 +41,20 @@ export function useContextRotation(autoRotate = true) {
     setProgress(0);
   }, []);
 
-  // Auto-rotate timer
+  // Auto-rotate timer — progress is CSS-driven, JS only handles the switch
   useEffect(() => {
     if (!autoRotate || paused) return;
 
-    const startTime = Date.now();
-    const timer = setInterval(() => {
-      const elapsed = Date.now() - startTime;
-      const pct = Math.min(100, (elapsed / ROTATE_INTERVAL) * 100);
-      setProgress(pct);
+    // Kick CSS transition: 0 → 100 over ROTATE_INTERVAL
+    // Start at 0, then rAF to 100 so the browser sees the change
+    setProgress(0);
+    const raf = requestAnimationFrame(() => setProgress(100));
 
-      if (elapsed >= ROTATE_INTERVAL) {
-        next();
-      }
-    }, 200);
+    const timer = setTimeout(() => {
+      next();
+    }, ROTATE_INTERVAL);
 
-    return () => clearInterval(timer);
+    return () => { cancelAnimationFrame(raf); clearTimeout(timer); };
   }, [contextIndex, autoRotate, paused, next]);
 
   return { context, contextIndex, progress, paused, setPaused, next, prev, goTo };
