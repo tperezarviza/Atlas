@@ -62,6 +62,18 @@ function extractHeadline(html: string | undefined): string | undefined {
   return (plain && plain !== 'No Title') ? plain : undefined;
 }
 
+/** Decode common HTML entities in headlines. */
+function decodeEntities(text: string): string {
+  return text
+    .replace(/&amp;/g, '&')
+    .replace(/&apos;/g, "'")
+    .replace(/&quot;/g, '"')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&#39;/g, "'")
+    .replace(/&#x27;/g, "'");
+}
+
 /** Extract domain from the first <a href="..."> in GDELT html. */
 function extractDomain(html: string | undefined): string | undefined {
   if (!html) return undefined;
@@ -109,8 +121,9 @@ async function fetchGdeltQuery(
   const points: NewsPoint[] = [];
   for (let i = 0; i < data.features.length; i++) {
     const f = data.features[i];
-    const headline = extractHeadline(f.properties.html) ?? (f.properties.name !== 'No Title' ? f.properties.name : undefined) ?? 'Unknown';
-    if (headline === 'Unknown' || headline.length < 10) continue;
+    const rawHeadline = extractHeadline(f.properties.html) ?? (f.properties.name !== 'No Title' ? f.properties.name : undefined) ?? 'Unknown';
+    if (rawHeadline === 'Unknown' || rawHeadline.length < 10 || rawHeadline.startsWith('ERROR:')) continue;
+    const headline = decodeEntities(rawHeadline);
     points.push({
       id: `gdelt-${category}-${i}`,
       lat: f.geometry.coordinates[1],
