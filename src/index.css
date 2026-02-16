@@ -272,13 +272,13 @@ will-change: box-shadow;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  border: 2px solid rgba(255, 200, 50, 0.3);
-  opacity: 0.85;
+  border: 1.5px solid rgba(255, 200, 50, 0.15);
+  opacity: 0.75;
   font-weight: 700;
   color: #fff;
   font-family: 'JetBrains Mono', monospace;
   transition: transform 0.2s, opacity 0.2s;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9);
 }
 
 .cluster-marker:hover {
@@ -298,7 +298,6 @@ will-change: box-shadow;
   max-width: 300px !important;
   width: max-content !important;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5) !important;
-  backdrop-filter: blur(24px) !important;
   word-wrap: break-word !important;
   overflow-wrap: break-word !important;
 }

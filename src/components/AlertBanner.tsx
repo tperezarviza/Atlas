@@ -11,12 +11,12 @@ function timeAgo(ts: string): string {
 
 const PRIORITY_STYLES: Record<string, { bg: string; border: string; badge: string }> = {
   flash: {
-    bg: 'rgba(255,59,59,0.12)',
+    bg: 'rgba(20,0,0,0.95)',
     border: '#ff3b3b',
     badge: 'bg-critical text-white',
   },
   urgent: {
-    bg: 'rgba(255,140,0,0.12)',
+    bg: 'rgba(20,10,0,0.95)',
     border: '#ff8c00',
     badge: 'bg-high text-white',
   },
@@ -36,7 +36,7 @@ export default memo(function AlertBanner({ alerts, dismissedIds, onDismiss }: Al
     .slice(0, 3);
 
   return (
-    <div className="fixed top-[50px] left-0 right-0 z-[950] flex flex-col gap-[2px] pointer-events-none">
+    <div className="fixed bottom-[40px] right-4 z-[950] flex flex-col-reverse gap-2 pointer-events-none" style={{ width: 380, maxWidth: 'calc(100vw - 32px)' }}>
       {visible.map(alert => (
         <BannerItem key={alert.id} alert={alert} onDismiss={onDismiss} />
       ))}
@@ -75,10 +75,12 @@ function BannerItem({ alert, onDismiss }: { alert: Alert; onDismiss: (id: string
       className={`pointer-events-auto mx-4 ${alert.priority === 'flash' ? 'alert-glow-flash' : 'alert-glow-urgent'}`}
       style={{
         background: style.bg,
+        border: `1px solid ${style.border}44`,
         borderLeft: `3px solid ${style.border}`,
-        borderRadius: 3,
+        borderRadius: 6,
+        boxShadow: `0 4px 24px rgba(0,0,0,0.6), 0 0 12px ${style.border}22`,
         opacity: visible ? 1 : 0,
-        transform: visible ? 'translateY(0)' : 'translateY(-12px)',
+        transform: visible ? 'translateX(0)' : 'translateX(20px)',
         transition: 'opacity 0.18s ease-out, transform 0.18s ease-out',
       }}
     >

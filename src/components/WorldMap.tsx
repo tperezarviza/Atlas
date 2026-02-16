@@ -176,13 +176,13 @@ function getClusterIcon(count: number, worstTone: number): L.DivIcon {
 
   let icon = clusterIconCache.get(key);
   if (!icon) {
-    const size = Math.max(24, Math.min(60, 20 + Math.sqrt(count) * 6));
+    const size = count < 5 ? 16 : Math.max(20, Math.min(38, 16 + Math.sqrt(count) * 3));
     const color = toneBucket <= -6 ? '#ff3b3b'
       : toneBucket <= -3 ? '#ff8c00'
       : toneBucket <= -1 ? '#ffc832'
       : '#7a6418';
-    const label = count > 999 ? `${Math.round(count / 1000)}K` : String(count);
-    const fontSize = size > 40 ? 14 : 11;
+    const label = count < 5 ? '' : count > 999 ? `${Math.round(count / 1000)}K` : String(count);
+    const fontSize = size > 30 ? 11 : 9;
 
     icon = L.divIcon({
       className: '',
@@ -196,17 +196,18 @@ function getClusterIcon(count: number, worstTone: number): L.DivIcon {
 }
 
 const GEOJSON_STYLE: L.PathOptions = {
-  fillOpacity: 0,
-  weight: 0.5,
-  color: 'rgba(255,200,50,0.05)',
+  fillOpacity: 0.015,
+  fillColor: '#ffc832',
+  weight: 0.8,
+  color: 'rgba(255,200,50,0.18)',
   opacity: 1,
 };
 
 const GEOJSON_HOVER_STYLE: L.PathOptions = {
-  fillOpacity: 0.08,
+  fillOpacity: 0.06,
   fillColor: '#ffc832',
-  weight: 1,
-  color: 'rgba(255,200,50,0.15)',
+  weight: 1.2,
+  color: 'rgba(255,200,50,0.35)',
 };
 
 export default function WorldMap({ selectedConflictId, onSelectConflict, onCountryClick, conflicts, conflictsError, viewCenter, viewZoom, activeTab }: WorldMapProps) {
