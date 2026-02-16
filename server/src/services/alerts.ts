@@ -182,27 +182,37 @@ function checkNaturalEvents(): void {
   }
 }
 
+const TWITTER_AGE_LIMIT = 6 * 60 * 60 * 1000; // Only alert on tweets from the last 6 hours
+// Stricter keywords for Twitter — require genuinely critical military terms, not political commentary
+const TWITTER_CRITICAL_RE = /\b(nuclear test|invasion|coup d|assassination|missile launch|bomb(?:ing|ed)|airstrike|air strike|troops deployed|chemical attack|biological weapon|massacre|hostage|tsunami warning|volcanic eruption)\b/i;
+
 function checkTwitterIntel(): void {
   const tweets = cache.get<TwitterIntelItem[]>('twitter');
   if (!tweets) return;
 
+  const now = Date.now();
   for (const tweet of tweets) {
     // Only crisis and military categories
     if (tweet.category !== 'crisis' && tweet.category !== 'military') continue;
 
-    const hasKeywords = MILITARY_KEYWORDS.test(tweet.text);
-    const isHighPriority = tweet.priority === 'flash' || tweet.priority === 'urgent';
+    // Skip old tweets — only alert on tweets from the last 6 hours
+    const tweetAge = now - new Date(tweet.created_at).getTime();
+    if (tweetAge > TWITTER_AGE_LIMIT) continue;
 
+    // Use stricter keyword matching for Twitter (not the broad MILITARY_KEYWORDS)
+    const hasKeywords = TWITTER_CRITICAL_RE.test(tweet.text);
+    const isHighPriority = tweet.priority === 'flash';
+
+    // Require BOTH keywords and high priority, OR flash-level alone
     if (!hasKeywords && !isHighPriority) continue;
 
-    // Map priority: keywords + high-priority → keep tweet priority; keywords only → priority; high-priority only → keep
     let alertPriority: AlertPriority;
     if (hasKeywords && isHighPriority) {
-      alertPriority = tweet.priority;
+      alertPriority = 'flash';
     } else if (hasKeywords) {
-      alertPriority = 'priority';
+      alertPriority = 'urgent';
     } else {
-      alertPriority = tweet.priority;
+      alertPriority = 'priority'; // flash-only but no keywords → downgrade to priority
     }
 
     const author = `@${tweet.author.username}`;

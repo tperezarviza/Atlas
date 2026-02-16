@@ -26,9 +26,9 @@ export function useCluster(
     if (!points.length || !bounds) return [];
 
     const index = new Supercluster({
-      radius: 60,
+      radius: 90,
       maxZoom: 14,
-      minPoints: 3,
+      minPoints: 4,
       map: (props) => ({
         worstTone: (props as any).tone ?? 0,
         count: 1,
