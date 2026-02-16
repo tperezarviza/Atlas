@@ -1,11 +1,10 @@
 import { cache } from '../cache.js';
 import { TTL } from '../config.js';
-import type { CalendarEvent } from '../types.js';
+import type { CalendarEvent, CalendarUrgency } from '../types.js';
 
 export async function fetchUNSC(): Promise<void> {
   console.log('[UNSC] Fetching Security Council calendar...');
   try {
-    // Primary: press.un.org RSS filtered for Security Council items
     const res = await fetch(
       'https://press.un.org/en/rss.xml',
       {
@@ -20,7 +19,7 @@ export async function fetchUNSC(): Promise<void> {
     if (!res.ok) throw new Error(`Press UN HTTP ${res.status}`);
     const xml = await res.text();
 
-    const events: CalendarEvent[] = [];
+    const allEvents: (CalendarEvent & { _urgency: CalendarUrgency | 'past' })[] = [];
     const items = xml.match(/<item>([\s\S]*?)<\/item>/gi) ?? [];
     let idx = 0;
 
@@ -35,22 +34,28 @@ export async function fetchUNSC(): Promise<void> {
 
       const d = new Date(pubDate);
       if (isNaN(d.getTime())) continue;
-      const dateStr = d.toISOString().split('T')[0];
 
-      events.push({
+      const urgency = getUrgency(d);
+      allEvents.push({
         id: `unsc-${idx++}`,
-        date: dateStr,
+        date: formatEventDate(d),
         title: `UNSC: ${title.slice(0, 120)}`,
         detail: title,
-        urgency: getUrgency(dateStr),
+        urgency: urgency === 'past' ? 'today' : urgency, // placeholder for type
+        _urgency: urgency,
       });
     }
 
+    // Filter out events older than 7 days
+    const events: CalendarEvent[] = allEvents
+      .filter(e => e._urgency !== 'past')
+      .map(({ _urgency, ...rest }) => ({ ...rest, urgency: _urgency as CalendarUrgency }));
+
     if (events.length > 0) {
       cache.set('unsc_calendar', events, TTL.CALENDAR);
-      console.log(`[UNSC] ${events.length} SC press items cached`);
+      console.log(`[UNSC] ${events.length} SC press items cached (${allEvents.length - events.length} past dropped)`);
     } else {
-      console.log('[UNSC] No SC items found in RSS feed');
+      console.log('[UNSC] No recent SC items found in RSS feed');
     }
   } catch (err) {
     console.error('[UNSC] Fetch failed:', err);
@@ -63,11 +68,26 @@ function extractTag(xml: string, tag: string): string {
   return m ? (m[1] ?? m[2] ?? '').trim() : '';
 }
 
-function getUrgency(dateStr: string): 'today' | 'soon' | 'future' {
-  const now = new Date();
-  const d = new Date(dateStr);
-  const diffDays = (d.getTime() - now.getTime()) / 86400000;
-  if (diffDays <= 0) return 'today';
+function getUrgency(eventDate: Date): CalendarUrgency | 'past' {
+  const diffMs = eventDate.getTime() - Date.now();
+  const diffDays = Math.floor(diffMs / 86400000);
+  if (diffDays < -7) return 'past';
+  if (diffDays < 1) return 'today';
   if (diffDays <= 3) return 'soon';
   return 'future';
+}
+
+function formatEventDate(date: Date): string {
+  const diffMs = date.getTime() - Date.now();
+  const diffDays = Math.floor(diffMs / 86400000);
+  const formatted = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
+  if (diffDays < -1) {
+    const daysAgo = Math.abs(diffDays);
+    return daysAgo <= 7 ? `${daysAgo}d ago · ${formatted}` : formatted;
+  }
+  if (diffDays < 1) return `TODAY · ${formatted}`;
+  if (diffDays === 1) return `TOMORROW · ${formatted}`;
+  if (diffDays <= 7) return `In ${diffDays}d · ${formatted}`;
+  return formatted;
 }

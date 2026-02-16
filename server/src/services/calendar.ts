@@ -4,7 +4,13 @@ import { cache } from '../cache.js';
 import { stripHTML } from '../utils.js';
 import type { CalendarEvent, CalendarUrgency } from '../types.js';
 
-const parser = new RSSParser({ timeout: FETCH_TIMEOUT_RSS });
+const parser = new RSSParser({
+  timeout: FETCH_TIMEOUT_RSS,
+  headers: {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+    'Accept': 'application/rss+xml, application/xml, text/xml, */*',
+  },
+});
 
 const CALENDAR_FEEDS = [
   { url: 'https://www.federalreserve.gov/feeds/press_monetary.xml', prefix: 'Fed' },
@@ -72,7 +78,7 @@ export async function fetchCalendar(): Promise<void> {
 
     if (filtered.length > 0) {
       // Sort: today first, then soon, then future
-      const urgencyOrder: Record<CalendarUrgency, number> = { today: 0, soon: 1, future: 2 };
+      const urgencyOrder: Record<string, number> = { today: 0, soon: 1, future: 2, past: 3 };
       filtered.sort((a, b) => urgencyOrder[a.urgency] - urgencyOrder[b.urgency]);
 
       cache.set('calendar', filtered, TTL.CALENDAR);
