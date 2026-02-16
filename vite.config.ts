@@ -10,7 +10,6 @@ export default defineConfig({
       output: {
         manualChunks: {
           'vendor-map': ['leaflet', 'react-leaflet'],
-          'vendor-panels': ['react-resizable-panels'],
           'vendor-sanitize': ['dompurify'],
         },
       },

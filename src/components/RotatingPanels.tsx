@@ -1,0 +1,453 @@
+import { useState, useEffect, useCallback, memo, useMemo } from 'react';
+import { useApiData } from '../hooks/useApiData';
+import { api } from '../services/api';
+import type { NewsWireItem, FeedItem } from '../types';
+
+// ── Constants ──
+
+const TAB_LABELS = ['INTEL WIRE', 'RRSS', 'CII', 'FOCAL'] as const;
+const ROTATION_SECONDS = 60;
+
+const SPORTS_ENTERTAINMENT_RE =
+  /sport|football|soccer|basketball|nba|nfl|mlb|tennis|golf|cricket|entertainment|celebrity|movie|music|album|grammy|oscar|emmy|fashion/i;
+
+const CONTEXT_FILTERS: Record<string, RegExp> = {
+  mideast:  /israel|iran|gaza|hamas|hezbollah|houthi|yemen|saudi|syria|iraq|lebanon|turkey|egypt|jordan|qatar|uae/i,
+  ukraine:  /ukraine|zelensky|putin|nato|pentagon|kharkiv|donetsk|crimea/i,
+  domestic: /trump|congress|senate|border|white.?house|cabinet/i,
+  intel:    /cyber|hack|apt|ransomware|malware|espionage|nsa|cia|mi6|mossad|fsb|gru/i,
+};
+
+const PLATFORM_COLORS: Record<string, string> = {
+  twitter:  '#1d9bf0',
+  x:        '#1d9bf0',
+  telegram: '#00ff88',
+  truth:    '#a855f7',
+};
+
+const SEVERITY_COLORS: Record<string, string> = {
+  critical: '#ff3b3b',
+  high:     '#ff8c00',
+  medium:   '#d4a72c',
+  low:      '#50400e',
+  accent:   '#d4a72c',
+};
+
+// ── CII types ──
+
+interface CIIEntry {
+  code: string;
+  name: string;
+  score: number;
+  trend: 'rising' | 'stable' | 'falling';
+  sparkline: number[];
+  factors: Record<string, number>;
+}
+
+// ── Focal Point types ──
+
+interface FocalPoint {
+  id: string;
+  title: string;
+  description: string;
+  severity: string;
+  sourceCount: number;
+  updatedAt: string;
+  region?: string;
+}
+
+// ── Helpers ──
+
+function relativeTime(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime();
+  const mins = Math.floor(diff / 60_000);
+  if (mins < 1) return 'just now';
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  return `${Math.floor(hrs / 24)}d ago`;
+}
+
+function ciiScoreColor(s: number): string {
+  if (s >= 80) return '#ff3b3b';
+  if (s >= 60) return '#ff8c00';
+  return '#ffc832';
+}
+
+function ciiLabel(s: number): string {
+  if (s >= 80) return 'CRITICAL';
+  if (s >= 60) return 'HIGH';
+  if (s >= 40) return 'ELEVATED';
+  return 'MODERATE';
+}
+
+// ── Sub-panels ──
+
+const IntelWirePanel = memo(function IntelWirePanel({ contextId }: { contextId: string }) {
+  const { data } = useApiData<NewsWireItem[]>(api.newswire, 900_000);
+
+  const items = useMemo(() => {
+    if (!data) return [];
+    let filtered = data.filter((item) => !SPORTS_ENTERTAINMENT_RE.test(item.headline));
+    const ctxRe = CONTEXT_FILTERS[contextId];
+    if (ctxRe) {
+      filtered = filtered.filter((item) => ctxRe.test(item.headline));
+    }
+    return filtered.slice(0, 4);
+  }, [data, contextId]);
+
+  if (!data) {
+    return <div style={{ padding: '14px 20px', color: '#7a6418', fontSize: 14 }}>Loading wire...</div>;
+  }
+  if (items.length === 0) {
+    return <div style={{ padding: '14px 20px', color: '#7a6418', fontSize: 14 }}>No matching items.</div>;
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+      {items.map((item) => (
+        <div
+          key={item.id}
+          style={{
+            display: 'flex',
+            gap: 12,
+            background: 'rgba(255,200,50,0.025)',
+            borderRadius: 8,
+            overflow: 'hidden',
+          }}
+        >
+          {/* Severity bar */}
+          <div
+            style={{
+              width: 4,
+              flexShrink: 0,
+              background: SEVERITY_COLORS[item.bullet] ?? '#50400e',
+              borderRadius: '8px 0 0 8px',
+            }}
+          />
+          <div style={{ padding: '10px 14px 10px 0', flex: 1, minWidth: 0 }}>
+            <div
+              style={{
+                fontSize: 18,
+                fontWeight: 600,
+                color: '#ffffff',
+                lineHeight: 1.35,
+                marginBottom: 6,
+              }}
+            >
+              {item.headline}
+            </div>
+            <div
+              style={{
+                fontSize: 14,
+                fontFamily: "'IBM Plex Mono', monospace",
+                color: '#c9a84c',
+                display: 'flex',
+                gap: 8,
+                alignItems: 'center',
+              }}
+            >
+              <span>{item.source}</span>
+              <span style={{ color: '#7a6418' }}>{relativeTime(item.time)}</span>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+});
+
+const RRSSPanel = memo(function RRSSPanel() {
+  const { data } = useApiData<FeedItem[]>(api.leaders, 120_000);
+
+  const items = useMemo(() => (data ?? []).slice(0, 3), [data]);
+
+  if (!data) {
+    return <div style={{ padding: '14px 20px', color: '#7a6418', fontSize: 14 }}>Loading feeds...</div>;
+  }
+  if (items.length === 0) {
+    return <div style={{ padding: '14px 20px', color: '#7a6418', fontSize: 14 }}>No items.</div>;
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      {items.map((item) => {
+        const platformKey = (item.source ?? '').toLowerCase();
+        const avatarBg = PLATFORM_COLORS[platformKey] ?? '#7a6418';
+
+        return (
+          <div
+            key={item.id}
+            style={{
+              display: 'flex',
+              gap: 12,
+              background: 'rgba(255,200,50,0.025)',
+              borderRadius: 8,
+              padding: 14,
+            }}
+          >
+            {/* Avatar circle */}
+            <div
+              style={{
+                width: 32,
+                height: 32,
+                borderRadius: '50%',
+                background: avatarBg,
+                flexShrink: 0,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: 14,
+                fontWeight: 700,
+                color: '#000',
+              }}
+            >
+              {(item.handle ?? '?')[0].toUpperCase()}
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                <span
+                  style={{
+                    fontSize: 14,
+                    fontFamily: "'IBM Plex Mono', monospace",
+                    color: '#c9a84c',
+                  }}
+                >
+                  {item.handle}
+                </span>
+                <span style={{ fontSize: 13, color: '#7a6418' }}>
+                  {item.source} · {relativeTime(item.time)}
+                </span>
+              </div>
+              <div
+                style={{
+                  fontSize: 17,
+                  color: 'rgba(255,255,255,0.88)',
+                  lineHeight: 1.45,
+                }}
+              >
+                {item.text}
+              </div>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+});
+
+const CIIPanel = memo(function CIIPanel() {
+  const { data } = useApiData<CIIEntry[]>(api.cii, 120_000);
+
+  const top6 = useMemo(() => {
+    if (!data) return [];
+    return [...data].sort((a, b) => b.score - a.score).slice(0, 6);
+  }, [data]);
+
+  if (!data) {
+    return <div style={{ padding: '14px 20px', color: '#7a6418', fontSize: 14 }}>Loading index...</div>;
+  }
+
+  return (
+    <div
+      style={{
+        display: 'grid',
+        gridTemplateColumns: '1fr 1fr',
+        gap: 10,
+      }}
+    >
+      {top6.map((entry) => (
+        <div
+          key={entry.code}
+          style={{
+            background: 'rgba(255,200,50,0.03)',
+            border: '1px solid rgba(255,200,50,0.12)',
+            borderRadius: 8,
+            padding: 14,
+            textAlign: 'center',
+          }}
+        >
+          <div style={{ fontSize: 15, fontWeight: 600, color: '#ffffff', marginBottom: 6 }}>
+            {entry.name}
+          </div>
+          <div
+            style={{
+              fontSize: 32,
+              fontFamily: "'IBM Plex Mono', monospace",
+              fontWeight: 700,
+              color: ciiScoreColor(entry.score),
+              lineHeight: 1.1,
+            }}
+          >
+            {Math.round(entry.score)}
+          </div>
+          <div style={{ fontSize: 12, color: '#7a6418', marginTop: 4, letterSpacing: 1 }}>
+            {ciiLabel(entry.score)}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+});
+
+const FocalPanel = memo(function FocalPanel() {
+  const { data } = useApiData<FocalPoint[]>(api.focalPoints, 900_000);
+
+  const items = useMemo(() => (data ?? []).slice(0, 3), [data]);
+
+  if (!data) {
+    return <div style={{ padding: '14px 20px', color: '#7a6418', fontSize: 14 }}>Loading focal points...</div>;
+  }
+  if (items.length === 0) {
+    return <div style={{ padding: '14px 20px', color: '#7a6418', fontSize: 14 }}>No focal points.</div>;
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+      {items.map((fp) => {
+        const borderColor = fp.severity === 'critical' ? '#ff3b3b' : '#ff8c00';
+        return (
+          <div
+            key={fp.id}
+            style={{
+              background: 'rgba(255,200,50,0.03)',
+              border: '1px solid rgba(255,200,50,0.12)',
+              borderRadius: 8,
+              padding: 14,
+              borderLeft: `3px solid ${borderColor}`,
+            }}
+          >
+            <div style={{ fontSize: 18, fontWeight: 700, color: '#ffffff', marginBottom: 6 }}>
+              {fp.title}
+            </div>
+            <div
+              style={{
+                fontSize: 16,
+                color: 'rgba(255,255,255,0.85)',
+                lineHeight: 1.45,
+                marginBottom: 8,
+              }}
+            >
+              {fp.description}
+            </div>
+            <div
+              style={{
+                fontSize: 13,
+                fontFamily: "'IBM Plex Mono', monospace",
+                color: '#c9a84c',
+              }}
+            >
+              {fp.sourceCount} sources · Updated {relativeTime(fp.updatedAt)}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+});
+
+// ── Main Component ──
+
+interface RotatingPanelsProps {
+  contextId: string;
+}
+
+export default memo(function RotatingPanels({ contextId }: RotatingPanelsProps) {
+  const [activeTab, setActiveTab] = useState(0);
+  const [elapsed, setElapsed] = useState(0);
+
+  // Auto-rotation timer
+  useEffect(() => {
+    const id = setInterval(() => {
+      setElapsed((prev) => {
+        if (prev + 1 >= ROTATION_SECONDS) {
+          setActiveTab((tab) => (tab + 1) % TAB_LABELS.length);
+          return 0;
+        }
+        return prev + 1;
+      });
+    }, 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  const handleTabClick = useCallback((index: number) => {
+    setActiveTab(index);
+    setElapsed(0);
+  }, []);
+
+  const progress = (elapsed / ROTATION_SECONDS) * 100;
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+      {/* Tab bar */}
+      <div
+        style={{
+          height: 44,
+          flexShrink: 0,
+          display: 'flex',
+          alignItems: 'stretch',
+          borderBottom: '1px solid rgba(255,200,50,0.12)',
+          background: 'rgba(255,200,50,0.03)',
+          position: 'relative',
+        }}
+      >
+        {TAB_LABELS.map((label, i) => {
+          const isActive = i === activeTab;
+          return (
+            <button
+              key={label}
+              onClick={() => handleTabClick(i)}
+              style={{
+                flex: 1,
+                background: 'transparent',
+                border: 'none',
+                borderBottom: isActive ? '2px solid #ffc832' : '2px solid transparent',
+                cursor: 'pointer',
+                fontSize: 14,
+                fontFamily: "'Space Grotesk', sans-serif",
+                fontWeight: 600,
+                letterSpacing: 1.5,
+                textTransform: 'uppercase',
+                color: isActive ? '#ffffff' : '#7a6418',
+                padding: '0 8px',
+                transition: 'color 200ms, border-color 200ms',
+              }}
+            >
+              {label}
+            </button>
+          );
+        })}
+
+        {/* Progress bar */}
+        <div
+          style={{
+            position: 'absolute',
+            bottom: 0,
+            left: 0,
+            height: 2,
+            width: `${progress}%`,
+            background: '#ffc832',
+            opacity: 0.4,
+            transition: 'width 1s linear',
+          }}
+        />
+      </div>
+
+      {/* Panel content */}
+      <div
+        style={{
+          flex: 1,
+          overflowY: 'auto',
+          padding: '14px 20px',
+          minHeight: 0,
+        }}
+        className="scrollbar-thin"
+      >
+        {activeTab === 0 && <IntelWirePanel contextId={contextId} />}
+        {activeTab === 1 && <RRSSPanel />}
+        {activeTab === 2 && <CIIPanel />}
+        {activeTab === 3 && <FocalPanel />}
+      </div>
+    </div>
+  );
+});

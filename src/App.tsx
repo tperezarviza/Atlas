@@ -1,24 +1,20 @@
-import { useState, useCallback, useEffect, useMemo, lazy, Suspense } from 'react'
+import { useState, useCallback, useEffect, lazy, Suspense } from 'react'
 import { useApiData } from './hooks/useApiData'
 import { api } from './services/api'
 import { useContextRotation } from './hooks/useContextRotation'
 import { useKioskMode } from './hooks/useKioskMode'
 import ErrorBoundary from './components/ErrorBoundary'
 import TopBar from './components/TopBar'
+import TrendsBar from './components/TrendsBar'
+import AIBrief from './components/AIBrief'
+import RotatingPanels from './components/RotatingPanels'
 import Ticker from './components/Ticker'
-import AlertBanner from './components/AlertBanner'
-import TabPanel from './components/tabs/TabPanel'
-import DashboardLayout from './components/layout/DashboardLayout'
 
 const WorldMap = lazy(() => import('./components/WorldMap'))
-const BootSequence = lazy(() => import('./components/BootSequence'))
 const CountryProfilePanel = lazy(() => import('./components/CountryProfilePanel'))
 const TrumpNewsPopup = lazy(() => import('./components/TrumpNewsPopup'))
-const CriticalEventPopup = lazy(() => import('./components/CriticalEventPopup'))
-import { getWidgetComponent, getWidgetProps } from './config/widgetComponents'
-import type { WidgetContext } from './config/widgetComponents'
-import { FIXED_LAYOUT } from './config/viewPresets'
-import type { SlotId } from './config/widgetRegistry'
+const CriticalMegaPopup = lazy(() => import('./components/CriticalMegaPopup'))
+const Tier1AlertCard = lazy(() => import('./components/Tier1AlertCard'))
 
 import type { Conflict, Alert } from './types'
 import { MAP_VIEWS } from './types/tabs'
@@ -28,10 +24,7 @@ const CONFLICTS_INTERVAL = 3_600_000
 const ALERTS_INTERVAL = 30_000
 
 export default function App() {
-  const [booted, setBooted] = useState(() => sessionStorage.getItem('atlas-booted') === '1')
-  const [selectedConflictId, setSelectedConflictId] = useState<string | null>('c1')
   const [selectedCountryCode, setSelectedCountryCode] = useState<string | null>(null)
-  const [dismissedAlerts, setDismissedAlerts] = useState<Set<string>>(new Set())
   const [kioskActive, setKioskActive] = useState(false)
 
   const { context, contextIndex, progress, goTo } = useContextRotation(true)
@@ -63,138 +56,79 @@ export default function App() {
     if (params.get('kiosk') === 'true') setKioskActive(true)
   }, [])
 
-  const handleSelectConflict = useCallback((id: string) => {
-    setSelectedConflictId(prev => (prev === id || id === '') ? null : id)
-  }, [])
-
   const handleDismissAlert = useCallback((id: string) => {
-    setDismissedAlerts(prev => new Set(prev).add(id))
     api.markAlertRead(id).catch(() => {})
   }, [])
 
   // Map view based on context
   const mapView = MAP_VIEWS[context.id as TabId] ?? MAP_VIEWS.global
 
-  // Widget context
-  const widgetCtx: WidgetContext = useMemo(() => ({
-    contextId: context.id,
-    conflicts,
-    conflictsLoading,
-    conflictsError,
-    conflictsLastUpdate,
-    selectedConflictId,
-    onSelectConflict: handleSelectConflict,
-  }), [context.id, conflicts, conflictsLoading, conflictsError, conflictsLastUpdate, selectedConflictId, handleSelectConflict])
-
-  // Fixed layout slot rendering
-  function renderSlot(slotId: SlotId) {
-    const widgetId = FIXED_LAYOUT.slots[slotId]
-    if (!widgetId) return null
-    const Widget = getWidgetComponent(widgetId)
-    if (!Widget) return null
-    const props = getWidgetProps(widgetId, widgetCtx)
-    return <Widget {...props} />
-  }
-
-  if (!booted) {
-    return (
-      <Suspense fallback={<div className="h-screen w-screen" style={{ background: '#000' }} />}>
-        <BootSequence onComplete={() => {
-          sessionStorage.setItem('atlas-booted', '1')
-          setBooted(true)
-        }} />
-      </Suspense>
-    )
-  }
+  // Brief focus based on context
+  const briefFocus = context.briefFocus
 
   return (
     <ErrorBoundary>
-      <div className="h-screen w-screen flex flex-col" style={{ background: '#000000' }}>
-        {/* Row 1: TopBar */}
-        <div className="shrink-0" style={{ height: 48 }}>
-          <TopBar
-            contextId={context.id}
-            contextIndex={contextIndex}
-            progress={progress}
-            onContextClick={goTo}
-          />
+      {/* 4-row grid layout */}
+      <div style={{
+        display: 'grid',
+        width: '100%',
+        height: '100vh',
+        gridTemplateRows: '56px 44px 1fr 42px',
+        background: '#06080c',
+      }}>
+        {/* Row 1: StatusBar */}
+        <TopBar
+          contextId={context.id}
+          contextIndex={contextIndex}
+          progress={progress}
+          onContextClick={goTo}
+        />
+
+        {/* Row 2: TrendsBar */}
+        <TrendsBar />
+
+        {/* Row 3: Main content — 65% map | 35% right column */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: '65% 35%',
+          overflow: 'hidden',
+        }}>
+          {/* Map */}
+          <div style={{ position: 'relative', overflow: 'hidden', borderRight: '1px solid rgba(255,200,50,0.12)' }}>
+            <Suspense fallback={<div style={{ width: '100%', height: '100%', background: '#080c14' }} />}>
+              <WorldMap
+                selectedConflictId={undefined}
+                onSelectConflict={() => {}}
+                onCountryClick={setSelectedCountryCode}
+                conflicts={conflicts}
+                conflictsLoading={conflictsLoading}
+                conflictsError={conflictsError}
+                conflictsLastUpdate={conflictsLastUpdate}
+                viewCenter={mapView.center}
+                viewZoom={mapView.zoom}
+                activeTab={context.id as TabId}
+              />
+            </Suspense>
+          </div>
+
+          {/* Right column */}
+          <div style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+            {/* AI Brief — 42% */}
+            <div style={{ flex: '0 0 42%', borderBottom: '1px solid rgba(255,200,50,0.12)', overflow: 'hidden' }}>
+              <AIBrief focus={briefFocus} contextId={context.id} />
+            </div>
+            {/* Rotating Panels — 58% */}
+            <div style={{ flex: 1, overflow: 'hidden' }}>
+              <RotatingPanels contextId={context.id} />
+            </div>
+          </div>
         </div>
 
-        {/* Resizable panel area */}
-        <div style={{ flex: 1, minHeight: 0 }}>
-          <DashboardLayout
-            kioskActive={kioskActive}
-            r2c1={
-              <div className="h-full transition-opacity duration-300">
-                <TabPanel tabKey={`${context.id}-r2c1`}>
-                  {renderSlot('r2c1')}
-                </TabPanel>
-              </div>
-            }
-            map={
-              <div className="h-full">
-                <Suspense fallback={<div className="h-full w-full" style={{ background: '#0a0a0a' }} />}>
-                  <WorldMap
-                    selectedConflictId={selectedConflictId}
-                    onSelectConflict={handleSelectConflict}
-                    onCountryClick={setSelectedCountryCode}
-                    conflicts={conflicts}
-                    conflictsLoading={conflictsLoading}
-                    conflictsError={conflictsError}
-                    conflictsLastUpdate={conflictsLastUpdate}
-                    viewCenter={mapView.center}
-                    viewZoom={mapView.zoom}
-                    activeTab={context.id as TabId}
-                  />
-                </Suspense>
-              </div>
-            }
-            r2c3={
-              <div className="h-full">
-                {renderSlot('r2c3')}
-              </div>
-            }
-            r3c1={
-              <div className="h-full transition-opacity duration-300">
-                <TabPanel tabKey={`${context.id}-r3c1`}>
-                  {renderSlot('r3c1')}
-                </TabPanel>
-              </div>
-            }
-            r3c2Left={
-              <div className="h-full">
-                {renderSlot('r3c2-left')}
-              </div>
-            }
-            r3c2Right={
-              <div className="h-full">
-                {renderSlot('r3c2-right')}
-              </div>
-            }
-            r3c3={
-              <div className="h-full transition-opacity duration-300">
-                <TabPanel tabKey={`${context.id}-r3c3`}>
-                  {renderSlot('r3c3')}
-                </TabPanel>
-              </div>
-            }
-          />
-        </div>
-
-        {/* Ticker */}
-        <div className="shrink-0" style={{ height: 30 }}>
-          <Ticker />
-        </div>
+        {/* Row 4: Ticker */}
+        <Ticker />
       </div>
 
-      {/* Alert banners */}
-      <AlertBanner
-        alerts={alerts ?? []}
-        dismissedIds={dismissedAlerts}
-        onDismiss={handleDismissAlert}
-      />
-
-      {/* Lazy-loaded overlays */}
+      {/* Overlays */}
       <Suspense fallback={null}>
         <CountryProfilePanel
           countryCode={selectedCountryCode}
@@ -202,7 +136,8 @@ export default function App() {
           conflicts={conflicts ?? []}
         />
         <TrumpNewsPopup />
-        <CriticalEventPopup />
+        <CriticalMegaPopup alerts={alerts ?? []} onDismiss={handleDismissAlert} />
+        <Tier1AlertCard alerts={alerts ?? []} onDismiss={handleDismissAlert} />
       </Suspense>
     </ErrorBoundary>
   )

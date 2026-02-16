@@ -7,7 +7,9 @@ import { api } from '../services/api';
 import { conflictMarkerSize, newsMarkerSize } from '../utils/formatters';
 import { getAgeBucket, getEventColor, getEventOpacity, isInPermanentZone } from '../utils/permanentZones';
 import MapLegend from './MapLegend';
-import ConflictDetailOverlay from './ConflictDetailOverlay';
+import CountryLabels from './map/CountryLabels';
+import LayersPanel from './map/LayersPanel';
+import ConflictCard from './map/ConflictCard';
 import { nuclearFacilities } from '../data/nuclearFacilities';
 import FlightMarkers from './map/FlightMarkers';
 import ChokepointMarkers from './map/ChokepointMarkers';
@@ -451,22 +453,26 @@ export default function WorldMap({ selectedConflictId, onSelectConflict, onCount
         <PipelineLines data={pipelinesData} visible={layers.pipelines} />
         <FireMarkers data={fireData} visible={layers.fires} />
         <SurgeMarkers data={surgeData} visible={layers.surges} />
+
+        {/* Country name labels */}
+        <CountryLabels />
       </MapContainer>
 
-      {/* News count badge - top left */}
-      <div
-        className="absolute top-2 left-2 z-[800] rounded-[3px] px-[10px] py-[6px] font-data"
-        style={{
-          background: 'rgba(0,0,0,0.85)',
-          border: '1px solid rgba(255,200,50,0.10)',
-        }}
-      >
-        <div className="text-[8px] tracking-[1.5px] text-text-muted uppercase mb-[2px]">
-          Live News Markers
-        </div>
-        <span className="text-critical font-bold text-[16px]">{n.length}</span>
-        <span className="text-text-muted text-[10px]"> from GDELT</span>
-      </div>
+      {/* Active layers panel - top left */}
+      <LayersPanel layers={[
+        { name: 'Mil. Flights', color: '#00ff88', count: flights?.filter(f => !f.on_ground).length ?? 0, visible: layers.flights },
+        { name: 'Shipping', color: '#4fc3f7', count: chokepoints?.length ?? 0, visible: layers.shipping },
+        { name: 'Internet', color: '#a855f7', count: shutdowns.length, visible: layers.internet },
+        { name: 'Nuclear', color: '#ff3b3b', count: nuclearFacilities.length, visible: layers.nuclear },
+        { name: 'Armed Groups', color: '#ff8c00', count: armedGroupsData?.length ?? 0, visible: layers.armedGroups },
+        { name: 'Nat. Events', color: '#ffc832', count: naturalEventsData?.length ?? 0, visible: layers.naturalEvents },
+        { name: 'Earthquakes', color: '#ff6b6b', count: earthquakesData?.length ?? 0, visible: layers.earthquakes },
+        { name: 'Bases', color: '#7a6418', count: basesData?.features?.length ?? 0, visible: layers.bases },
+        { name: 'Cables', color: '#4fc3f7', count: cablesData?.features?.length ?? 0, visible: layers.cables },
+        { name: 'Pipelines', color: '#ff8c00', count: pipelinesData?.features?.length ?? 0, visible: layers.pipelines },
+        { name: 'Fires', color: '#ff3b3b', count: fireData?.filter(f => f.confidence >= 80).length ?? 0, visible: layers.fires },
+        { name: 'Surges', color: '#ffc832', count: surgeData?.length ?? 0, visible: layers.surges },
+      ]} />
 
       {/* Legend - top right */}
       <MapLegend
@@ -488,38 +494,8 @@ export default function WorldMap({ selectedConflictId, onSelectConflict, onCount
         }}
       />
 
-      {/* Bottom stats overlay */}
-      <div
-        className="absolute bottom-2 left-2 z-[800] flex gap-3 rounded-[3px] px-[10px] py-1 font-data text-[9px] text-text-muted"
-        style={{
-          background: 'rgba(0,0,0,0.85)',
-          border: '1px solid rgba(255,200,50,0.10)',
-        }}
-      >
-        <span>
-          Conflicts: <b className="text-text-secondary">{c.length}</b>
-        </span>
-        <span>
-          Sources: <b className="text-text-secondary">GDELT · ACLED · USGS</b>
-        </span>
-        <span>
-          Refresh: <b className="text-text-secondary">15m</b>
-        </span>
-        {hasErrors && (
-          <span className="text-critical font-bold">
-            FEED ERROR
-          </span>
-        )}
-      </div>
-
-      {/* Conflict Detail Overlay */}
-      <ConflictDetailOverlay
-        conflict={selectedConflictId ? c.find(x => x.id === selectedConflictId) ?? null : null}
-        onClose={() => {
-          onSelectConflict('');
-          setFocusedConflict(null);
-        }}
-      />
+      {/* Auto-rotating conflict card - bottom left */}
+      <ConflictCard conflicts={c} />
     </div>
   );
 }

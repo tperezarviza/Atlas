@@ -2,6 +2,7 @@ import { cache } from '../cache.js';
 import { TTL } from '../config.js';
 import type { TickerItem, NewsPoint, FeedItem, MarketSection, EconomicEvent } from '../types.js';
 import type { Earthquake } from './earthquakes.js';
+import type { PolymarketEvent } from './polymarket.js';
 
 function toneToColor(tone: number): string {
   if (tone < -7) return '#e83b3b'; // critical red
@@ -122,6 +123,21 @@ export function composeTicker(): void {
         bulletColor: '#d4a72c',
         source: 'ECON',
         text: `${e.currency} ${e.event_name} — ${e.time || 'TBD'}`,
+      });
+    }
+  }
+
+  // 6. Polymarket predictions
+  const polymarket = cache.get<PolymarketEvent[]>('polymarket');
+  if (polymarket) {
+    const top = polymarket.slice(0, 5);
+    for (const pm of top) {
+      const prob = pm.outcomePrices[0] != null ? Math.round(pm.outcomePrices[0] * 100) : null;
+      items.push({
+        id: `tk-poly-${idCounter++}`,
+        bulletColor: '#a855f7', // purple for predictions
+        source: 'POLYMARKET',
+        text: `${pm.title}${prob != null ? ` — ${prob}%` : ''}`,
       });
     }
   }

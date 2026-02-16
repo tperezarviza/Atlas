@@ -55,8 +55,10 @@ export default function TrumpNewsPopup() {
   const [visible, setVisible] = useState(false)
   const [mounted, setMounted] = useState(false)
   const [currentPage, setCurrentPage] = useState(0)
+  const [screenFlash, setScreenFlash] = useState(false)
   const dismissTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const pageTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const flashTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const seenFingerprintsRef = useRef<Set<string>>(new Set())
   const initialLoadRef = useRef(true)
 
@@ -69,6 +71,12 @@ export default function TrumpNewsPopup() {
     clearTimers()
     setPost(p)
     setCurrentPage(0)
+
+    // Trigger screen flash
+    setScreenFlash(true)
+    if (flashTimerRef.current) clearTimeout(flashTimerRef.current)
+    flashTimerRef.current = setTimeout(() => setScreenFlash(false), 600)
+
     setVisible(true)
     // Force a frame at opacity 0, then animate in
     requestAnimationFrame(() => setMounted(true))
@@ -154,44 +162,52 @@ export default function TrumpNewsPopup() {
     return () => window.removeEventListener('keydown', handler)
   }, [visible, dismiss])
 
-  useEffect(() => () => clearTimers(), [clearTimers])
+  useEffect(() => () => {
+    clearTimers()
+    if (flashTimerRef.current) clearTimeout(flashTimerRef.current)
+  }, [clearTimers])
 
   const pages = post ? splitPages(post.text) : []
   const multiPage = pages.length > 1
 
   return (
     <>
+      {/* Screen flash — red overlay on trigger */}
+      <div className={`screen-flash${screenFlash ? ' active' : ''}`} />
+
       {visible && post && (
         <>
-          {/* Backdrop — NO blur, solid dark overlay */}
+          {/* Backdrop — red-tinted dark overlay, NO blur */}
           <div
             onClick={dismiss}
             style={{
               position: 'fixed', inset: 0, zIndex: 9998,
-              background: 'rgba(0,0,0,0.85)',
+              background: 'rgba(40,0,0,0.75)',
               opacity: mounted ? 1 : 0,
               transition: 'opacity 0.18s ease-out',
             }}
           />
 
-          {/* Popup — pure CSS transform animation */}
+          {/* Popup — pure CSS transform animation with glow */}
           <div
             style={{
               position: 'fixed',
               top: '50%', left: '50%',
-              width: 'min(920px, 94vw)',
-              background: '#0a0a0a',
-              border: '2px solid #b91c1c',
-              borderRadius: 8,
+              width: '44%',
+              maxWidth: 860,
+              minWidth: 600,
+              background: '#0c0a08',
+              border: '2px solid #d4af37',
+              borderRadius: 12,
               overflow: 'hidden',
               zIndex: 9999,
-              boxShadow: '0 0 60px rgba(185,28,28,0.2)',
               opacity: mounted ? 1 : 0,
               transform: mounted
                 ? 'translate(-50%, -50%) scale(1)'
                 : 'translate(-50%, -50%) scale(0.92)',
               transition: 'opacity 0.18s ease-out, transform 0.18s ease-out',
               willChange: 'transform, opacity',
+              animation: mounted ? 'popup-glow 2s ease-in-out infinite alternate' : 'none',
             }}
           >
             <div className="tn-header">

@@ -1,23 +1,13 @@
-import { useState, useRef, useMemo, useEffect, memo } from 'react';
+import { useState, useMemo, memo } from 'react';
 import { useClock } from '../hooks/useClock';
 import { useApiData } from '../hooks/useApiData';
 import { api } from '../services/api';
 import type { TopBarData, HealthResponse } from '../services/api';
 import type { ContextId } from '../hooks/useContextRotation';
-import { CONTEXTS } from '../hooks/useContextRotation';
-import ApiHealthPanel from './ApiHealthPanel';
 
 const REFRESH_MS = 30_000;
 const HEALTH_REFRESH_MS = 30_000;
-const TRENDING_REFRESH_MS = 30_000;
-const CLOCK_FILTER = new Set(['DC', 'UTC', 'LON', 'MSK', 'BEI', 'TEH']);
-
-// Extracted inline style constants (avoid object recreation on every render)
-const TOPBAR_STYLE = { background: '#000000', borderBottom: '1px solid rgba(255,200,50,0.10)', padding: '0 20px', gap: 0 };
-const DIVIDER_STYLE = { width: 1, height: 22, background: 'rgba(255,200,50,0.10)' };
-const ACCENT_LINE = { background: 'linear-gradient(90deg, transparent, #ffc832, transparent)' };
-const MUTED_COLOR = { color: '#7a6418' };
-const HEALTH_DROPDOWN = { width: 380, maxHeight: 480, background: 'rgba(0,0,0,0.85)', border: '1px solid rgba(255,200,50,0.10)', boxShadow: '0 8px 32px rgba(0,0,0,.5)' };
+const CLOCK_FILTER = new Set(['UTC', 'DC', 'MSK', 'BEI', 'TEH']);
 
 interface TopBarProps {
   contextId: ContextId;
@@ -26,205 +16,264 @@ interface TopBarProps {
   onContextClick: (idx: number) => void;
 }
 
-export default memo(function TopBar({ contextId, contextIndex, progress, onContextClick }: TopBarProps) {
+export default memo(function TopBar({ contextId }: TopBarProps) {
   const clock = useClock();
   const fetchTopbar = useMemo(() => () => api.topbar(contextId), [contextId]);
   const { data, error } = useApiData<TopBarData>(fetchTopbar, REFRESH_MS);
-  const [healthOpen, setHealthOpen] = useState(false);
-  const healthContainerRef = useRef<HTMLDivElement>(null);
-
   const { data: healthData } = useApiData<HealthResponse>(api.health, HEALTH_REFRESH_MS);
-  const { data: trendingData } = useApiData<{ keyword: string; count: number }[]>(api.twitterTrending, TRENDING_REFRESH_MS);
-
-  useEffect(() => {
-    if (!healthOpen) return;
-    const handler = (e: MouseEvent) => {
-      const el = healthContainerRef.current;
-      if (el && !el.contains(e.target as Node)) setHealthOpen(false);
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, [healthOpen]);
+  const [audioEnabled, setAudioEnabled] = useState(false);
 
   const kpis = data?.kpis ?? [];
+  const threatLevel = data?.threatLevel ?? 'ELEVATED';
   const healthSummary = healthData?.summary;
   const allOk = healthSummary ? healthSummary.ok === healthSummary.total : true;
   const healthColor = !healthData ? '#7a6418' : allOk ? '#00ff88' : '#ff8c00';
   const filteredZones = clock.zones.filter(z => CLOCK_FILTER.has(z.label));
 
+  // Map KPI colorClass to actual hex colors
+  const kpiColor = (colorClass?: string): string => {
+    if (!colorClass) return '#ffffff';
+    if (colorClass.includes('critical')) return '#ff3b3b';
+    if (colorClass.includes('high')) return '#ff8c00';
+    if (colorClass.includes('positive')) return '#00ff88';
+    if (colorClass.includes('accent')) return '#ffc832';
+    if (colorClass.includes('muted')) return '#7a6418';
+    return '#ffffff';
+  };
+
   return (
-    <div
-      className="h-full flex items-center relative overflow-visible"
-      style={TOPBAR_STYLE}
-    >
+    <div style={{
+      display: 'flex',
+      alignItems: 'center',
+      height: '100%',
+      padding: '0 20px',
+      background: 'linear-gradient(180deg, rgba(255,200,50,0.04), transparent)',
+      borderBottom: '1px solid rgba(255,200,50,0.10)',
+      position: 'relative',
+      overflow: 'visible',
+    }}>
       {/* Bottom accent line */}
-      <div
-        className="absolute bottom-0 left-0 right-0 h-px"
-        style={ACCENT_LINE}
-      />
+      <div style={{
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        height: 1,
+        background: 'linear-gradient(90deg, transparent, #ffc832, transparent)',
+      }} />
 
-      {/* ── GROUP 1: Logo + LIVE ── */}
-      <div className="flex items-center gap-[12px] shrink-0" style={{ padding: '0 16px 0 0' }}>
-        <div className="font-title font-bold tracking-[4px]" style={{ fontSize: '18px' }}>
-          <span style={{ color: '#ffc832' }}>▣</span>{' '}
-          <span style={{ color: '#ffe082' }}>ATLAS</span>
+      {/* ── GROUP 1: Logo + Threat Level ── */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexShrink: 0, paddingRight: 18 }}>
+        <div style={{
+          fontFamily: "'Space Grotesk', sans-serif",
+          fontWeight: 700,
+          fontSize: 26,
+          letterSpacing: 6,
+          color: '#ffc832',
+          textShadow: '0 0 20px rgba(255,200,50,0.3)',
+          lineHeight: 1,
+        }}>
+          ATLAS
         </div>
-        <div
-          className="flex items-center gap-[5px] rounded-[3px] px-2 py-[2px] font-data text-[13px] font-semibold tracking-[1px]"
-          style={{
-            background: error && !data ? 'rgba(255,140,0,.12)' : 'rgba(255,59,59,.12)',
-            border: error && !data ? '1px solid rgba(255,140,0,.3)' : '1px solid rgba(255,59,59,.3)',
-            color: error && !data ? '#ff8c00' : '#ff3b3b',
-          }}
-        >
-          <div
-            className="w-[6px] h-[6px] rounded-full"
-            style={{
-              background: error && !data ? '#ff8c00' : '#ff3b3b',
-              animation: 'pulse-dot 1.5s infinite',
-            }}
-          />
-          {error && !data ? 'OFFLINE' : 'LIVE'}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 6,
+          padding: '3px 10px',
+          borderRadius: 3,
+          background: 'rgba(255,59,59,0.10)',
+          border: '1px solid rgba(255,59,59,0.25)',
+        }}>
+          <div style={{
+            width: 7,
+            height: 7,
+            borderRadius: '50%',
+            background: error && !data ? '#ff8c00' : '#ff3b3b',
+            animation: 'pulse-dot 1.5s infinite',
+          }} />
+          <span style={{
+            fontFamily: "'IBM Plex Mono', monospace",
+            fontSize: 12,
+            fontWeight: 700,
+            letterSpacing: 1.5,
+            color: '#ff3b3b',
+          }}>
+            {error && !data ? 'OFFLINE' : threatLevel}
+          </span>
         </div>
       </div>
 
       {/* DIVIDER */}
-      <div className="shrink-0" style={DIVIDER_STYLE} />
+      <Divider />
 
-      {/* ── GROUP 2: Context Rotation Bar ── */}
-      <div className="flex items-center gap-[2px] shrink-0" style={{ padding: '0 16px' }}>
-        {CONTEXTS.map((ctx, idx) => {
-          const isActive = idx === contextIndex;
-          return (
-            <button
-              key={ctx.id}
-              onClick={() => onContextClick(idx)}
-              className="font-title font-semibold tracking-[1px] cursor-pointer transition-all duration-200 relative"
-              style={{
-                fontSize: isActive ? '13px' : '11px',
-                background: 'transparent',
-                color: isActive ? '#ffc832' : '#50400e',
-                padding: '6px 12px',
-                borderRadius: 0,
-                borderBottom: isActive ? '2px solid #ffc832' : '2px solid transparent',
-              }}
-            >
-              {ctx.icon} {ctx.label}
-              {/* Progress bar under active context */}
-              {isActive && (
-                <div
-                  className="absolute bottom-0 left-0 h-[2px]"
-                  style={{
-                    width: `${progress}%`,
-                    background: 'linear-gradient(90deg, #ffc832, #ffe082)',
-                    transition: progress === 0 ? 'none' : 'width 180s linear',
-                  }}
-                />
-              )}
-            </button>
-          );
-        })}
-      </div>
-
-      {/* DIVIDER */}
-      <div className="shrink-0" style={DIVIDER_STYLE} />
-
-      {/* ── GROUP 3: Clocks ── */}
-      <div className="flex-1 flex items-center justify-center gap-[16px]" style={{ padding: '0 12px' }}>
-        {filteredZones.map((z) => (
-          <div key={z.label} className="flex flex-col items-center">
-            <span className="font-data text-[10px] tracking-[1px]" style={MUTED_COLOR}>{z.label}</span>
-            <span className="font-data text-[14px] font-medium" style={{ color: '#ffc832' }}>{z.time}</span>
-          </div>
-        ))}
-      </div>
-
-      {/* DIVIDER */}
-      <div className="shrink-0" style={DIVIDER_STYLE} />
-
-      {/* ── GROUP 4: Stats ── */}
-      <div className="flex items-center gap-[14px] shrink-0" style={{ padding: '0 12px' }}>
+      {/* ── GROUP 2: KPIs ── */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 20, flexShrink: 0, padding: '0 18px' }}>
         {kpis.length > 0
           ? kpis.map(kpi => (
-              <KPI key={kpi.label} label={kpi.label} value={kpi.value} colorClass={kpi.colorClass} />
+              <div key={kpi.label} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <span style={{
+                  fontFamily: "'IBM Plex Mono', monospace",
+                  fontSize: 26,
+                  fontWeight: 600,
+                  color: kpiColor(kpi.colorClass),
+                  lineHeight: 1.1,
+                }}>
+                  {kpi.value}
+                </span>
+                <span style={{
+                  fontFamily: "'IBM Plex Mono', monospace",
+                  fontSize: 11,
+                  fontWeight: 500,
+                  letterSpacing: 1.5,
+                  color: '#7a6418',
+                  textTransform: 'uppercase' as const,
+                }}>
+                  {kpi.label}
+                </span>
+              </div>
             ))
           : <>
-              <KPI label="CONFLICTS" value="—" colorClass="text-text-muted" />
-              <KPI label="CRITICAL" value="—" colorClass="text-text-muted" />
-              <KPI label="BTC" value="—" colorClass="text-text-muted" />
+              <KPIPlaceholder label="CONFLICTS" />
+              <KPIPlaceholder label="CRITICAL" />
+              <KPIPlaceholder label="SOURCES" />
             </>
         }
       </div>
 
       {/* DIVIDER */}
-      <div className="shrink-0" style={DIVIDER_STYLE} />
+      <Divider />
 
-      {/* ── GROUP 5: Trending ── */}
-      {trendingData && trendingData.length > 0 && (
-        <>
-          <div className="flex items-center gap-[6px] shrink-0 overflow-hidden" style={{ padding: '0 12px', maxWidth: 320 }}>
-            <span className="font-data text-[9px] tracking-[1px] uppercase shrink-0" style={MUTED_COLOR}>TREND</span>
-            <span className="font-data text-[12px] truncate" style={{ color: '#c8a020' }}>
-              {trendingData.slice(0, 5).map(t => `${t.keyword} ×${t.count}`).join(' · ')}
+      {/* ── GROUP 3: Clocks ── */}
+      <div style={{
+        flex: 1,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 24,
+        padding: '0 16px',
+      }}>
+        {filteredZones.map((z) => (
+          <div key={z.label} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <span style={{
+              fontFamily: "'IBM Plex Mono', monospace",
+              fontSize: 18,
+              fontWeight: 500,
+              color: '#ffffff',
+              lineHeight: 1.2,
+            }}>
+              {z.time}
+            </span>
+            <span style={{
+              fontFamily: "'IBM Plex Mono', monospace",
+              fontSize: 10,
+              fontWeight: 500,
+              letterSpacing: 1.5,
+              color: '#7a6418',
+              textTransform: 'uppercase' as const,
+            }}>
+              {z.label}
             </span>
           </div>
-          <div className="shrink-0" style={DIVIDER_STYLE} />
-        </>
-      )}
+        ))}
+      </div>
 
-      {/* ── GROUP 6: Health btn ── */}
-      <div className="flex items-center gap-[12px] shrink-0" style={{ padding: '0 0 0 16px' }}>
-        <div ref={healthContainerRef} className="relative">
-          <div
-            className="cursor-pointer flex items-center gap-[4px] px-[6px] py-[3px] rounded-[3px] transition-colors duration-150"
-            style={{
-              background: healthOpen ? "rgba(255,200,50,.12)" : "transparent",
-              border: healthOpen ? "1px solid rgba(255,200,50,.25)" : "1px solid transparent",
-            }}
-            onClick={() => setHealthOpen(prev => !prev)}
-            title="System Health"
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={healthColor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
-            </svg>
-            {healthSummary && (
-              <span className="font-data text-[12px] font-bold" style={{ color: healthColor }}>
-                {healthSummary.ok}/{healthSummary.total}
-              </span>
-            )}
-          </div>
+      {/* DIVIDER */}
+      <Divider />
 
-          {healthOpen && (
-            <div
-              className="fixed mt-1 z-[960] rounded-[3px] overflow-hidden"
-              style={{ ...HEALTH_DROPDOWN, top: 48, right: 8 }}
-            >
-              <div style={{ maxHeight: "70vh" }}>
-                <ApiHealthPanel />
-              </div>
-            </div>
-          )}
+      {/* ── GROUP 4: Health + Audio toggle ── */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexShrink: 0, paddingLeft: 18 }}>
+        {/* Health simple */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={healthColor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+          </svg>
+          <span style={{
+            fontFamily: "'IBM Plex Mono', monospace",
+            fontSize: 16,
+            fontWeight: 600,
+            color: healthColor,
+          }}>
+            {healthSummary ? `${healthSummary.ok}/${healthSummary.total}` : '--/--'}
+          </span>
         </div>
+
+        {/* Audio toggle */}
+        <button
+          onClick={() => setAudioEnabled(prev => !prev)}
+          title={audioEnabled ? 'Mute alerts' : 'Enable alert audio'}
+          style={{
+            width: 36,
+            height: 36,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            borderRadius: 4,
+            border: '1px solid rgba(255,200,50,0.15)',
+            background: audioEnabled ? 'rgba(255,200,50,0.10)' : 'transparent',
+            cursor: 'pointer',
+            transition: 'background 150ms, border-color 150ms',
+          }}
+          onMouseEnter={(e) => {
+            (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,200,50,0.12)';
+            (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(255,200,50,0.25)';
+          }}
+          onMouseLeave={(e) => {
+            (e.currentTarget as HTMLButtonElement).style.background = audioEnabled ? 'rgba(255,200,50,0.10)' : 'transparent';
+            (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(255,200,50,0.15)';
+          }}
+        >
+          {audioEnabled ? (
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffc832" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+              <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+              <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+            </svg>
+          ) : (
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#50400e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+              <line x1="23" y1="9" x2="17" y2="15" />
+              <line x1="17" y1="9" x2="23" y2="15" />
+            </svg>
+          )}
+        </button>
       </div>
     </div>
   );
 });
 
-const ALLOWED_COLOR_CLASSES = new Set([
-  'text-critical', 'text-high', 'text-medium', 'text-positive',
-  'text-accent', 'text-text-primary', 'text-text-muted', 'text-text-secondary',
-]);
-
-function KPI({ label, value, colorClass }: { label: string; value: string; colorClass?: string }) {
-  const safeColor = colorClass && ALLOWED_COLOR_CLASSES.has(colorClass) ? colorClass : 'text-text-primary';
+function Divider() {
   return (
-    <div className="flex flex-col items-center px-[2px] py-[2px]">
-      <div className="text-[10px] uppercase tracking-[1px] font-data font-medium" style={MUTED_COLOR}>
+    <div style={{
+      width: 1,
+      height: 28,
+      background: 'rgba(255,200,50,0.12)',
+      flexShrink: 0,
+    }} />
+  );
+}
+
+function KPIPlaceholder({ label }: { label: string }) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+      <span style={{
+        fontFamily: "'IBM Plex Mono', monospace",
+        fontSize: 26,
+        fontWeight: 600,
+        color: '#7a6418',
+        lineHeight: 1.1,
+      }}>
+        --
+      </span>
+      <span style={{
+        fontFamily: "'IBM Plex Mono', monospace",
+        fontSize: 11,
+        fontWeight: 500,
+        letterSpacing: 1.5,
+        color: '#7a6418',
+        textTransform: 'uppercase' as const,
+      }}>
         {label}
-      </div>
-      <div className={`font-data text-[14px] font-semibold ${safeColor}`}>
-        {value}
-      </div>
+      </span>
     </div>
   );
 }
