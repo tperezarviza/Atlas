@@ -150,9 +150,9 @@ function FeedItemRow({ item }: { item: FeedItem }) {
         className="text-[13px] leading-[1.45] text-text-primary relative"
         style={!expanded ? {
           display: '-webkit-box',
-          WebkitLineClamp: 4,
+          WebkitLineClamp: 3,
           WebkitBoxOrient: 'vertical' as const,
-          maxHeight: `calc(13px * 1.45 * 4)`,
+          overflow: 'hidden',
         } : undefined}
       >
         <FeedText text={item.text} />

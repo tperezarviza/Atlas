@@ -77,7 +77,7 @@ export default memo(function NewsWire({ filter, title }: NewsWireProps = {}) {
                       style={{ width: toneWidth, background: tColor }}
                     />
                     <span style={{ color: tColor }}>
-                      {item.tone > 0 ? '+' : ''}{item.tone}
+                      {item.tone > 0 ? '+' : ''}{item.tone.toFixed(1)}
                     </span>
                   </div>
                 </div>

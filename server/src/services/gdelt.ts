@@ -151,9 +151,7 @@ function newsToWire(news: NewsPoint[], fetchedAt: number): NewsWireItem[] {
 }
 
 export async function fetchGdeltNews(): Promise<void> {
-  if (isBigQueryAvailable()) {
-    return fetchGdeltNewsBQ();
-  }
+  // BQ events table lacks headlines (no Title field) — use geo API which provides real article titles
   console.log(`[GDELT] Fetching news from ${GDELT_QUERIES.length} thematic + regional queries...`);
 
   try {
