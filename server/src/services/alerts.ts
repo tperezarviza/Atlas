@@ -2,7 +2,7 @@ import { createHash } from 'crypto';
 import { readFileSync, writeFileSync, mkdirSync } from 'fs';
 import { cache } from '../cache.js';
 import { redisGet, redisSet } from '../redis.js';
-import type { Alert, AlertPriority, AlertSource, Conflict, NewsPoint, InternetIncident, MarketSection, ExecutiveOrder, NaturalEvent, TwitterIntelItem, FeedItem } from '../types.js';
+import type { Alert, AlertPriority, AlertSource, AlertEventType, Conflict, NewsPoint, InternetIncident, MarketSection, ExecutiveOrder, NaturalEvent, TwitterIntelItem, FeedItem } from '../types.js';
 import type { Earthquake } from './earthquakes.js';
 import type { SurgeAlert } from './surge-detection.js';
 
@@ -18,7 +18,7 @@ function contentHash(source: string, title: string): string {
   return createHash('md5').update(`${source}:${title}`).digest('hex');
 }
 
-function addAlert(priority: AlertPriority, source: AlertSource, title: string, detail?: string): void {
+function addAlert(priority: AlertPriority, source: AlertSource, title: string, detail?: string, eventType?: AlertEventType, tags?: string[]): void {
   const hash = contentHash(source, title);
   if (seenHashes.has(hash)) return;
   seenHashes.add(hash);
@@ -31,6 +31,8 @@ function addAlert(priority: AlertPriority, source: AlertSource, title: string, d
     detail,
     timestamp: new Date().toISOString(),
     read: false,
+    eventType,
+    tags,
   });
 }
 
@@ -54,15 +56,29 @@ function pruneOld(): void {
 
 // ── Detection Rules ──
 
+function classifyGdeltEvent(headline: string): AlertEventType {
+  const h = headline.toLowerCase();
+  if (/coup|overthrow|seize/.test(h)) return 'coup';
+  if (/nuclear/.test(h)) return 'nuclear';
+  if (/cyber|hack|ransomware/.test(h)) return 'cyber';
+  if (/protest|riot|demonstration/.test(h)) return 'protest';
+  if (/terror|suicide.bomb/.test(h)) return 'terrorism';
+  if (/earthquake|tsunami/.test(h)) return 'earthquake';
+  if (/hurricane|typhoon|volcano|flood|wildfire/.test(h)) return 'natural_event';
+  return 'military_strike';
+}
+
 function checkGdeltNews(): void {
   const news = cache.get<NewsPoint[]>('news');
   if (!news) return;
 
   for (const item of news) {
     if (item.tone < -8 && MILITARY_KEYWORDS.test(item.headline)) {
-      addAlert('flash', 'gdelt', `CRITICAL: ${item.headline}`, `GDELT tone ${item.tone} — ${item.source}`);
+      const et = classifyGdeltEvent(item.headline);
+      addAlert('flash', 'gdelt', `CRITICAL: ${item.headline}`, `GDELT tone ${item.tone} — ${item.source}`, et, [item.category, 'GDELT']);
     } else if (item.tone < -6 && MILITARY_KEYWORDS.test(item.headline)) {
-      addAlert('urgent', 'gdelt', `URGENT: ${item.headline}`, `GDELT tone ${item.tone} — ${item.source}`);
+      const et = classifyGdeltEvent(item.headline);
+      addAlert('urgent', 'gdelt', `URGENT: ${item.headline}`, `GDELT tone ${item.tone} — ${item.source}`, et, [item.category, 'GDELT']);
     }
   }
 }
@@ -79,11 +95,11 @@ function checkNewConflicts(): void {
   if (previousConflictIds.size > 0) {
     for (const conflict of conflicts) {
       if (!previousConflictIds.has(conflict.id)) {
-        addAlert('urgent', 'acled', `New conflict reported: ${conflict.name}`, `${conflict.severity.toUpperCase()} — ${conflict.region}`);
+        addAlert('urgent', 'acled', `New conflict reported: ${conflict.name}`, `${conflict.severity.toUpperCase()} — ${conflict.region}`, 'military_strike', [conflict.region, conflict.severity]);
       }
       // Escalating + critical
       if (conflict.trend === 'escalating' && conflict.severity === 'critical') {
-        addAlert('urgent', 'acled_spike', `Escalating critical conflict: ${conflict.name}`, `${conflict.casualties} casualties, ${conflict.displaced} displaced`);
+        addAlert('urgent', 'acled_spike', `Escalating critical conflict: ${conflict.name}`, `${conflict.casualties} casualties, ${conflict.displaced} displaced`, 'military_strike', [conflict.region, 'ESCALATING']);
       }
     }
   }
@@ -97,7 +113,7 @@ function checkInternetShutdowns(): void {
 
   for (const inc of incidents) {
     if (!inc.endDate) {
-      addAlert('priority', 'ooni', `Internet shutdown ongoing in ${inc.country}`, inc.shortDescription);
+      addAlert('priority', 'ooni', `Internet shutdown ongoing in ${inc.country}`, inc.shortDescription, 'internet', [inc.country, 'SHUTDOWN']);
     }
   }
 }
@@ -113,7 +129,7 @@ function checkMarketMoves(): void {
       if (match) {
         const pct = Math.abs(parseFloat(match[1]));
         if (pct > 5) {
-          addAlert('priority', 'markets', `Market move alert: ${item.name} ${item.delta}`, `${section.title} — ${item.price}`);
+          addAlert('priority', 'markets', `Market move alert: ${item.name} ${item.delta}`, `${section.title} — ${item.price}`, 'market', [item.name, section.title]);
         }
       }
     }
@@ -129,7 +145,7 @@ function checkExecutiveOrders(): void {
   for (const eo of orders) {
     const signed = new Date(eo.signing_date).getTime();
     if (signed > cutoff) {
-      addAlert('priority', 'executive_orders', `New Executive Order: EO ${eo.number} — ${eo.title}`, `Topics: ${eo.topics.join(', ')}`);
+      addAlert('priority', 'executive_orders', `New Executive Order: EO ${eo.number} — ${eo.title}`, `Topics: ${eo.topics.join(', ')}`, 'executive_order', eo.topics);
     }
   }
 }
@@ -139,14 +155,16 @@ function checkEarthquakes(): void {
   if (!quakes) return;
 
   for (const q of quakes) {
+    const tags = [q.place, `M${q.magnitude}`];
+    if (q.tsunami) tags.push('TSUNAMI');
     if (q.tsunami) {
-      addAlert('flash', 'usgs', `TSUNAMI WARNING: ${q.place} — M${q.magnitude}`, `Depth ${q.depth}km • ${q.url}`);
+      addAlert('flash', 'usgs', `TSUNAMI WARNING: ${q.place} — M${q.magnitude}`, `Depth ${q.depth}km • ${q.url}`, 'earthquake', tags);
     } else if (q.alert === 'red') {
-      addAlert('urgent', 'usgs', `Major earthquake: M${q.magnitude} ${q.place} — USGS RED`, `Depth ${q.depth}km • ${q.url}`);
+      addAlert('urgent', 'usgs', `Major earthquake: M${q.magnitude} ${q.place} — USGS RED`, `Depth ${q.depth}km • ${q.url}`, 'earthquake', tags);
     } else if (q.alert === 'orange') {
-      addAlert('urgent', 'usgs', `Significant earthquake: M${q.magnitude} ${q.place} — USGS ORANGE`, `Depth ${q.depth}km • ${q.url}`);
+      addAlert('urgent', 'usgs', `Significant earthquake: M${q.magnitude} ${q.place} — USGS ORANGE`, `Depth ${q.depth}km • ${q.url}`, 'earthquake', tags);
     } else if (q.magnitude >= 6.0) {
-      addAlert('priority', 'usgs', `M${q.magnitude} earthquake: ${q.place}`, `Depth ${q.depth}km • ${q.url}`);
+      addAlert('priority', 'usgs', `M${q.magnitude} earthquake: ${q.place}`, `Depth ${q.depth}km • ${q.url}`, 'earthquake', tags);
     }
   }
 }
@@ -157,9 +175,9 @@ function checkNaturalEvents(): void {
 
   for (const evt of events) {
     if (evt.severity === 'extreme') {
-      addAlert('urgent', 'eonet', `EXTREME: ${evt.title}`, `${evt.category} • ${evt.link}`);
+      addAlert('urgent', 'eonet', `EXTREME: ${evt.title}`, `${evt.category} • ${evt.link}`, 'natural_event', [evt.category]);
     } else if (evt.severity === 'severe') {
-      addAlert('priority', 'eonet', `Severe: ${evt.title}`, `${evt.category} • ${evt.link}`);
+      addAlert('priority', 'eonet', `Severe: ${evt.title}`, `${evt.category} • ${evt.link}`, 'natural_event', [evt.category]);
     }
   }
 }
@@ -189,7 +207,12 @@ function checkTwitterIntel(): void {
 
     const author = `@${tweet.author.username}`;
     const engagement = `${tweet.metrics.retweet_count} RT • ${tweet.metrics.like_count} likes`;
-    addAlert(alertPriority, 'twitter', tweet.text.substring(0, 200), `${author} • ${engagement} • ${tweet.url}`);
+    const tweetEventType: AlertEventType = /coup|overthrow/.test(tweet.text) ? 'coup'
+      : /nuclear/.test(tweet.text) ? 'nuclear'
+      : /cyber|hack/.test(tweet.text) ? 'cyber'
+      : /terror/.test(tweet.text) ? 'terrorism'
+      : 'military_strike';
+    addAlert(alertPriority, 'twitter', tweet.text.substring(0, 200), `${author} • ${engagement} • ${tweet.url}`, tweetEventType, [tweet.category, author]);
   }
 }
 
@@ -203,7 +226,7 @@ function checkRssFeeds(): void {
 
     if (MILITARY_KEYWORDS.test(item.text)) {
       const priority: AlertPriority = item.category === 'military' ? 'urgent' : 'priority';
-      addAlert(priority, 'rss', item.text.substring(0, 200), `${item.handle} (${item.source}) • ${item.role}`);
+      addAlert(priority, 'rss', item.text.substring(0, 200), `${item.handle} (${item.source}) • ${item.role}`, 'military_strike', [item.category, item.source]);
     }
   }
 }
@@ -220,6 +243,8 @@ function checkSurges(): void {
       'surge',
       `Flight surge near ${s.baseName}: ${s.currentCount} aircraft (z=${s.zScore})`,
       `Level: ${s.level.toUpperCase()} • Baseline: ${s.baselineMean}±${s.baselineStdDev} • ${s.topCallsigns.join(', ')}`,
+      'surge',
+      [s.baseName, s.level.toUpperCase()],
     );
   }
 }

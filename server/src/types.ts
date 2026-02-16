@@ -422,6 +422,8 @@ export interface NaturalEvent {
   link: string;
 }
 
+export type AlertEventType = 'military_strike' | 'earthquake' | 'natural_event' | 'terrorism' | 'coup' | 'nuclear' | 'cyber' | 'protest' | 'internet' | 'market' | 'executive_order' | 'surge' | 'generic';
+
 export interface Alert {
   id: string;
   priority: AlertPriority;
@@ -430,6 +432,8 @@ export interface Alert {
   detail?: string;
   timestamp: string;
   read: boolean;
+  eventType?: AlertEventType;
+  tags?: string[];
 }
 
 export interface EconomicEvent {
