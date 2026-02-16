@@ -239,6 +239,39 @@ export async function computeCII(): Promise<void> {
   const flights = (cache.get('flights') as MilitaryFlight[] | undefined) ?? [];
   const hostility = (cache.get('hostility') as HostilityPair[] | undefined) ?? [];
 
+  // Dynamic weighting: if a global source is empty (API down / rate-limited),
+  // redistribute its weight proportionally among available factors.
+  const BASE_WEIGHTS = {
+    news: 0.25,
+    conflicts: 0.35,
+    internet: 0.10,
+    flights: 0.10,
+    hostility: 0.20,
+  };
+  const available: Record<string, boolean> = {
+    news: news.length > 0,
+    conflicts: conflicts.length > 0,
+    internet: true, // incidents can legitimately be 0
+    flights: flights.length > 0,
+    hostility: hostility.length > 0,
+  };
+  // Compute effective weights: redistribute unavailable weight
+  const totalAvailable = Object.entries(available)
+    .filter(([, ok]) => ok)
+    .reduce((sum, [key]) => sum + BASE_WEIGHTS[key as keyof typeof BASE_WEIGHTS], 0);
+  const weights: Record<string, number> = {};
+  for (const [key, ok] of Object.entries(available)) {
+    weights[key] = ok && totalAvailable > 0
+      ? BASE_WEIGHTS[key as keyof typeof BASE_WEIGHTS] / totalAvailable
+      : 0;
+  }
+
+  const degraded = Object.values(available).filter(ok => !ok).length;
+  if (degraded > 0) {
+    const missing = Object.entries(available).filter(([, ok]) => !ok).map(([k]) => k);
+    console.log(`[CII] Degraded mode: ${missing.join(', ')} unavailable — weights redistributed`);
+  }
+
   const results: CountryInstability[] = [];
 
   for (const country of COUNTRY_BASELINES) {
@@ -251,13 +284,13 @@ export async function computeCII(): Promise<void> {
     const flightFactor = computeFlightFactor(flights, code);
     const hostilityFactor = computeHostilityFactor(hostility, code);
 
-    // Weighted event score
+    // Dynamic weighted event score
     const eventScore = Math.round(
-      newsFactor * 0.20 +
-      conflictFactor * 0.35 +
-      internetFactor * 0.10 +
-      flightFactor * 0.15 +
-      hostilityFactor * 0.20
+      newsFactor * weights.news +
+      conflictFactor * weights.conflicts +
+      internetFactor * weights.internet +
+      flightFactor * weights.flights +
+      hostilityFactor * weights.hostility
     );
 
     // Composite: baseline × 0.40 + eventScore × 0.60
@@ -297,5 +330,6 @@ export async function computeCII(): Promise<void> {
   results.sort((a, b) => b.score - a.score);
 
   cache.set('cii', results, TTL.CII);
-  console.log(`[CII] ${results.length} countries scored (top: ${results[0]?.name} = ${results[0]?.score})`);
+  const top5 = results.slice(0, 5).map(r => `${r.code}=${r.score}`).join(' ');
+  console.log(`[CII] ${results.length} countries scored | top5: ${top5} | sources: news=${news.length} conflicts=${conflicts.length} ooni=${incidents.length} flights=${flights.length} hostility=${hostility.length}`);
 }
