@@ -156,7 +156,7 @@ export default function Ticker() {
     tier2Items.forEach((t, i) => {
       elements.push(
         <span key={`${keyPrefix}-t-${i}`} style={itemStyle}>
-          <span style={{ color: '#7a6418' }}>T2</span>
+          <span style={{ color: '#c9a84c' }}>{t.source}</span>
           <span style={{ color: '#ffffff' }}>{t.text}</span>
         </span>,
       );

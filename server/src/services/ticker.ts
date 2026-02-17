@@ -51,11 +51,13 @@ export async function composeTicker(): Promise<void> {
   if (feed) {
     const trumpPosts = feed.filter((f) => f.category === 'trump');
     for (const post of trumpPosts.slice(0, 2)) {
+      const text = post.text.substring(0, 120).trim();
+      if (text.length < 20 || /^\[?no.title\]?/i.test(text) || /^post from/i.test(text)) continue;
       items.push({
         id: `tk-${idCounter++}`,
         bulletColor: '#9b59e8',
         source: 'TRUTH SOCIAL',
-        text: post.text.substring(0, 120),
+        text,
       });
     }
   }

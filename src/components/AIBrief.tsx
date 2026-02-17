@@ -52,23 +52,24 @@ export default function AIBrief({ focus, contextId }: AIBriefProps) {
 
   useEffect(() => { refetch(); }, [focus, refetch]);
 
-  // Auto-scroll past BLUF after 5s
+  // Auto-scroll past BLUF after 15s
   useEffect(() => {
     const el = briefRef.current;
     if (!el || !brief) return;
-
+    let intervalId: ReturnType<typeof setInterval> | null = null;
     const timeout = setTimeout(() => {
-      const interval = setInterval(() => {
+      intervalId = setInterval(() => {
         if (el.scrollTop + el.clientHeight >= el.scrollHeight - 10) {
           el.scrollTop = 0;
         } else {
           el.scrollTop += 1;
         }
-      }, 60);
-      return () => clearInterval(interval);
-    }, 5000);
-
-    return () => clearTimeout(timeout);
+      }, 200);
+    }, 15000);
+    return () => {
+      clearTimeout(timeout);
+      if (intervalId) clearInterval(intervalId);
+    };
   }, [brief]);
 
   const sanitizedHtml = brief ? sanitizeBriefHTML(brief.html) : '';

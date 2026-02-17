@@ -44,6 +44,8 @@ RULES:
 ${STRATEGIC_RULES}
 - When analyzing economic data, highlight indicators of strength and growth
 
+CRITICAL: Use ONLY HTML tags (<h2>, <strong>, <ul>, <li>, <p>). Do NOT use markdown (**, ##, -).
+
 FORMAT (use HTML tags):
 <h2>■ SITUATION OVERVIEW</h2>
 <p>2-3 sentences: global threat level, dominant narrative of the cycle</p>
@@ -72,6 +74,8 @@ RULES:
 - Track Houthi attacks on commercial shipping with dates and vessel names when available
 - Flag nuclear program developments as CRITICAL
 ${STRATEGIC_RULES}
+
+CRITICAL: Use ONLY HTML tags (<h2>, <strong>, <ul>, <li>, <p>). Do NOT use markdown (**, ##, -).
 
 FORMAT (use HTML tags):
 <h2>■ REGIONAL OVERVIEW</h2>
@@ -103,6 +107,8 @@ RULES:
 - Frame US foreign policy as strength-based strategic deterrence
 - Prioritize threats from adversary nations over allied disagreements
 - Note positive developments for US/Ukrainian interests with appropriate context
+
+CRITICAL: Use ONLY HTML tags (<h2>, <strong>, <ul>, <li>, <p>). Do NOT use markdown (**, ##, -).
 
 FORMAT (use HTML tags):
 <h2>■ THEATER OVERVIEW</h2>
@@ -137,6 +143,8 @@ RULES:
 - Highlight market-positive policy outcomes
 - When analyzing economic data, highlight indicators of strength and growth
 
+CRITICAL: Use ONLY HTML tags (<h2>, <strong>, <ul>, <li>, <p>). Do NOT use markdown (**, ##, -).
+
 FORMAT (use HTML tags):
 <h2>■ DOMESTIC OVERVIEW</h2>
 <p>2-3 sentences: political climate, dominant policy narrative</p>
@@ -168,6 +176,8 @@ RULES:
 - When analyzing reforms, frame as structural modernization progress
 - Distinguish between CFK-aligned and non-aligned opposition
 
+CRITICAL: Use ONLY HTML tags (<h2>, <strong>, <ul>, <li>, <p>). Do NOT use markdown (**, ##, -).
+
 FORMAT (use HTML tags):
 <h2>■ ARGENTINA OVERVIEW</h2>
 <p>2-3 sentences: political climate, reform progress, economic trajectory</p>
@@ -195,6 +205,8 @@ RULES:
 - Flag unusual military flight patterns
 - Cross-reference armed group activity with state sponsor patterns
 ${STRATEGIC_RULES}
+
+CRITICAL: Use ONLY HTML tags (<h2>, <strong>, <ul>, <li>, <p>). Do NOT use markdown (**, ##, -).
 
 FORMAT (use HTML tags):
 <h2>■ INTELLIGENCE OVERVIEW</h2>
@@ -470,6 +482,19 @@ function gatherTrendsContext(desk: string): string {
 
 const ALLOWED_HTML_TAGS = new Set(['h1','h2','h3','h4','p','ul','ol','li','b','strong','em','i','br','span']);
 
+function markdownToHtml(text: string): string {
+  return text
+    .replace(/^####\s+(.+)$/gm, '<h4>$1</h4>')
+    .replace(/^###\s+(.+)$/gm, '<h3>$1</h3>')
+    .replace(/^##\s+(.+)$/gm, '<h2>$1</h2>')
+    .replace(/^#\s+(.+)$/gm, '<h1>$1</h1>')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    .replace(/^[-•]\s+(.+)$/gm, '<li>$1</li>')
+    .replace(/((?:<li>.*<\/li>\s*)+)/g, '<ul>$1</ul>')
+    .replace(/^\d+\.\s+(.+)$/gm, '<li>$1</li>');
+}
+
 function sanitizeServerHtml(raw: string): string {
   return raw.replace(/<(\/?)([a-zA-Z][a-zA-Z0-9]*)\b([^>]*?)(\s*\/?)>/gi, (_match, slash, tag, attrs, selfClose) => {
     const tagLower = tag.toLowerCase();
@@ -521,7 +546,7 @@ export async function fetchBrief(focus?: string): Promise<BriefResponse> {
     { maxTokens: 2500 },
   );
 
-  const html = sanitizeServerHtml(response.text || '<p>Brief generation failed</p>');
+  const html = sanitizeServerHtml(markdownToHtml(response.text || '<p>Brief generation failed</p>'));
 
   const cacheKey = focus ? `brief:${focus}` : 'brief';
   const brief: BriefResponse = {
@@ -575,7 +600,8 @@ RULES:
 - Be concise — each section 4-8 bullet points MAX
 - Cross-reference between sections where relevant
 - Flag immediate threats with FLASH: prefix
-- The Propaganda Watch section should analyze narratives critically from a Western democratic security perspective`;
+- The Propaganda Watch section should analyze narratives critically from a Western democratic security perspective
+- CRITICAL: Use ONLY HTML tags (<h2>, <strong>, <ul>, <li>, <p>). Do NOT use markdown (**, ##, -).`;
 
   const summarizerData = `SPECIALIST BRIEFS:\n${Object.entries(specialistBriefs).map(([k, v]) => `--- ${k.toUpperCase()} ---\n${v}`).join('\n\n')}
 
@@ -583,7 +609,7 @@ PROPAGANDA RAW DATA:\n${propagandaContext}`;
 
   try {
     const response = await aiComplete(summarizerPrompt, summarizerData, { maxTokens: 5000 });
-    const html = sanitizeServerHtml(response.text);
+    const html = sanitizeServerHtml(markdownToHtml(response.text));
 
     const unified: BriefResponse = {
       html,
@@ -645,7 +671,7 @@ FORMAT (use HTML tags):
 
   try {
     const response = await aiComplete(systemPrompt, userData, { maxTokens: 1500 });
-    const html = sanitizeServerHtml(response.text || '<p>Surge brief generation failed</p>');
+    const html = sanitizeServerHtml(markdownToHtml(response.text || '<p>Surge brief generation failed</p>'));
 
     const brief: BriefResponse = {
       html,

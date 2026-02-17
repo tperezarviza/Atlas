@@ -117,7 +117,7 @@ const IntelWirePanel = memo(function IntelWirePanel({ contextId }: { contextId: 
       } else {
         el.scrollTop += 1;
       }
-    }, 50);
+    }, 120);
     return () => clearInterval(interval);
   }, [items]);
 
@@ -186,7 +186,17 @@ const RRSSPanel = memo(function RRSSPanel() {
   const { data } = useApiData<FeedItem[]>(api.leaders, 120_000);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const items = useMemo(() => (data ?? []).slice(0, 20), [data]);
+  const items = useMemo(() => {
+    if (!data) return [];
+    const filtered = data.filter(item => !SPORTS_ENTERTAINMENT_RE.test(item.text));
+    const seen = new Set<string>();
+    return filtered.filter(item => {
+      const key = item.text.substring(0, 60).toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    }).slice(0, 20);
+  }, [data]);
 
   useEffect(() => {
     const el = scrollRef.current;
@@ -198,7 +208,7 @@ const RRSSPanel = memo(function RRSSPanel() {
       } else {
         el.scrollTop += 1;
       }
-    }, 50);
+    }, 120);
     return () => clearInterval(interval);
   }, [items]);
 
@@ -346,7 +356,7 @@ const FocalPanel = memo(function FocalPanel() {
     new:     { icon: '★', color: '#a855f7' },
     rising:  { icon: '▲', color: '#ff3b3b' },
     stable:  { icon: '▬', color: '#c9a84c' },
-    falling: { icon: '▼', color: '#00ff88' },
+    falling: { icon: '▼', color: '#7a6418' },
   };
 
   return (
@@ -354,7 +364,8 @@ const FocalPanel = memo(function FocalPanel() {
       {items.map((fp) => {
         const borderColor = fp.score >= 50 ? '#ff3b3b' : fp.score >= 25 ? '#ff8c00' : '#ffc832';
         const trendInfo = TREND_ICONS[fp.trend] ?? TREND_ICONS.stable;
-        const topSample = fp.sources[0]?.sample ?? '';
+        const rawSample = fp.sources[0]?.sample ?? '';
+        const topSample = rawSample.length > 120 ? rawSample.substring(0, 120) + '…' : rawSample;
         return (
           <div
             key={fp.entity}
