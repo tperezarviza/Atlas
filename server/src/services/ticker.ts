@@ -1,5 +1,6 @@
 import { cache } from '../cache.js';
 import { TTL } from '../config.js';
+import { aiComplete } from '../utils/ai-client.js';
 import type { TickerItem, NewsPoint, FeedItem, MarketSection, EconomicEvent } from '../types.js';
 import type { Earthquake } from './earthquakes.js';
 import type { PolymarketEvent } from './polymarket.js';
@@ -21,7 +22,25 @@ const CATEGORY_COLORS: Record<string, string> = {
   general: '#2d7aed',
 };
 
-export function composeTicker(): void {
+const TICKER_MARKETS = ['S&P 500', 'NASDAQ', 'DOW', 'MERVAL', 'BITCOIN', 'GOLD', 'WTI OIL'];
+const TICKER_FOREX = ['USD/ARS'];
+
+async function summarizeHeadlines(headlines: string[]): Promise<string[]> {
+  if (headlines.length === 0) return [];
+  try {
+    const response = await aiComplete(
+      'Summarize each headline to max 80 characters in English. Keep country names, actors, and action verbs. Return ONLY a JSON array of strings, same order as input.',
+      JSON.stringify(headlines),
+      { preferHaiku: true, maxTokens: 500 },
+    );
+    const result = JSON.parse(response.text.match(/\[[\s\S]*\]/)?.[0] ?? '[]');
+    return Array.isArray(result) ? result.map(String) : headlines;
+  } catch {
+    return headlines;
+  }
+}
+
+export async function composeTicker(): Promise<void> {
   console.log('[TICKER] Compositing ticker from caches...');
 
   const items: TickerItem[] = [];
@@ -34,7 +53,7 @@ export function composeTicker(): void {
     for (const post of trumpPosts.slice(0, 2)) {
       items.push({
         id: `tk-${idCounter++}`,
-        bulletColor: '#9b59e8', // purple for Trump
+        bulletColor: '#9b59e8',
         source: 'TRUTH SOCIAL',
         text: post.text.substring(0, 120),
       });
@@ -43,13 +62,15 @@ export function composeTicker(): void {
 
   // 2. Breaking news — use tone when available, category colors when GDELT returns no tone
   const news = cache.get<NewsPoint[]>('news');
+  const headlinesToSummarize: string[] = [];
+  const headlineItems: { bulletColor: string; source: string }[] = [];
+
   if (news) {
     const hasTone = news.some(n => n.tone !== 0);
     let selected: NewsPoint[];
     if (hasTone) {
       selected = [...news].sort((a, b) => a.tone - b.tone).slice(0, 8);
     } else {
-      // Round-robin categories for diversity
       const byCategory = new Map<string, NewsPoint[]>();
       for (const n of news) {
         const arr = byCategory.get(n.category) ?? [];
@@ -63,26 +84,46 @@ export function composeTicker(): void {
       selected = selected.slice(0, 8);
     }
     for (const n of selected) {
-      items.push({
-        id: `tk-${idCounter++}`,
+      headlinesToSummarize.push(n.headline);
+      headlineItems.push({
         bulletColor: hasTone ? toneToColor(n.tone) : (CATEGORY_COLORS[n.category] ?? '#2d7aed'),
         source: n.source.replace(/\.(com|org|net|gov)$/i, '').toUpperCase(),
-        text: n.headline,
       });
     }
   }
 
-  // 3. Market movers (items with significant changes)
+  // Add RSS feed headlines
+  if (feed) {
+    const rssPosts = feed.filter(f => f.category !== 'trump').slice(0, 5);
+    for (const post of rssPosts) {
+      headlinesToSummarize.push(post.text);
+      headlineItems.push({
+        bulletColor: '#2d7aed',
+        source: post.handle.toUpperCase(),
+      });
+    }
+  }
+
+  // Batch-summarize all headlines
+  const summarized = await summarizeHeadlines(headlinesToSummarize);
+  for (let i = 0; i < summarized.length; i++) {
+    items.push({
+      id: `tk-${idCounter++}`,
+      bulletColor: headlineItems[i].bulletColor,
+      source: headlineItems[i].source,
+      text: summarized[i],
+    });
+  }
+
+  // 3. Key markets (always show these)
   const sections = cache.get<MarketSection[]>('markets');
   if (sections) {
     for (const section of sections) {
       for (const item of section.items) {
-        const pctMatch = item.delta.match(/([\d.]+)%/);
-        const pct = pctMatch ? parseFloat(pctMatch[1]) : 0;
-        if (pct >= 1.5) {
+        if (TICKER_MARKETS.includes(item.name)) {
           items.push({
             id: `tk-${idCounter++}`,
-            bulletColor: item.direction === 'up' ? '#28b35a' : '#e83b3b',
+            bulletColor: item.direction === 'up' ? '#28b35a' : item.direction === 'down' ? '#e83b3b' : '#7a6418',
             source: 'MARKETS',
             text: `${item.name} ${item.price} ${item.delta}`,
           });
@@ -90,7 +131,21 @@ export function composeTicker(): void {
       }
     }
   }
-
+  const forex = cache.get<MarketSection[]>('forex');
+  if (forex) {
+    for (const section of forex) {
+      for (const item of section.items) {
+        if (TICKER_FOREX.includes(item.name)) {
+          items.push({
+            id: `tk-${idCounter++}`,
+            bulletColor: item.direction === 'up' ? '#28b35a' : item.direction === 'down' ? '#e83b3b' : '#7a6418',
+            source: 'FOREX',
+            text: `${item.name} ${item.price} ${item.delta}`,
+          });
+        }
+      }
+    }
+  }
 
   // 4. Earthquake alerts
   const quakes = cache.get<Earthquake[]>('earthquakes');
@@ -135,7 +190,7 @@ export function composeTicker(): void {
       const prob = pm.outcomePrices[0] != null ? Math.round(pm.outcomePrices[0] * 100) : null;
       items.push({
         id: `tk-poly-${idCounter++}`,
-        bulletColor: '#a855f7', // purple for predictions
+        bulletColor: '#a855f7',
         source: 'POLYMARKET',
         text: `${pm.title}${prob != null ? ` — ${prob}%` : ''}`,
       });

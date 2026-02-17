@@ -1,13 +1,34 @@
+import { useMemo } from 'react';
 import { useApiData } from '../hooks/useApiData';
 import { api } from '../services/api';
+import type { GoogleTrendsData } from '../services/api';
 
 const REFRESH_MS = 30_000;
+const TRENDS_REFRESH_MS = 120_000;
 
 export default function TrendsBar() {
-  const { data } = useApiData<{ keyword: string; count: number }[]>(api.twitterTrending, REFRESH_MS);
+  const { data: twitterTrends } = useApiData<{ keyword: string; count: number }[]>(api.twitterTrending, REFRESH_MS);
+  const { data: googleTrends } = useApiData<GoogleTrendsData>(api.googleTrends, TRENDS_REFRESH_MS);
 
-  const items = data ?? [];
-  const sorted = [...items].sort((a, b) => b.count - a.count);
+  const merged = useMemo(() => {
+    const items: { keyword: string; count: number; source: 'twitter' | 'google' }[] = [];
+
+    if (twitterTrends) {
+      for (const t of twitterTrends) {
+        items.push({ keyword: t.keyword, count: t.count, source: 'twitter' });
+      }
+    }
+
+    if (googleTrends?.geoTerms) {
+      for (const g of googleTrends.geoTerms.filter(t => t.isGeopolitical).slice(0, 10)) {
+        if (!items.some(i => i.keyword.toLowerCase() === g.term.toLowerCase())) {
+          items.push({ keyword: g.term, count: g.maxScore, source: 'google' });
+        }
+      }
+    }
+
+    return items.sort((a, b) => b.count - a.count);
+  }, [twitterTrends, googleTrends]);
 
   return (
     <div style={{
@@ -32,11 +53,12 @@ export default function TrendsBar() {
         🔥 TRENDS
       </div>
       <div style={{ display: 'flex', gap: 10, overflow: 'hidden' }}>
-        {sorted.map((item, i) => {
+        {merged.map((item, i) => {
           const isHot = i < 2;
+          const isGoogle = item.source === 'google';
           return (
             <div
-              key={item.keyword}
+              key={`${item.source}-${item.keyword}`}
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -56,9 +78,9 @@ export default function TrendsBar() {
               <span style={{
                 fontFamily: "'IBM Plex Mono', monospace",
                 fontSize: 13,
-                color: '#c9a84c',
+                color: isGoogle ? '#a855f7' : '#c9a84c',
               }}>
-                ×{item.count}
+                {isGoogle ? `G` : `×${item.count}`}
               </span>
             </div>
           );

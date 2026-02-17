@@ -38,6 +38,7 @@ import { detectFocalPoints } from './services/focal-points.js';
 import { flushDailyBytes } from './services/bq-cost-tracker.js';
 import { fetchGoogleTrends } from './services/google-trends-bq.js';
 import { detectSurges } from './services/surge-detection.js';
+import { fetchEventSpikes, fetchMilitaryCameo } from './services/bq-events.js';
 
 function safeRun(name: string, fn: () => Promise<void> | void) {
   return async () => {
@@ -61,7 +62,7 @@ export function startCronJobs() {
   // */15 * * * * -> GDELT News + Ticker recomposite
   cron.schedule('*/15 * * * *', safeRun('gdelt+ticker', async () => {
     await fetchGdeltNews();
-    composeTicker();
+    await composeTicker();
   }));
 
   // 0 * * * * -> ACLED Conflicts + Macro data
@@ -92,14 +93,14 @@ export function startCronJobs() {
   // 15,45 * * * * -> Shipping (every 30 min offset)
   cron.schedule('15,45 * * * *', safeRun('shipping', fetchShippingData));
 
-  // 0 7 * * * -> Propaganda (1x/day at 7am)
-  cron.schedule('0 7 * * *', safeRun('propaganda', fetchPropaganda));
+  // 0 7,15,23 * * * -> Propaganda (3x/day)
+  cron.schedule('0 7,15,23 * * *', safeRun('propaganda', fetchPropaganda));
 
   // 0 3 * * * -> Sanctions (daily 3am)
   cron.schedule('0 3 * * *', safeRun('sanctions', fetchSanctions));
 
-  // */2 * * * * -> Military flights (every 2 min)
-  cron.schedule('*/2 * * * *', safeRun('flights', fetchFlights));
+  // */5 * * * * -> Military flights (every 5 min via ADSB Exchange)
+  cron.schedule('*/5 * * * *', safeRun('flights', fetchFlights));
 
   // 10 * * * * -> Ukraine front (every hour, offset 10)
   cron.schedule('10 * * * *', safeRun('ukraine-front', fetchUkraineFront));
@@ -138,11 +139,17 @@ export function startCronJobs() {
   cron.schedule('20,50 * * * *', safeRun('cii', computeCII));
 
   // 7 */6 * * * -> Focal Point Detection (BQ GKG entities or Claude NER fallback)
-  cron.schedule('7 */6 * * *', safeRun('focal-points', detectFocalPoints));
+  cron.schedule('7 * * * *', safeRun('focal-points', detectFocalPoints));
 
 
   // 0 */6 * * * -> Google Trends (BQ, 4x/day — data updates daily)
   cron.schedule('0 */6 * * *', safeRun('google-trends', fetchGoogleTrends));
+
+  // 15 */6 * * * -> BQ event spike + military CAMEO analysis
+  cron.schedule('15 */6 * * *', safeRun('bq-events', async () => {
+    await fetchEventSpikes();
+    await fetchMilitaryCameo();
+  }));
 
   // 0 * * * * -> Flush BQ cost tracking bytes to Redis (hourly)
   cron.schedule('0 * * * *', safeRun('bq-cost-flush', flushDailyBytes));

@@ -89,6 +89,15 @@ const FEED_SOURCES: FeedSource[] = [
     flag: '🇺🇸', handle: 'ISW', role: 'Institute for Study of War',
     sourceName: 'ISW', category: 'think_tank', tags: ['Think Tank', 'Military'], tier: 2 },
 
+  // ═══ Tier 2 – Argentina ═══
+  { url: 'https://www.infobae.com/feeds/rss/', flag: '🇦🇷', handle: 'Infobae', role: 'Argentine News', sourceName: 'infobae', category: 'leader', tags: ['argentina', 'news'], tier: 2 },
+  { url: 'https://www.clarin.com/rss/lo-ultimo/', flag: '🇦🇷', handle: 'Clarín', role: 'Argentine News', sourceName: 'clarin', category: 'leader', tags: ['argentina', 'news'], tier: 2 },
+  { url: 'https://www.lanacion.com.ar/arcio/rss/', flag: '🇦🇷', handle: 'La Nación', role: 'Argentine News', sourceName: 'lanacion', category: 'leader', tags: ['argentina', 'news'], tier: 2 },
+  { url: 'https://www.ambito.com/rss/pages/home.xml', flag: '🇦🇷', handle: 'Ámbito', role: 'Argentine Finance', sourceName: 'ambito', category: 'leader', tags: ['argentina', 'economy'], tier: 2 },
+  { url: 'https://www.cronista.com/files/rss/apertura.xml', flag: '🇦🇷', handle: 'El Cronista', role: 'Argentine Finance', sourceName: 'cronista', category: 'leader', tags: ['argentina', 'economy'], tier: 2 },
+  { url: 'https://tn.com.ar/feeds/rss', flag: '🇦🇷', handle: 'TN', role: 'Argentine News', sourceName: 'tn', category: 'leader', tags: ['argentina', 'news'], tier: 2 },
+  { url: 'https://www.pagina12.com.ar/rss/portada', flag: '🇦🇷', handle: 'Página/12', role: 'Argentine News', sourceName: 'pagina12', category: 'leader', tags: ['argentina', 'news'], tier: 2 },
+
   // ═══ TIER 3: International Quality ═══
   { url: 'https://rss.nytimes.com/services/xml/rss/nyt/World.xml',
     flag: '🇺🇸', handle: 'NYT', role: 'New York Times',

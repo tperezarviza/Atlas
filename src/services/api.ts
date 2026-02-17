@@ -83,6 +83,15 @@ export interface BriefResponse {
   generatedAt: string;
   model: string;
   sources: string[];
+  confidence?: number;
+}
+
+export interface GoogleTrendsData {
+  geoTerms: { term: string; countries: { code: string; name: string; score: number }[]; countryCount: number; maxScore: number; isGeopolitical: boolean; signal: string }[];
+  multiCountrySignals: any[];
+  topRisingByCountry: Record<string, { term: string; score: number }[]>;
+  updatedAt: string;
+  refreshDate: string;
 }
 
 export interface MarketsResponse {
@@ -207,4 +216,5 @@ export const api = {
   cloudflareOutages:   () => fetchJSON<any[]>('/api/cloudflare-outages'),
   // Surge Detection
   surgeAlerts:         () => fetchJSON<SurgeAlert[]>('/api/surge-alerts'),
+  googleTrends:        () => fetchJSON<GoogleTrendsData>('/api/google-trends'),
 };

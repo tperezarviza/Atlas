@@ -27,6 +27,7 @@ export function isBigQueryAvailable(): boolean {
 export async function bqQuery<T = Record<string, unknown>>(
   sql: string,
   params?: Record<string, unknown>,
+  maxBytes?: number,
 ): Promise<T[]> {
   if (!client) throw new Error('BigQuery not initialized');
 
@@ -34,6 +35,7 @@ export async function bqQuery<T = Record<string, unknown>>(
     query: sql,
     location: 'US', // GDELT is in US multi-region
   };
+  if (maxBytes) options.maximumBytesBilled = String(maxBytes);
   if (params) {
     options.params = params;
     options.parameterMode = 'NAMED';

@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useRef, useMemo } from 'react';
 import DOMPurify from 'dompurify';
 import { useApiData } from '../hooks/useApiData';
 import { api } from '../services/api';
@@ -16,13 +16,11 @@ function parseBriefContent(html: string): { bluf: string; bullets: string[] } {
   const div = document.createElement('div');
   div.innerHTML = html;
   const paragraphs: string[] = [];
-  // Collect text from all p, li elements
   div.querySelectorAll('p, li').forEach(el => {
     const text = el.textContent?.trim();
     if (text && text.length > 10) paragraphs.push(text);
   });
   if (paragraphs.length === 0) {
-    // Fallback: use full text
     const text = div.textContent?.trim() ?? '';
     return { bluf: text, bullets: [] };
   }
@@ -50,13 +48,35 @@ interface AIBriefProps {
 export default function AIBrief({ focus, contextId }: AIBriefProps) {
   const fetchBrief = useMemo(() => () => api.brief(focus), [focus]);
   const { data: brief, error, refetch } = useApiData<BriefResponse>(fetchBrief, REFRESH_MS);
+  const briefRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => { refetch(); }, [focus, refetch]);
+
+  // Auto-scroll past BLUF after 5s
+  useEffect(() => {
+    const el = briefRef.current;
+    if (!el || !brief) return;
+
+    const timeout = setTimeout(() => {
+      const interval = setInterval(() => {
+        if (el.scrollTop + el.clientHeight >= el.scrollHeight - 10) {
+          el.scrollTop = 0;
+        } else {
+          el.scrollTop += 1;
+        }
+      }, 60);
+      return () => clearInterval(interval);
+    }, 5000);
+
+    return () => clearTimeout(timeout);
+  }, [brief]);
 
   const sanitizedHtml = brief ? sanitizeBriefHTML(brief.html) : '';
   const { bluf, bullets } = useMemo(() => sanitizedHtml ? parseBriefContent(sanitizedHtml) : { bluf: '', bullets: [] }, [sanitizedHtml]);
   const contextLabel = CONTEXT_LABELS[contextId ?? 'global'] ?? 'GLOBAL';
   const updatedAgo = brief?.generatedAt ? timeAgo(brief.generatedAt) : '—';
+  const confidence = brief?.confidence ?? 0;
+  const confColor = confidence >= 70 ? '#00ff88' : confidence >= 40 ? '#ff8c00' : '#ff3b3b';
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
@@ -84,7 +104,7 @@ export default function AIBrief({ focus, contextId }: AIBriefProps) {
       </div>
 
       {/* Body */}
-      <div style={{ padding: '16px 20px', overflowY: 'auto', flex: 1 }}>
+      <div ref={briefRef} style={{ padding: '16px 20px', overflowY: 'auto', flex: 1 }}>
         {error && !brief ? (
           <div style={{ fontSize: 16, color: '#ff3b3b' }}>Failed to load brief...</div>
         ) : bluf ? (
@@ -121,9 +141,9 @@ export default function AIBrief({ focus, contextId }: AIBriefProps) {
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 12, color: '#7a6418' }}>Confidence</span>
           <div style={{ width: 100, height: 5, borderRadius: 3, background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
-            <div style={{ height: '100%', borderRadius: 3, background: '#00ff88', width: '82%' }} />
+            <div style={{ height: '100%', borderRadius: 3, background: confColor, width: `${confidence}%` }} />
           </div>
-          <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 12, color: '#00ff88' }}>82%</span>
+          <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 12, color: confColor }}>{confidence}%</span>
         </div>
         <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 13, color: '#7a6418' }}>
           {brief?.generatedAt ? new Date(brief.generatedAt).toUTCString().replace(/:\d{2} GMT/, ' UTC') : '—'}

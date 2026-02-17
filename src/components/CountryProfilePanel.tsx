@@ -106,7 +106,7 @@ export default memo(function CountryProfilePanel({ countryCode, onClose, conflic
             top: 48,
             bottom: 78,
             width: 480,
-            background: '#000000',
+            background: '#06080c',
             borderLeft: '1px solid rgba(255,200,50,0.10)',
             boxShadow: '-8px 0 32px rgba(0,0,0,.4)',
             transform: 'translateX(0)',

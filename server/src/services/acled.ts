@@ -238,7 +238,9 @@ export async function fetchConflicts(): Promise<void> {
       .slice(0, 25)
       .map((c, i) => ({
         id: `acled-${i}`,
-        name: c.country,
+        name: c.actors.size > 0
+          ? `${c.country}: ${[...c.actors].slice(0, 2).join(' vs ')}`
+          : c.country,
         severity: determineSeverity(c.events, c.fatalities),
         lat: c.lat,
         lng: c.lng,

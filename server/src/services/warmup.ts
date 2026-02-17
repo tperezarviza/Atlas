@@ -110,7 +110,7 @@ export async function warmUpCache(): Promise<void> {
   ]);
 
   // Phase 3: Composite and AI (depends on previous data)
-  composeTicker();
+  await composeTicker();
 
   await Promise.allSettled([
     safeRun('AI Briefs (all desks)', generateAllBriefs),

@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import type { Alert } from '../types'
 
 const DISMISS_MS = 20_000
-const MEGA_RE = /bomb|strike|invasion|coup|nuclear.test|war.declared|capitol.seized/i
+const MEGA_RE = /bombing|bombed|airstrike|air.strike|invasion|coup\s+d|nuclear.test|war.declared|capitol.seized|missile.launch|chemical.attack|massacre/i
 
 interface Props {
   alerts: Alert[]
@@ -153,7 +153,7 @@ export default function Tier1AlertCard({ alerts, onDismiss }: Props) {
           <div style={{ display: 'flex', gap: 4 }}>
             {sourceTags.map(tag => (
               <span key={tag} style={{
-                fontFamily: "'JetBrains Mono', monospace",
+                fontFamily: "'IBM Plex Mono', monospace",
                 fontSize: 12, fontWeight: 600,
                 letterSpacing: 0.5,
                 color: '#7a6418',
@@ -166,7 +166,7 @@ export default function Tier1AlertCard({ alerts, onDismiss }: Props) {
           {/* Time - right aligned */}
           <span style={{
             marginLeft: 'auto',
-            fontFamily: "'JetBrains Mono', monospace",
+            fontFamily: "'IBM Plex Mono', monospace",
             fontSize: 13,
             color: '#7a6418',
           }}>
@@ -193,7 +193,7 @@ export default function Tier1AlertCard({ alerts, onDismiss }: Props) {
         }}>
           {/* Outline tag - priority */}
           <span style={{
-            fontFamily: "'JetBrains Mono', monospace",
+            fontFamily: "'IBM Plex Mono', monospace",
             fontSize: 10, fontWeight: 600,
             letterSpacing: 1, padding: '2px 8px', borderRadius: 2,
             textTransform: 'uppercase',
@@ -207,7 +207,7 @@ export default function Tier1AlertCard({ alerts, onDismiss }: Props) {
           {/* Filled tags - sources */}
           {sourceTags.map(tag => (
             <span key={tag} style={{
-              fontFamily: "'JetBrains Mono', monospace",
+              fontFamily: "'IBM Plex Mono', monospace",
               fontSize: 10, fontWeight: 600,
               letterSpacing: 1, padding: '2px 8px', borderRadius: 2,
               textTransform: 'uppercase',

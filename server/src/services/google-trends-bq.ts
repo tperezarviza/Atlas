@@ -1,6 +1,7 @@
 import { isBigQueryAvailable, bqQuery } from './bigquery.js';
 import { cache } from '../cache.js';
 import { redisSet } from '../redis.js';
+import { aiComplete } from '../utils/ai-client.js';
 
 // Countries to monitor (ISO-2)
 const MONITORED_COUNTRIES = [
@@ -22,8 +23,21 @@ const GEO_KEYWORDS = [
   // Countries/regions in crisis
   'iran', 'gaza', 'ukraine', 'taiwan', 'north korea', 'syria', 'yemen',
   'sudan', 'haiti', 'myanmar',
-  // Economic crisis
-  'tariff', 'recession', 'inflation', 'oil price', 'gold price', 'dollar',
+  // Economics & Policy
+  'inflation', 'recession', 'gdp', 'unemployment', 'default', 'devaluation',
+  'interest rate', 'central bank', 'debt crisis', 'austerity',
+  'tariff', 'oil price', 'gold price', 'dollar',
+  // Politics
+  'election', 'impeachment', 'protest', 'riot', 'corruption', 'referendum',
+  'populism', 'authoritarian',
+  // Cyber & Intel
+  'ransomware', 'cyberattack', 'data breach', 'espionage', 'surveillance',
+  'classified', 'leak', 'whistleblower',
+  // Trade & Diplomacy
+  'trade war', 'import ban', 'export control', 'supply chain',
+  'summit', 'g7', 'g20', 'brics', 'opec', 'un general assembly',
+  // Argentina-specific
+  'milei', 'peso argentino', 'merval', 'cepo', 'inflacion argentina',
   // Disaster
   'earthquake', 'tsunami', 'hurricane', 'volcano', 'evacuation', 'refugee',
   // Panic indicators
@@ -161,6 +175,27 @@ export async function fetchGoogleTrends(): Promise<void> {
         signal: count >= 5 ? 'critical' as const : count >= 3 ? 'strong' as const : count >= 2 ? 'moderate' as const : 'weak' as const,
       };
     });
+
+    // Classify high-score terms that didn't match keywords via Haiku
+    const unclassified = allSignals
+      .filter(s => !s.isGeopolitical && s.maxScore > 500 && s.countryCount >= 2)
+      .slice(0, 20);
+
+    if (unclassified.length > 0) {
+      try {
+        const resp = await aiComplete(
+          'For each search term, respond YES if relevant to geopolitics/politics/economics/defense/cyber/intelligence, NO otherwise. Return JSON array of booleans.',
+          JSON.stringify(unclassified.map(s => s.term)),
+          { preferHaiku: true, maxTokens: 200 },
+        );
+        const results = JSON.parse(resp.text.match(/\[[\s\S]*\]/)?.[0] ?? '[]');
+        unclassified.forEach((s, i) => {
+          if (results[i] === true) {
+            s.isGeopolitical = true;
+          }
+        });
+      } catch { /* fail-open */ }
+    }
 
     const geoTerms = allSignals
       .filter(s => s.isGeopolitical)

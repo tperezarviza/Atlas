@@ -3,7 +3,10 @@ import { cache } from '../cache.js';
 import { translateTexts } from './translate.js';
 import { withCircuitBreaker } from '../utils/circuit-breaker.js';
 import { isInPermanentZone } from '../utils/permanentZones.js';
+import { aiComplete } from '../utils/ai-client.js';
 import type { NewsPoint, NewsWireItem, NewsBullet } from '../types.js';
+import type { FocalPoint } from './focal-points.js';
+import type { EventSpike } from './bq-events.js';
 
 interface GdeltFeature {
   type: string;
@@ -152,6 +155,74 @@ function deduplicateNews(points: NewsPoint[]): NewsPoint[] {
   });
 }
 
+async function filterRelevantNews(points: NewsPoint[]): Promise<NewsPoint[]> {
+  if (points.length === 0) return [];
+
+  const IRRELEVANT_RE = /\b(sports?|football|soccer|basketball|baseball|hockey|tennis|golf|cricket|boxing|wrestling|UFC|NASCAR|Formula.?1|Olympics|medal|championship|playoff|touchdown|quarterback|home.run|batting|rushing|celebrity|kardashian|reality.?tv|bachelor|oscar|grammy|emmy|box.office|album.chart|billboard|streaming|netflix|recipe|cooking|fashion|lifestyle|horoscope|zodiac|weather forecast|lottery|game show)\b/i;
+
+  const afterRegex = points.filter(p => !IRRELEVANT_RE.test(p.headline));
+  console.log(`[GDELT-FILTER] Regex: ${points.length} → ${afterRegex.length} (removed ${points.length - afterRegex.length})`);
+
+  const BATCH_SIZE = 50;
+  const relevant: NewsPoint[] = [];
+
+  for (let i = 0; i < afterRegex.length; i += BATCH_SIZE) {
+    const batch = afterRegex.slice(i, i + BATCH_SIZE);
+    const headlines = batch.map((p, idx) => `${idx}: ${p.headline}`).join('\n');
+
+    try {
+      const response = await aiComplete(
+        'You are a geopolitical intelligence filter. For each numbered headline, respond with ONLY the numbers of headlines relevant to: geopolitics, international relations, military/defense, politics, economics/markets, cyber/intelligence, terrorism, natural disasters, humanitarian crises. Exclude: sports, entertainment, celebrity, lifestyle, weather, local crime, human interest. Return ONLY a JSON array of numbers like [0,2,5,7].',
+        headlines,
+        { preferHaiku: true, maxTokens: 200 },
+      );
+
+      const kept = JSON.parse(response.text.match(/\[[\d,\s]*\]/)?.[0] ?? '[]') as number[];
+      for (const idx of kept) {
+        if (batch[idx]) relevant.push(batch[idx]);
+      }
+    } catch {
+      relevant.push(...batch);
+    }
+  }
+
+  console.log(`[GDELT-FILTER] Haiku: ${afterRegex.length} → ${relevant.length}`);
+  return relevant;
+}
+
+async function getDynamicQueries(): Promise<typeof GDELT_QUERIES[number][]> {
+  const dynamic: typeof GDELT_QUERIES[number][] = [];
+
+  const focals = cache.get<FocalPoint[]>('focal_points') ?? [];
+  const staticKeywords = GDELT_QUERIES.map(q => q.query.toLowerCase()).join(' ');
+
+  for (const fp of focals.filter(f => f.score > 30)) {
+    if (!staticKeywords.includes(fp.entity.toLowerCase())) {
+      dynamic.push({
+        query: `"${fp.entity}" (conflict OR crisis OR attack OR protest OR military)`,
+        category: 'dynamic_focal',
+        timespan: '24h',
+        maxpoints: 50,
+      });
+    }
+  }
+
+  const spikes = cache.get<EventSpike[]>('bq_event_spikes') ?? [];
+  for (const spike of spikes.filter(s => s.spike_ratio > 3)) {
+    const country = spike.country;
+    if (!staticKeywords.includes(country.toLowerCase())) {
+      dynamic.push({
+        query: `${country} (crisis OR conflict OR protest OR violence OR military)`,
+        category: 'dynamic_spike',
+        timespan: '24h',
+        maxpoints: 50,
+      });
+    }
+  }
+
+  return dynamic.slice(0, 5);
+}
+
 const CATEGORY_PRIORITY: Record<string, number> = {
   conflict: 0, terrorism: 1, crisis: 2,
   africa_crisis: 3, latam_crisis: 3, asia_crisis: 3,
@@ -222,12 +293,13 @@ function newsToWire(news: NewsPoint[], fetchedAt: number): NewsWireItem[] {
 }
 
 export async function fetchGdeltNews(): Promise<void> {
-  // BQ events table lacks headlines (no Title field) — use geo API which provides real article titles
-  console.log(`[GDELT] Fetching news from ${GDELT_QUERIES.length} thematic + regional queries...`);
+  const dynamicQueries = await getDynamicQueries();
+  const allQueries = [...GDELT_QUERIES, ...dynamicQueries];
+  console.log(`[GDELT] Fetching news from ${GDELT_QUERIES.length} static + ${dynamicQueries.length} dynamic queries...`);
 
   try {
     const results = await Promise.allSettled(
-      GDELT_QUERIES.map((q) =>
+      allQueries.map((q) =>
         withCircuitBreaker(
           'gdelt',
           () => fetchGdeltQuery(q.query, q.category, q.timespan, q.maxpoints),
@@ -240,28 +312,29 @@ export async function fetchGdeltNews(): Promise<void> {
     results.forEach((r, i) => {
       if (r.status === 'fulfilled') {
         allPoints.push(...r.value);
-        console.log(`[GDELT] ${GDELT_QUERIES[i].category}: ${r.value.length} points`);
+        console.log(`[GDELT] ${allQueries[i].category}: ${r.value.length} points`);
       } else {
-        console.warn(`[GDELT] ${GDELT_QUERIES[i].category} failed:`, r.reason);
+        console.warn(`[GDELT] ${allQueries[i].category} failed:`, r.reason);
       }
     });
 
     if (allPoints.length > 0) {
       const deduped = deduplicateNews(allPoints);
+      const filtered = await filterRelevantNews(deduped);
 
       // Translate non-English headlines before caching
-      await translateHeadlines(deduped);
+      await translateHeadlines(filtered);
 
       // Merge with existing cached events to accumulate over time
       const existing = cache.get<NewsPoint[]>('news') ?? [];
-      const newKeys = new Set(deduped.map(p =>
+      const newKeys = new Set(filtered.map(p =>
         `${p.lat.toFixed(1)}_${p.lng.toFixed(1)}_${p.headline.substring(0, 40).toLowerCase()}`
       ));
       const kept = existing.filter(p => {
         const key = `${p.lat.toFixed(1)}_${p.lng.toFixed(1)}_${p.headline.substring(0, 40).toLowerCase()}`;
         return !newKeys.has(key); // keep old events not in new batch
       });
-      const merged = [...deduped, ...kept];
+      const merged = [...filtered, ...kept];
 
       // Prune events older than 7 days (keep permanent zones)
       const MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
@@ -274,7 +347,7 @@ export async function fetchGdeltNews(): Promise<void> {
 
       const fetchedAtMs = Date.now();
       cache.set('news', pruned, TTL.NEWS);
-      console.log(`[GDELT] Total: ${deduped.length} new + ${kept.length} kept = ${pruned.length} after prune`);
+      console.log(`[GDELT] Total: ${filtered.length} new + ${kept.length} kept = ${pruned.length} after prune`);
 
       const wire = newsToWire(pruned, fetchedAtMs);
       cache.set('newswire', wire, TTL.NEWS);

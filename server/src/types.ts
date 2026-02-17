@@ -127,6 +127,7 @@ export interface BriefResponse {
   generatedAt: string;
   model: string;
   sources: string[];
+  confidence?: number;
 }
 
 export interface TopBarKPI {

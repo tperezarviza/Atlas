@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, memo, useMemo } from 'react';
+import { useState, useEffect, useCallback, useRef, memo, useMemo } from 'react';
 import { useApiData } from '../hooks/useApiData';
 import { api } from '../services/api';
 import type { NewsWireItem, FeedItem } from '../types';
@@ -66,7 +66,10 @@ interface FocalPoint {
 // ── Helpers ──
 
 function relativeTime(iso: string): string {
-  const diff = Date.now() - new Date(iso).getTime();
+  if (!iso) return '—';
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return iso;
+  const diff = Date.now() - d.getTime();
   const mins = Math.floor(diff / 60_000);
   if (mins < 1) return 'just now';
   if (mins < 60) return `${mins}m ago`;
@@ -92,6 +95,7 @@ function ciiLabel(s: number): string {
 
 const IntelWirePanel = memo(function IntelWirePanel({ contextId }: { contextId: string }) {
   const { data } = useApiData<NewsWireItem[]>(api.newswire, 900_000);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   const items = useMemo(() => {
     if (!data) return [];
@@ -100,8 +104,22 @@ const IntelWirePanel = memo(function IntelWirePanel({ contextId }: { contextId: 
     if (ctxRe) {
       filtered = filtered.filter((item) => ctxRe.test(item.headline));
     }
-    return filtered.slice(0, 8);
+    return filtered.slice(0, 20);
   }, [data, contextId]);
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    el.scrollTop = 0;
+    const interval = setInterval(() => {
+      if (el.scrollTop + el.clientHeight >= el.scrollHeight - 10) {
+        el.scrollTop = 0;
+      } else {
+        el.scrollTop += 1;
+      }
+    }, 50);
+    return () => clearInterval(interval);
+  }, [items]);
 
   if (!data) {
     return <div style={{ padding: '14px 20px', color: '#7a6418', fontSize: 14 }}>Loading wire...</div>;
@@ -111,7 +129,7 @@ const IntelWirePanel = memo(function IntelWirePanel({ contextId }: { contextId: 
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+    <div ref={scrollRef} style={{ display: 'flex', flexDirection: 'column', gap: 10, maxHeight: '100%', overflow: 'hidden' }}>
       {items.map((item) => (
         <div
           key={item.id}
@@ -166,8 +184,23 @@ const IntelWirePanel = memo(function IntelWirePanel({ contextId }: { contextId: 
 
 const RRSSPanel = memo(function RRSSPanel() {
   const { data } = useApiData<FeedItem[]>(api.leaders, 120_000);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
-  const items = useMemo(() => (data ?? []).slice(0, 6), [data]);
+  const items = useMemo(() => (data ?? []).slice(0, 20), [data]);
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    el.scrollTop = 0;
+    const interval = setInterval(() => {
+      if (el.scrollTop + el.clientHeight >= el.scrollHeight - 10) {
+        el.scrollTop = 0;
+      } else {
+        el.scrollTop += 1;
+      }
+    }, 50);
+    return () => clearInterval(interval);
+  }, [items]);
 
   if (!data) {
     return <div style={{ padding: '14px 20px', color: '#7a6418', fontSize: 14 }}>Loading feeds...</div>;
@@ -177,7 +210,7 @@ const RRSSPanel = memo(function RRSSPanel() {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+    <div ref={scrollRef} style={{ display: 'flex', flexDirection: 'column', gap: 12, maxHeight: '100%', overflow: 'hidden' }}>
       {items.map((item) => {
         const platformKey = (item.source ?? '').toLowerCase();
         const avatarBg = PLATFORM_COLORS[platformKey] ?? '#7a6418';

@@ -8,7 +8,7 @@ import { getProviderStats } from '../utils/ai-client.js';
 
 const CACHE_KEYS = [
   'conflicts', 'news', 'feed', 'markets', 'forex',
-  'macro', 'calendar', 'brief', 'connections', 'ticker',
+  'macro', 'calendar', 'brief', 'ticker',
   'countries', 'ofac_sanctions', 'armed_groups', 'shipping', 'ooni', 'hostility', 'propaganda', 'acled_actors',
   'congress_bills', 'congress_nominations', 'executive_orders', 'flights', 'ukraine_front',
   'twitter', 'cyber_threats', 'natural_events', 'economic_calendar', 'alerts',
@@ -22,8 +22,9 @@ const CACHE_KEYS = [
   'layer_bases',
   'layer_cables',
   'layer_pipelines',
-  'entity_connections',
   'google_trends',
+  'bq_event_spikes',
+  'bq_military_cameo',
   'surge_alerts',
 ];
 
@@ -37,7 +38,6 @@ const SERVICE_META: Record<string, { name: string; category: string }> = {
   macro: { name: 'US Macro', category: 'Markets' },
   calendar: { name: 'Diplomatic Calendar', category: 'Intelligence' },
   brief: { name: 'AI Brief', category: 'Intelligence' },
-  connections: { name: 'Connections', category: 'Intelligence' },
   ticker: { name: 'News Ticker', category: 'Intelligence' },
   countries: { name: 'Country Profiles', category: 'Intelligence' },
   ofac_sanctions: { name: 'OFAC Sanctions', category: 'Intelligence' },
@@ -67,8 +67,9 @@ const SERVICE_META: Record<string, { name: string; category: string }> = {
   layer_bases: { name: 'Military Bases Layer', category: 'Map Layers' },
   layer_cables: { name: 'Undersea Cables Layer', category: 'Map Layers' },
   layer_pipelines: { name: 'Pipelines Layer', category: 'Map Layers' },
-  entity_connections: { name: 'BQ Entity Connections', category: 'BigQuery' },
   google_trends: { name: 'Google Trends', category: 'BigQuery' },
+  bq_event_spikes: { name: 'BQ Event Spikes', category: 'BigQuery' },
+  bq_military_cameo: { name: 'BQ Military CAMEO', category: 'BigQuery' },
   surge_alerts: { name: 'Surge Detection', category: 'Military' },
 };
 

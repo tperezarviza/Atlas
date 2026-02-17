@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import type { Alert } from '../types'
 
 const DISMISS_MS = 30_000
-const MEGA_RE = /bomb|strike|invasion|coup|nuclear.test|war.declared|capitol.seized/i
+const MEGA_RE = /bombing|bombed|airstrike|air.strike|invasion|coup\s+d|nuclear.test|war.declared|capitol.seized|missile.launch|chemical.attack|massacre/i
 
 interface Props {
   alerts: Alert[]
@@ -203,7 +203,7 @@ export default function CriticalMegaPopup({ alerts, onDismiss }: Props) {
           }}>
             <span style={{
               fontSize: 14,
-              fontFamily: "'JetBrains Mono', monospace",
+              fontFamily: "'IBM Plex Mono', monospace",
               color: 'rgba(255,255,255,0.5)',
             }}>
               {formatUtcTime()}
@@ -230,7 +230,7 @@ export default function CriticalMegaPopup({ alerts, onDismiss }: Props) {
             </div>
             <div style={{
               fontSize: 12,
-              fontFamily: "'JetBrains Mono', monospace",
+              fontFamily: "'IBM Plex Mono', monospace",
               fontWeight: 700,
               letterSpacing: 2,
               color: '#ff3b3b',
@@ -268,7 +268,7 @@ export default function CriticalMegaPopup({ alerts, onDismiss }: Props) {
             }}>
               {sourceTags.map(tag => (
                 <span key={tag} style={{
-                  fontFamily: "'JetBrains Mono', monospace",
+                  fontFamily: "'IBM Plex Mono', monospace",
                   fontSize: 10, fontWeight: 600,
                   letterSpacing: 1, padding: '2px 8px', borderRadius: 2,
                   textTransform: 'uppercase',
@@ -280,7 +280,7 @@ export default function CriticalMegaPopup({ alerts, onDismiss }: Props) {
                 </span>
               ))}
               <span style={{
-                fontFamily: "'JetBrains Mono', monospace",
+                fontFamily: "'IBM Plex Mono', monospace",
                 fontSize: 10, fontWeight: 600,
                 letterSpacing: 1, padding: '2px 8px', borderRadius: 2,
                 textTransform: 'uppercase',

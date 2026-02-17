@@ -1,6 +1,6 @@
 export const colors = {
-  bgDeep: '#000000',
-  bgPrimary: '#000000',
+  bgDeep: '#06080c',
+  bgPrimary: '#06080c',
   bgCard: 'rgba(255,200,50,0.025)',
   bgCardHover: 'rgba(255,200,50,0.04)',
   border: 'rgba(255,200,50,0.10)',

@@ -42,6 +42,14 @@ const STATE_MEDIA: { country: string; code: string; outlets: { name: string; dom
       { name: 'Anadolu Agency', domain: 'aa.com.tr' },
     ],
   },
+  {
+    country: 'Palestine', code: 'PS',
+    outlets: [
+      { name: 'WAFA', domain: 'english.wafa.ps' },
+      { name: 'Palestine Chronicle', domain: 'palestinechronicle.com' },
+      { name: 'Quds News', domain: 'qudsnen.co' },
+    ],
+  },
 ];
 
 function delay(ms: number): Promise<void> {

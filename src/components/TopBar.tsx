@@ -30,6 +30,14 @@ export default memo(function TopBar({ contextId }: TopBarProps) {
   const healthColor = !healthData ? '#7a6418' : allOk ? '#00ff88' : '#ff8c00';
   const filteredZones = clock.zones.filter(z => CLOCK_FILTER.has(z.label));
 
+  const threatColors: Record<string, string> = {
+    CRITICAL: '#ff3b3b',
+    ELEVATED: '#ff8c00',
+    GUARDED: '#d4a72c',
+    LOW: '#00ff88',
+  };
+  const badgeColor = threatColors[threatLevel] ?? '#ff8c00';
+
   // Map KPI colorClass to actual hex colors
   const kpiColor = (colorClass?: string): string => {
     if (!colorClass) return '#ffffff';
@@ -81,14 +89,14 @@ export default memo(function TopBar({ contextId }: TopBarProps) {
           gap: 6,
           padding: '3px 10px',
           borderRadius: 3,
-          background: 'rgba(255,59,59,0.10)',
-          border: '1px solid rgba(255,59,59,0.25)',
+          background: `${badgeColor}15`,
+          border: `1px solid ${badgeColor}40`,
         }}>
           <div style={{
             width: 7,
             height: 7,
             borderRadius: '50%',
-            background: error && !data ? '#ff8c00' : '#ff3b3b',
+            background: error && !data ? '#ff8c00' : badgeColor,
             animation: 'pulse-dot 1.5s infinite',
           }} />
           <span style={{
@@ -96,7 +104,7 @@ export default memo(function TopBar({ contextId }: TopBarProps) {
             fontSize: 12,
             fontWeight: 700,
             letterSpacing: 1.5,
-            color: '#ff3b3b',
+            color: badgeColor,
           }}>
             {error && !data ? 'OFFLINE' : threatLevel}
           </span>

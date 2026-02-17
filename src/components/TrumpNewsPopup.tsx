@@ -107,8 +107,7 @@ export default function TrumpNewsPopup() {
         const trumpTweets: TrumpPost[] = tweets
           .filter((t: TwitterIntelItem) =>
             t.author.username.toLowerCase() === 'realdonaldtrump' ||
-            t.author.username.toLowerCase() === 'potus' ||
-            t.author.username.toLowerCase() === 'whitehouse'
+            t.author.username.toLowerCase() === 'potus'
           )
           .filter((t: TwitterIntelItem) => hasValidText(t.text))
           .map((t: TwitterIntelItem) => ({

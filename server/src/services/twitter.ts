@@ -24,7 +24,7 @@ const ACCOUNT_GROUPS: AccountGroup[] = [
   // ── TIER A: Flash/Urgent — every cycle ──
   {
     label: 'POTUS & Trump',
-    accounts: ['realDonaldTrump', 'POTUS', 'WhiteHouse'],
+    accounts: ['realDonaldTrump', 'POTUS'],
     category: 'trump', priority: 'flash', tier: 'A',
   },
   {
@@ -51,7 +51,7 @@ const ACCOUNT_GROUPS: AccountGroup[] = [
   },
   {
     label: 'US Gov & Diplomacy',
-    accounts: ['StateDept', 'USTreasury', 'USTradeRep', 'DHSgov', 'CBP'],
+    accounts: ['StateDept', 'USTreasury', 'USTradeRep', 'DHSgov', 'CBP', 'WhiteHouse'],
     category: 'geopolitical', priority: 'priority', tier: 'B',
   },
   {
@@ -76,6 +76,14 @@ const ACCOUNT_GROUPS: AccountGroup[] = [
     label: 'EU & NATO',
     accounts: ['eu_eeas', 'NATO', 'SHAPE_NATO'],
     category: 'geopolitical', priority: 'priority', tier: 'B',
+  },
+  {
+    label: 'Argentina',
+    accounts: ['JMilei', 'VickyVillarruel', 'PatoBullrich', 'LuisCaputoAR',
+               'CFKArgentina', 'SergioMassa', 'JuanGrabworking', 'Abordo'],
+    category: 'geopolitical' as TweetCategory,
+    priority: 'priority' as TweetPriority,
+    tier: 'B' as const,
   },
 
   // ── TIER C: Routine — every 4th cycle ──
@@ -239,6 +247,8 @@ async function searchTweets(q: { query: string; category: TweetCategory; priorit
     .filter((t: TwitterIntelItem) => {
       // Filter retweets for trump category
       if (q.category === 'trump' && t.text.startsWith('RT @')) return false;
+      // Filter Milei retweets (he RTs excessively)
+      if (t.author.username.toLowerCase() === 'jmilei' && t.text.startsWith('RT @')) return false;
       // Filter image-only / link-only tweets with no real text
       const textWithoutUrls = t.text.replace(/https?:\/\/\S+/g, '').trim();
       return textWithoutUrls.length >= 10;

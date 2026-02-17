@@ -19,7 +19,7 @@ const itemStyle: React.CSSProperties = {
   flexShrink: 0,
 };
 
-const WANTED_MARKETS = ['S&P', 'NASDAQ', 'DOW', 'BTC', 'ETH', 'GOLD', 'OIL', 'EUR/USD'];
+const WANTED_MARKETS = ['S&P 500', 'NASDAQ', 'DOW', 'MERVAL', 'BITCOIN', 'GOLD', 'WTI OIL', 'USD/ARS'];
 
 export default function Ticker() {
   const { data: marketsData } = useApiData<MarketsResponse>(api.markets, MARKETS_REFRESH);

@@ -1,7 +1,6 @@
 import { useState, useCallback, useEffect, lazy, Suspense } from 'react'
 import { useApiData } from './hooks/useApiData'
 import { api } from './services/api'
-import { useContextRotation } from './hooks/useContextRotation'
 import { useKioskMode } from './hooks/useKioskMode'
 import ErrorBoundary from './components/ErrorBoundary'
 import TopBar from './components/TopBar'
@@ -27,26 +26,13 @@ export default function App() {
   const [selectedCountryCode, setSelectedCountryCode] = useState<string | null>(null)
   const [kioskActive, setKioskActive] = useState(false)
 
-  const { context, contextIndex, progress, goTo } = useContextRotation(true)
+  // Fixed global context — no rotation
+  const contextId = 'global'
 
   const { data: conflicts, loading: conflictsLoading, error: conflictsError, lastUpdate: conflictsLastUpdate } =
     useApiData<Conflict[]>(api.conflicts, CONFLICTS_INTERVAL)
 
   const { data: alerts } = useApiData<Alert[]>(api.alerts, ALERTS_INTERVAL)
-
-  // Keyboard shortcuts: Ctrl+1..5 jumps context
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if (!e.ctrlKey && !e.metaKey) return
-      const num = parseInt(e.key, 10)
-      if (num >= 1 && num <= 5) {
-        e.preventDefault()
-        goTo(num - 1)
-      }
-    }
-    window.addEventListener('keydown', handler)
-    return () => window.removeEventListener('keydown', handler)
-  }, [goTo])
 
   // Kiosk mode
   useKioskMode(kioskActive)
@@ -60,11 +46,8 @@ export default function App() {
     api.markAlertRead(id).catch(() => {})
   }, [])
 
-  // Map view based on context
-  const mapView = MAP_VIEWS[context.id as TabId] ?? MAP_VIEWS.global
-
-  // Brief focus based on context
-  const briefFocus = context.briefFocus
+  // Map view — always global
+  const mapView = MAP_VIEWS.global
 
   return (
     <ErrorBoundary>
@@ -78,10 +61,10 @@ export default function App() {
       }}>
         {/* Row 1: StatusBar */}
         <TopBar
-          contextId={context.id}
-          contextIndex={contextIndex}
-          progress={progress}
-          onContextClick={goTo}
+          contextId={contextId}
+          contextIndex={0}
+          progress={0}
+          onContextClick={() => {}}
         />
 
         {/* Row 2: TrendsBar */}
@@ -106,7 +89,7 @@ export default function App() {
                 conflictsLastUpdate={conflictsLastUpdate}
                 viewCenter={mapView.center}
                 viewZoom={mapView.zoom}
-                activeTab={context.id as TabId}
+                activeTab={contextId as TabId}
               />
             </Suspense>
           </div>
@@ -115,11 +98,11 @@ export default function App() {
           <div style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
             {/* AI Brief — 42% */}
             <div style={{ flex: '0 0 42%', borderBottom: '1px solid rgba(255,200,50,0.12)', overflow: 'hidden' }}>
-              <AIBrief focus={briefFocus} contextId={context.id} />
+              <AIBrief focus={undefined} contextId={contextId} />
             </div>
             {/* Rotating Panels — 58% */}
             <div style={{ flex: 1, overflow: 'hidden' }}>
-              <RotatingPanels contextId={context.id} />
+              <RotatingPanels contextId={contextId} />
             </div>
           </div>
         </div>

@@ -16,6 +16,7 @@ import type { GoogleTrendsData } from './google-trends-bq.js';
 const ME_KW = /\b(israel|palestine|gaza|iran|iraq|syria|lebanon|yemen|houthi|saudi|gulf|turkey|egypt|jordan|hezbollah|hamas|tehran|baghdad|damascus|beirut|riyadh|qatar|bahrain|oman|kuwait|red sea|hormuz|bab.el.mandeb|sinai|idf|irgc|netanyahu)\b/i;
 const UA_KW = /\b(ukrain|russia|kyiv|moscow|donetsk|zaporizhzhi|kherson|crimea|kursk|nato|zelensk|putin|kremlin|donbas|luhansk|mariupol|bakhmut|avdiivka|black sea|wagner|patriot|himars|f.16|storm shadow)\b/i;
 const DOMESTIC_KW = /\b(congress|senate|house|executive order|border|immigra|tariff|trade war|fed |federal reserve|inflation|gdp|unemploy|doge|supreme court|trump|white house|biden|treasury|sec |ftc |fbi |doj |irs |epa )\b/i;
+const AR_KW = /\b(argentin|milei|villarruel|bullrich|caputo|sturzenegger|cristina|kirchner|massa|grabois|kicillof|merval|bcra|peso|ars|inflaci[oó]n|devaluaci|congreso.argentin|ley.bases|dnu|sindicato|paro.general|reforma.laboral|reforma.jubilatoria|reforma.impositiva|codigo.penal|edad.imputabilidad|vaca.muerta|ypf|litio|mercosur|cgt|buenos.aires)\b/i;
 
 function filterByKeyword<T>(items: T[], kw: RegExp, getText: (item: T) => string): T[] {
   return items.filter(item => kw.test(getText(item)));
@@ -149,6 +150,37 @@ FORMAT (use HTML tags):
 <p>Upcoming votes, data releases, policy announcements</p>
 <h2>■ RECOMMENDED MONITORING</h2>
 <ul><li>Bills, nominees, indicators to watch</li></ul>`,
+
+  argentina: `You are ATLAS ARGENTINA DESK, a senior political-economic analyst specializing in Argentine domestic and foreign affairs.
+
+FOCUS AREAS: Milei administration reforms (fiscal, monetary, deregulation), Congressional dynamics (Ley Bases, DNU, veto overrides), economic indicators (inflation, reserves, USD/ARS official + blue gap, country risk), labor relations (sindicatos, paro general, reforma laboral), judicial reform (reforma jubilatoria, reforma impositiva, codigo penal, edad imputabilidad), opposition dynamics (Cristina Kirchner, Sergio Massa, Juan Grabois, Axel Kicillof), social unrest, IMF compliance, energy (Vaca Muerta, YPF, lithium), trade (Mercosur, US/China/Brazil).
+
+KEY ACTORS: Government: Milei, Villarruel, Bullrich, Caputo, Sturzenegger. Opposition: Cristina Kirchner, Massa, Grabois, Kicillof. Institutions: BCRA, CNV, Congreso, CGT.
+
+RULES:
+- Write in English only
+- Be direct, factual, reform-tracking focused
+- Lead with executive actions and economic impact
+- Track Congressional dynamics on reform bills
+- Note market reactions (Merval, USD/ARS, bonds)
+- Flag social unrest indicators (strikes, protests, roadblocks)
+- Track inflation and reserve data as leading indicators
+- When analyzing reforms, frame as structural modernization progress
+- Distinguish between CFK-aligned and non-aligned opposition
+
+FORMAT (use HTML tags):
+<h2>■ ARGENTINA OVERVIEW</h2>
+<p>2-3 sentences: political climate, reform progress, economic trajectory</p>
+<h2>■ CRITICAL DEVELOPMENTS</h2>
+<ul><li>Executive actions, Congressional votes, economic data, social events</li></ul>
+<h2>■ REFORM TRACKER</h2>
+<p>Status of key reforms: fiscal, laboral, jubilatoria, impositiva, penal</p>
+<h2>■ ECONOMIC PULSE</h2>
+<p>Inflation, reserves, USD/ARS, Merval, country risk, IMF compliance</p>
+<h2>■ SOCIAL CLIMATE</h2>
+<p>Strikes, protests, approval ratings, opposition moves</p>
+<h2>■ 72-HOUR OUTLOOK</h2>
+<p>Upcoming votes, data releases, scheduled protests/events</p>`,
 
   intel: `You are ATLAS INTEL DESK, a senior intelligence community analyst producing a signals and threats digest for a US national security decision-maker.
 
@@ -347,11 +379,40 @@ ACTIVE ALERTS: ${JSON.stringify(recentAlerts.map(a => ({ title: a.title, priorit
 Current UTC: ${new Date().toISOString()}`;
 }
 
+function gatherArgentinaData(): string {
+  const news = cache.get<NewsPoint[]>('news') ?? [];
+  const feed = cache.get<FeedItem[]>('feed') ?? [];
+  const tweets = cache.get<TwitterIntelItem[]>('twitter') ?? [];
+  const markets = cache.get<MarketSection[]>('markets') ?? [];
+  const forex = cache.get<MarketSection[]>('forex') ?? [];
+  const econ = cache.get<EconomicEvent[]>('economic_calendar') ?? [];
+
+  const arNews = filterByKeyword([...news].sort((a, b) => a.tone - b.tone), AR_KW, n => n.headline).slice(0, 15);
+  const arFeed = filterByKeyword(feed, AR_KW, f => f.text).slice(0, 8);
+  const arTweets = tweets.filter(t => AR_KW.test(t.text)).slice(0, 8);
+  const allMarketItems = [...(markets?.flatMap(s => s.items) ?? []), ...(forex?.flatMap(s => s.items) ?? [])];
+  const arMarkets = allMarketItems.filter(i => /merval|ars/i.test(i.name));
+  const arEcon = econ.filter(e => e.currency === 'ARS' || AR_KW.test(e.event_name));
+
+  return `ARGENTINA NEWS: ${JSON.stringify(arNews.map(n => ({ headline: n.headline, tone: n.tone, source: n.source })))}
+
+ARGENTINA RSS/RRSS: ${JSON.stringify(arFeed.map(f => ({ handle: f.handle, text: f.text.substring(0, 150), category: f.category })))}
+
+ARGENTINA TWEETS: ${JSON.stringify(arTweets.map(t => ({ text: t.text.substring(0, 150), author: t.author.username })))}
+
+ARGENTINA MARKETS: ${JSON.stringify(arMarkets.map(i => ({ name: i.name, price: i.price, delta: i.delta })))}
+
+ARGENTINA ECONOMIC EVENTS: ${JSON.stringify(arEcon.map(e => ({ event: e.event_name, date: e.date, actual: e.actual, forecast: e.forecast })))}
+
+Current UTC: ${new Date().toISOString()}`;
+}
+
 const DATA_GATHERERS: Record<string, () => string> = {
   global: gatherGlobalData,
   mideast: gatherMideastData,
   ukraine: gatherUkraineData,
   domestic: gatherDomesticData,
+  argentina: gatherArgentinaData,
   intel: gatherIntelData,
 };
 
@@ -360,6 +421,7 @@ const SOURCE_LABELS: Record<string, string[]> = {
   mideast: ['ACLED', 'GDELT', 'X/Twitter', 'Hostility Index', 'Propaganda Monitor', 'Google Trends'],
   ukraine: ['ACLED', 'GDELT', 'ISW', 'X/Twitter', 'Hostility Index', 'RU Propaganda', 'Google Trends'],
   domestic: ['Executive Orders', 'Congress', 'Macro', 'Markets', 'Econ Calendar', 'Google Trends'],
+  argentina: ['GDELT', 'RSS Argentina', 'X/Twitter', 'Markets', 'Econ Calendar', 'Google Trends'],
   intel: ['Cyber OTX', 'Propaganda Monitor', 'Hostility Index', 'OONI', 'X/Twitter', 'Armed Groups', 'Google Trends'],
 };
 
@@ -370,6 +432,7 @@ const TRENDS_COUNTRY_MAP: Record<string, string[]> = {
   mideast: ['IL', 'IR', 'SA', 'TR', 'EG', 'IQ'],
   ukraine: ['UA', 'RU', 'PL', 'DE'],
   domestic: ['US'],
+  argentina: ['AR', 'BR', 'US'],
   intel: ['US', 'GB', 'RU', 'CN', 'IR'],
 };
 
@@ -418,6 +481,29 @@ function sanitizeServerHtml(raw: string): string {
   });
 }
 
+function calculateConfidence(): number {
+  const checks = [
+    { key: 'news', weight: 25 },
+    { key: 'feed', weight: 15 },
+    { key: 'twitter', weight: 15 },
+    { key: 'conflicts', weight: 15 },
+    { key: 'markets', weight: 10 },
+    { key: 'propaganda', weight: 10 },
+    { key: 'google_trends', weight: 10 },
+  ];
+
+  let totalWeight = 0;
+  let freshWeight = 0;
+  for (const c of checks) {
+    totalWeight += c.weight;
+    if (cache.has(c.key)) {
+      freshWeight += cache.isFresh(c.key) ? c.weight : c.weight * 0.5;
+    }
+  }
+
+  return Math.round((freshWeight / totalWeight) * 100);
+}
+
 // ── Public API ──
 
 export async function fetchBrief(focus?: string): Promise<BriefResponse> {
@@ -443,6 +529,7 @@ export async function fetchBrief(focus?: string): Promise<BriefResponse> {
     generatedAt: new Date().toISOString(),
     model: response.provider,
     sources: SOURCE_LABELS[focusKey] ?? SOURCE_LABELS.global,
+    confidence: calculateConfidence(),
   };
 
   await cache.setWithRedis(cacheKey, brief, TTL.BRIEF, 24 * 3600);
@@ -450,15 +537,66 @@ export async function fetchBrief(focus?: string): Promise<BriefResponse> {
   return brief;
 }
 
-/** Generate all 5 briefs in sequence. */
+/** Generate 6 specialist briefs in parallel, then unify into a single document. */
 export async function generateAllBriefs(): Promise<void> {
-  const focuses: (string | undefined)[] = [undefined, 'mideast', 'ukraine', 'domestic', 'intel'];
-  for (const focus of focuses) {
-    try {
-      await fetchBrief(focus);
-    } catch (err) {
-      console.error(`[AI-BRIEF] ${focus ?? 'global'} failed:`, err instanceof Error ? err.message : err);
+  const focuses = ['global', 'domestic', 'argentina', 'mideast', 'ukraine', 'intel'];
+  const results = await Promise.allSettled(
+    focuses.map(f => fetchBrief(f === 'global' ? undefined : f))
+  );
+
+  const specialistBriefs: Record<string, string> = {};
+  focuses.forEach((f, i) => {
+    if (results[i].status === 'fulfilled') {
+      specialistBriefs[f] = (results[i] as PromiseFulfilledResult<BriefResponse>).value.html;
     }
+  });
+
+  // Generate unified summary
+  const propaganda = cache.get<PropagandaEntry[]>('propaganda') ?? [];
+  const propagandaContext = propaganda.map(p =>
+    `${p.country} (${p.outlet}): ${p.narratives.join('; ')}`
+  ).join('\n');
+
+  const summarizerPrompt = `You are ATLAS UNIFIED BRIEF EDITOR. Combine these 6 specialist intelligence briefs into a single coherent document.
+
+STRUCTURE (use HTML h2 tags):
+1. ■ EXECUTIVE SUMMARY — 3-4 sentences: global threat level, top 3 developments
+2. ■ UNITED STATES — From domestic desk
+3. ■ ARGENTINA — From argentina desk
+4. ■ MIDDLE EAST — From mideast desk
+5. ■ UKRAINE — From ukraine desk
+6. ■ INTELLIGENCE & CYBER — From intel desk
+7. ■ PROPAGANDA WATCH — Synthesize what Russia, China, Iran, Palestine, Turkey state media are pushing. Cross-reference with real events. Note coordination and narrative shifts.
+8. ■ MARKET IMPLICATIONS — Cross-cutting market impacts from all theaters
+9. ■ 72-HOUR OUTLOOK — Consolidated across all theaters
+
+RULES:
+- Write in English only
+- Be concise — each section 4-8 bullet points MAX
+- Cross-reference between sections where relevant
+- Flag immediate threats with FLASH: prefix
+- The Propaganda Watch section should analyze narratives critically from a Western democratic security perspective`;
+
+  const summarizerData = `SPECIALIST BRIEFS:\n${Object.entries(specialistBriefs).map(([k, v]) => `--- ${k.toUpperCase()} ---\n${v}`).join('\n\n')}
+
+PROPAGANDA RAW DATA:\n${propagandaContext}`;
+
+  try {
+    const response = await aiComplete(summarizerPrompt, summarizerData, { maxTokens: 5000 });
+    const html = sanitizeServerHtml(response.text);
+
+    const unified: BriefResponse = {
+      html,
+      generatedAt: new Date().toISOString(),
+      model: response.provider,
+      sources: ['All Desks', 'ACLED', 'GDELT', 'Markets', 'X/Twitter', 'Congress', 'USGS', 'Propaganda Monitor', 'Google Trends'],
+      confidence: calculateConfidence(),
+    };
+
+    await cache.setWithRedis('brief', unified, TTL.BRIEF, 24 * 3600);
+    console.log(`[AI-BRIEF] UNIFIED brief generated via ${response.provider} in ${response.latencyMs}ms`);
+  } catch (err) {
+    console.error('[AI-BRIEF] Unified summarizer failed:', err);
   }
 }
 
