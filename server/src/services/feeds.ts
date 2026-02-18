@@ -3,6 +3,7 @@ import { FETCH_TIMEOUT_RSS, TTL } from '../config.js';
 import { cache } from '../cache.js';
 import { stripHTML } from '../utils.js';
 import { translateTexts } from './translate.js';
+import { aiComplete } from '../utils/ai-client.js';
 import type { FeedItem, FeedCategory } from '../types.js';
 
 const parser = new RSSParser({
@@ -232,6 +233,42 @@ export async function fetchFeeds(): Promise<void> {
       for (let j = 0; j < toTranslate.length; j++) {
         allItems[toTranslate[j].idx].text = translated[j];
       }
+    }
+
+    // AI relevance filter — skip government/institutional sources
+    const toFilter: FeedItem[] = [];
+    const passThrough: FeedItem[] = [];
+    for (const item of allItems) {
+      if (UNFILTERED_HANDLES.has(item.handle)) {
+        passThrough.push(item);
+      } else {
+        toFilter.push(item);
+      }
+    }
+
+    if (toFilter.length > 0) {
+      const BATCH = 50;
+      const kept: FeedItem[] = [];
+      for (let i = 0; i < toFilter.length; i += BATCH) {
+        const batch = toFilter.slice(i, i + BATCH);
+        const numbered = batch.map((f, idx) => `${idx}: ${f.text}`).join('\n');
+        try {
+          const resp = await aiComplete(
+            'You are a geopolitical intelligence filter. For each numbered headline, respond with ONLY the numbers of headlines relevant to: geopolitics, international relations, military/defense, politics, economics/markets, trade, diplomacy, cyber/intelligence, terrorism, natural disasters, humanitarian crises, energy/commodities. Exclude: sports, entertainment, celebrity, lifestyle, weather forecasts, cooking, health/wellness tips, obituaries, human interest, local crime, gossip. Return ONLY a JSON array of numbers like [0,2,5].',
+            numbered,
+            { preferHaiku: true, maxTokens: 200 },
+          );
+          const indices = JSON.parse(resp.text.match(/\[[\d,\s]*\]/)?.[0] ?? '[]') as number[];
+          for (const idx of indices) {
+            if (batch[idx]) kept.push(batch[idx]);
+          }
+        } catch {
+          kept.push(...batch);
+        }
+      }
+      console.log(`[FEEDS] Haiku filter: ${toFilter.length} → ${kept.length}`);
+      allItems.length = 0;
+      allItems.push(...passThrough, ...kept);
     }
 
     // Sort by tier (ascending), then by recency within tier
