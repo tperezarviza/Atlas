@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef, memo, useMemo } from 'react';
 import { useApiData } from '../hooks/useApiData';
 import { api } from '../services/api';
-import type { NewsWireItem, FeedItem } from '../types';
+import type { NewsWireItem, TwitterIntelItem } from '../types';
 
 // ── Constants ──
 
@@ -104,7 +104,7 @@ const IntelWirePanel = memo(function IntelWirePanel({ contextId }: { contextId: 
     if (ctxRe) {
       filtered = filtered.filter((item) => ctxRe.test(item.headline));
     }
-    return filtered.slice(0, 20);
+    return filtered.slice(0, 40);
   }, [data, contextId]);
 
   useEffect(() => {
@@ -204,8 +204,17 @@ const IntelWirePanel = memo(function IntelWirePanel({ contextId }: { contextId: 
   );
 });
 
+const TWEET_CATEGORY_COLORS: Record<string, string> = {
+  crisis: '#ff3b3b',
+  military: '#ff8c00',
+  geopolitical: '#ffc832',
+  trump: '#a855f7',
+  osint: '#00ff88',
+  border: '#d4a72c',
+};
+
 const RRSSPanel = memo(function RRSSPanel() {
-  const { data } = useApiData<FeedItem[]>(api.leaders, 120_000);
+  const { data } = useApiData<TwitterIntelItem[]>(api.twitterIntel, 120_000);
   const scrollRef = useRef<HTMLDivElement>(null);
   const isPausedRef = useRef(false);
   const resumeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -215,11 +224,10 @@ const RRSSPanel = memo(function RRSSPanel() {
     const filtered = data.filter(item => !SPORTS_ENTERTAINMENT_RE.test(item.text));
     const seen = new Set<string>();
     return filtered.filter(item => {
-      const key = item.text.substring(0, 60).toLowerCase();
-      if (seen.has(key)) return false;
-      seen.add(key);
+      if (seen.has(item.id)) return false;
+      seen.add(item.id);
       return true;
-    }).slice(0, 50);
+    }).slice(0, 80);
   }, [data]);
 
   useEffect(() => {
@@ -262,17 +270,17 @@ const RRSSPanel = memo(function RRSSPanel() {
   }, [items]);
 
   if (!data) {
-    return <div style={{ padding: '14px 20px', color: '#7a6418', fontSize: 14 }}>Loading feeds...</div>;
+    return <div style={{ padding: '14px 20px', color: '#7a6418', fontSize: 14 }}>Loading tweets...</div>;
   }
   if (items.length === 0) {
-    return <div style={{ padding: '14px 20px', color: '#7a6418', fontSize: 14 }}>No items.</div>;
+    return <div style={{ padding: '14px 20px', color: '#7a6418', fontSize: 14 }}>No tweets.</div>;
   }
 
   return (
     <div ref={scrollRef} style={{ display: 'flex', flexDirection: 'column', gap: 12, maxHeight: '100%', overflowY: 'auto' }}>
       {items.map((item) => {
-        const platformKey = (item.source ?? '').toLowerCase();
-        const avatarBg = PLATFORM_COLORS[platformKey] ?? '#7a6418';
+        const catColor = TWEET_CATEGORY_COLORS[item.category] ?? '#7a6418';
+        const isUrgent = item.priority === 'flash' || item.priority === 'urgent';
 
         return (
           <div
@@ -282,71 +290,61 @@ const RRSSPanel = memo(function RRSSPanel() {
               gap: 12,
               background: 'rgba(255,200,50,0.025)',
               borderRadius: 8,
-              padding: 14,
+              overflow: 'hidden',
               flexShrink: 0,
             }}
           >
-            {/* Avatar circle */}
-            <div
-              style={{
-                width: 32,
-                height: 32,
-                borderRadius: '50%',
-                background: avatarBg,
-                flexShrink: 0,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: 14,
-                fontWeight: 700,
-                color: '#000',
-              }}
-            >
-              {(item.handle ?? '?')[0].toUpperCase()}
-            </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                <span
-                  style={{
-                    fontSize: 14,
-                    fontFamily: "'IBM Plex Mono', monospace",
-                    color: '#c9a84c',
-                  }}
-                >
-                  {item.handle}
-                </span>
-                <span style={{ fontSize: 13, color: '#7a6418' }}>
-                  {item.source} · {relativeTime(item.time)}
-                </span>
+            {/* Category sidebar */}
+            <div style={{ width: 4, flexShrink: 0, background: catColor, borderRadius: '8px 0 0 8px' }} />
+            <div style={{ padding: '10px 14px 10px 0', flex: 1, minWidth: 0, display: 'flex', gap: 10 }}>
+              {/* Avatar */}
+              <div
+                style={{
+                  width: 32, height: 32, borderRadius: '50%',
+                  background: catColor, flexShrink: 0,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 14, fontWeight: 700, color: '#000',
+                }}
+              >
+                {item.author.username[0].toUpperCase()}
               </div>
-              {item.url ? (
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                  <span style={{ fontSize: 14, fontFamily: "'IBM Plex Mono', monospace", color: '#c9a84c' }}>
+                    @{item.author.username}
+                  </span>
+                  {isUrgent && (
+                    <span style={{
+                      fontSize: 10, fontWeight: 700, letterSpacing: 1,
+                      padding: '1px 6px', borderRadius: 3,
+                      background: item.priority === 'flash' ? '#ff3b3b' : '#ff8c00',
+                      color: '#000', textTransform: 'uppercase',
+                    }}>
+                      {item.priority}
+                    </span>
+                  )}
+                  <span style={{ fontSize: 13, color: '#7a6418', marginLeft: 'auto' }}>
+                    {relativeTime(item.created_at)}
+                  </span>
+                </div>
                 <a
                   href={item.url}
                   target="_blank"
                   rel="noopener noreferrer"
                   style={{
-                    fontSize: 17,
-                    color: 'rgba(255,255,255,0.88)',
-                    lineHeight: 1.45,
-                    textDecoration: 'none',
-                    display: 'block',
+                    fontSize: 15, color: 'rgba(255,255,255,0.88)',
+                    lineHeight: 1.45, textDecoration: 'none', display: 'block',
                   }}
                   onMouseEnter={e => (e.currentTarget.style.color = '#ffc832')}
                   onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.88)')}
                 >
                   {item.text}
                 </a>
-              ) : (
-                <div
-                  style={{
-                    fontSize: 17,
-                    color: 'rgba(255,255,255,0.88)',
-                    lineHeight: 1.45,
-                  }}
-                >
-                  {item.text}
+                <div style={{ display: 'flex', gap: 12, marginTop: 4, fontSize: 12, fontFamily: "'IBM Plex Mono', monospace", color: '#7a6418' }}>
+                  <span>RT {item.metrics.retweet_count}</span>
+                  <span>{'\u2764'} {item.metrics.like_count}</span>
                 </div>
-              )}
+              </div>
             </div>
           </div>
         );

@@ -1,7 +1,7 @@
 import { cache } from '../cache.js';
 import { TTL } from '../config.js';
 import { aiComplete } from '../utils/ai-client.js';
-import type { TickerItem, NewsPoint, FeedItem, MarketSection, EconomicEvent } from '../types.js';
+import type { TickerItem, NewsPoint, FeedItem, MarketSection, EconomicEvent, TwitterIntelItem } from '../types.js';
 import type { Earthquake } from './earthquakes.js';
 import type { PolymarketEvent } from './polymarket.js';
 
@@ -18,6 +18,7 @@ const CATEGORY_COLORS: Record<string, string> = {
   russia_ukraine: '#e8842b',
   middle_east: '#e8842b',
   us_politics: '#9b59e8',
+  argentina: '#2d7aed',
   energy: '#d4a72c',
   general: '#2d7aed',
 };
@@ -38,6 +39,38 @@ async function summarizeHeadlines(headlines: string[]): Promise<string[]> {
   } catch {
     return headlines;
   }
+}
+
+/** Select RSS headlines with round-robin by tier for diversity */
+function selectDiverseFeeds(feed: FeedItem[], max: number): FeedItem[] {
+  const nonTrump = feed.filter(f => f.category !== 'trump');
+  const byTier = new Map<number, FeedItem[]>();
+  for (const f of nonTrump) {
+    const arr = byTier.get(f.tier) ?? [];
+    arr.push(f);
+    byTier.set(f.tier, arr);
+  }
+
+  // Target distribution: tier 1 → 2, tier 2 → 3 (includes AR), tier 3 → 2, tier 4 → 1
+  const targets: [number, number][] = [[1, 2], [2, 3], [3, 2], [4, 1]];
+  const selected: FeedItem[] = [];
+
+  for (const [tier, count] of targets) {
+    const items = byTier.get(tier) ?? [];
+    selected.push(...items.slice(0, count));
+  }
+
+  // Fill remaining slots round-robin
+  if (selected.length < max) {
+    const selectedIds = new Set(selected.map(s => s.id));
+    const remaining = nonTrump.filter(f => !selectedIds.has(f.id));
+    for (const f of remaining) {
+      if (selected.length >= max) break;
+      selected.push(f);
+    }
+  }
+
+  return selected.slice(0, max);
 }
 
 export async function composeTicker(): Promise<void> {
@@ -62,7 +95,7 @@ export async function composeTicker(): Promise<void> {
     }
   }
 
-  // 2. Breaking news — use tone when available, category colors when GDELT returns no tone
+  // 2. Breaking news — 12 items: top 4 negative + 8 round-robin by category
   const news = cache.get<NewsPoint[]>('news');
   const headlinesToSummarize: string[] = [];
   const headlineItems: { bulletColor: string; source: string }[] = [];
@@ -71,11 +104,9 @@ export async function composeTicker(): Promise<void> {
     const hasTone = news.some(n => n.tone !== 0);
     let selected: NewsPoint[];
     if (hasTone) {
-      // Top 4 by most negative tone
       const byTone = [...news].sort((a, b) => a.tone - b.tone);
       const topNeg = byTone.slice(0, 4);
       const topNegIds = new Set(topNeg.map(n => n.id));
-      // Up to 4 more by unique category (round-robin for diversity)
       const byCategory = new Map<string, NewsPoint[]>();
       for (const n of news) {
         if (topNegIds.has(n.id)) continue;
@@ -86,10 +117,10 @@ export async function composeTicker(): Promise<void> {
       const diverse: NewsPoint[] = [];
       const catKeys = [...byCategory.keys()];
       let round = 0;
-      while (diverse.length < 4 && round < 3) {
+      while (diverse.length < 8 && round < 4) {
         for (const cat of catKeys) {
           const arr = byCategory.get(cat)!;
-          if (round < arr.length && diverse.length < 4) {
+          if (round < arr.length && diverse.length < 8) {
             diverse.push(arr[round]);
           }
         }
@@ -107,7 +138,7 @@ export async function composeTicker(): Promise<void> {
       for (const [, arr] of byCategory) {
         selected.push(...arr.slice(0, 2));
       }
-      selected = selected.slice(0, 8);
+      selected = selected.slice(0, 12);
     }
     for (const n of selected) {
       headlinesToSummarize.push(n.headline);
@@ -118,14 +149,27 @@ export async function composeTicker(): Promise<void> {
     }
   }
 
-  // Add RSS feed headlines
+  // 3. RSS feed headlines — 10 items with tier diversity
   if (feed) {
-    const rssPosts = feed.filter(f => f.category !== 'trump').slice(0, 5);
+    const rssPosts = selectDiverseFeeds(feed, 10);
     for (const post of rssPosts) {
       headlinesToSummarize.push(post.text);
       headlineItems.push({
         bulletColor: '#2d7aed',
         source: post.handle.toUpperCase(),
+      });
+    }
+  }
+
+  // 4. Twitter highlights — top 3 flash/urgent tweets
+  const tweets = cache.get<TwitterIntelItem[]>('twitter');
+  if (tweets) {
+    const urgent = tweets.filter(t => t.priority === 'flash' || t.priority === 'urgent').slice(0, 3);
+    for (const t of urgent) {
+      headlinesToSummarize.push(t.text);
+      headlineItems.push({
+        bulletColor: t.priority === 'flash' ? '#e83b3b' : '#e8842b',
+        source: `@${t.author.username}`.toUpperCase(),
       });
     }
   }
@@ -141,7 +185,7 @@ export async function composeTicker(): Promise<void> {
     });
   }
 
-  // 3. Key markets (always show these)
+  // 5. Key markets (always show these)
   const sections = cache.get<MarketSection[]>('markets');
   if (sections) {
     for (const section of sections) {
@@ -173,7 +217,7 @@ export async function composeTicker(): Promise<void> {
     }
   }
 
-  // 4. Earthquake alerts
+  // 6. Earthquake alerts
   const quakes = cache.get<Earthquake[]>('earthquakes');
   if (quakes) {
     const significant = quakes.filter(q => q.magnitude >= 5.5).slice(0, 3);
@@ -187,7 +231,7 @@ export async function composeTicker(): Promise<void> {
     }
   }
 
-  // 5. Economic calendar — high-impact events in next 24h
+  // 7. Economic calendar — high-impact events in next 24h
   const econEvents = cache.get<EconomicEvent[]>('economic_calendar');
   if (econEvents) {
     const now = Date.now();
@@ -208,7 +252,7 @@ export async function composeTicker(): Promise<void> {
     }
   }
 
-  // 6. Polymarket predictions
+  // 8. Polymarket predictions
   const polymarket = cache.get<PolymarketEvent[]>('polymarket');
   if (polymarket) {
     const top = polymarket.slice(0, 5);

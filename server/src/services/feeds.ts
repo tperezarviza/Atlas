@@ -220,19 +220,17 @@ export async function fetchFeeds(): Promise<void> {
   });
 
   if (allItems.length > 0) {
-    // Translate non-English feed titles (state media may deliver non-English)
-    const nonLatinIndices: number[] = [];
-    const nonLatinTexts: string[] = [];
+    // Translate non-English feed titles — but preserve Argentine sources in Spanish
+    const toTranslate: { idx: number; text: string }[] = [];
     for (let i = 0; i < allItems.length; i++) {
-      if (allItems[i].text) {
-        nonLatinIndices.push(i);
-        nonLatinTexts.push(allItems[i].text);
+      if (allItems[i].text && !allItems[i].tags.includes('argentina')) {
+        toTranslate.push({ idx: i, text: allItems[i].text });
       }
     }
-    if (nonLatinTexts.length > 0) {
-      const translated = await translateTexts(nonLatinTexts, 'FEEDS');
-      for (let j = 0; j < nonLatinIndices.length; j++) {
-        allItems[nonLatinIndices[j]].text = translated[j];
+    if (toTranslate.length > 0) {
+      const translated = await translateTexts(toTranslate.map(t => t.text), 'FEEDS');
+      for (let j = 0; j < toTranslate.length; j++) {
+        allItems[toTranslate[j].idx].text = translated[j];
       }
     }
 

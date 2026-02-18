@@ -47,6 +47,7 @@ const GDELT_QUERIES = [
   { query: '(somalia OR al-shabaab) (attack OR killed OR military)', category: 'africa_crisis', timespan: '24h', maxpoints: 50 },
   { query: '(libya OR sahel OR niger OR mali OR burkina) (coup OR militia OR junta OR insurgent)', category: 'africa_crisis', timespan: '24h', maxpoints: 50 },
   { query: '(colombia OR "drug war" OR FARC OR ELN) (attack OR killed OR coca)', category: 'latam_crisis', timespan: '24h', maxpoints: 50 },
+  { query: '(argentina OR milei OR "buenos aires" OR peso) (economy OR reform OR crisis OR protest OR congress)', category: 'argentina', timespan: '24h', maxpoints: 100 },
 ];
 
 /** Extract the first article title from GDELT html field (contains <a> tags). */
@@ -235,7 +236,7 @@ const CATEGORY_PRIORITY: Record<string, number> = {
   conflict: 0, terrorism: 1, crisis: 2,
   africa_crisis: 3, latam_crisis: 3, asia_crisis: 3,
   nuclear: 4, china_threat: 4, russia_ukraine: 5, middle_east: 5,
-  us_politics: 6, energy: 7,
+  us_politics: 6, argentina: 6, energy: 7,
 };
 
 const CATEGORY_BULLET: Record<string, NewsBullet> = {
@@ -243,7 +244,7 @@ const CATEGORY_BULLET: Record<string, NewsBullet> = {
   africa_crisis: 'high', latam_crisis: 'high', asia_crisis: 'high',
   nuclear: 'high', china_threat: 'high',
   russia_ukraine: 'medium', middle_east: 'medium',
-  us_politics: 'accent', energy: 'accent',
+  us_politics: 'accent', argentina: 'medium', energy: 'accent',
 };
 
 function newsToWire(news: NewsPoint[], fetchedAt: number): NewsWireItem[] {
