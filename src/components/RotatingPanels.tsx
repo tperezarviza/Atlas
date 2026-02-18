@@ -139,6 +139,7 @@ const IntelWirePanel = memo(function IntelWirePanel({ contextId }: { contextId: 
             background: 'rgba(255,200,50,0.025)',
             borderRadius: 8,
             overflow: 'hidden',
+            flexShrink: 0,
           }}
         >
           {/* Severity bar */}
@@ -234,6 +235,7 @@ const RRSSPanel = memo(function RRSSPanel() {
               background: 'rgba(255,200,50,0.025)',
               borderRadius: 8,
               padding: 14,
+              flexShrink: 0,
             }}
           >
             {/* Avatar circle */}
