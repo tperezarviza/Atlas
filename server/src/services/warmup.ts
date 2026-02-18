@@ -32,6 +32,7 @@ import { detectFocalPoints } from './focal-points.js';
 // BQ services removed from warmup — too expensive (~180GB per redeploy).
 // Data restored from Redis or arrives at next cron cycle.
 import { detectSurges } from './surge-detection.js';
+import { fetchXNews } from './x-news.js';
 import { cache } from '../cache.js';
 import { redisGet } from '../redis.js';
 
@@ -107,6 +108,7 @@ export async function warmUpCache(): Promise<void> {
     safeRun('Flights', fetchFlights),
     safeRun('Twitter', fetchTwitterPrimary),
     safeRun('Cyber Threats', fetchCyberThreats),
+    safeRun('X News', fetchXNews),
   ]);
 
   // Phase 3: Composite and AI (depends on previous data)

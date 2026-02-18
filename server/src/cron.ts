@@ -39,6 +39,7 @@ import { flushDailyBytes } from './services/bq-cost-tracker.js';
 import { fetchGoogleTrends } from './services/google-trends-bq.js';
 import { detectSurges } from './services/surge-detection.js';
 import { fetchEventSpikes, fetchMilitaryCameo } from './services/bq-events.js';
+import { fetchXNews } from './services/x-news.js';
 
 function safeRun(name: string, fn: () => Promise<void> | void) {
   return async () => {
@@ -59,9 +60,10 @@ export function startCronJobs() {
   // */3 * * * * -> RSS Leader Feed
   cron.schedule('*/3 * * * *', safeRun('feeds', fetchFeeds));
 
-  // */15 * * * * -> GDELT News + Ticker recomposite
-  cron.schedule('*/15 * * * *', safeRun('gdelt+ticker', async () => {
+  // */15 * * * * -> GDELT News + X News + Ticker recomposite
+  cron.schedule('*/15 * * * *', safeRun('gdelt+xnews+ticker', async () => {
     await fetchGdeltNews();
+    await fetchXNews();
     await composeTicker();
   }));
 

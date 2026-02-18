@@ -20,9 +20,10 @@ export function registerNewswireRoutes(app: FastifyInstance) {
   app.get('/api/newswire', async () => {
     const gdeltWire = cache.get<NewsWireItem[]>('newswire') ?? [];
     const feeds = cache.get<FeedItem[]>('feed') ?? [];
+    const xNews = cache.get<NewsWireItem[]>('x_news') ?? [];
 
     const rssWire = feedToWire(feeds.filter(f => f.category !== 'trump'));
-    const merged = [...gdeltWire, ...rssWire];
+    const merged = [...gdeltWire, ...rssWire, ...xNews];
 
     // Sort by time (most recent first: 'now' < '1m' < '5m' < '1h' etc.)
     const timeToMin = (t: string): number => {
