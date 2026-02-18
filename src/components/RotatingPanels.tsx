@@ -152,17 +152,38 @@ const IntelWirePanel = memo(function IntelWirePanel({ contextId }: { contextId: 
             }}
           />
           <div style={{ padding: '10px 14px 10px 0', flex: 1, minWidth: 0 }}>
-            <div
-              style={{
-                fontSize: 18,
-                fontWeight: 600,
-                color: '#ffffff',
-                lineHeight: 1.35,
-                marginBottom: 6,
-              }}
-            >
-              {item.headline}
-            </div>
+            {item.url ? (
+              <a
+                href={item.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  fontSize: 18,
+                  fontWeight: 600,
+                  color: '#ffffff',
+                  lineHeight: 1.35,
+                  marginBottom: 6,
+                  textDecoration: 'none',
+                  display: 'block',
+                }}
+                onMouseEnter={e => (e.currentTarget.style.color = '#ffc832')}
+                onMouseLeave={e => (e.currentTarget.style.color = '#ffffff')}
+              >
+                {item.headline}
+              </a>
+            ) : (
+              <div
+                style={{
+                  fontSize: 18,
+                  fontWeight: 600,
+                  color: '#ffffff',
+                  lineHeight: 1.35,
+                  marginBottom: 6,
+                }}
+              >
+                {item.headline}
+              </div>
+            )}
             <div
               style={{
                 fontSize: 14,
@@ -186,6 +207,8 @@ const IntelWirePanel = memo(function IntelWirePanel({ contextId }: { contextId: 
 const RRSSPanel = memo(function RRSSPanel() {
   const { data } = useApiData<FeedItem[]>(api.leaders, 120_000);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const isPausedRef = useRef(false);
+  const resumeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const items = useMemo(() => {
     if (!data) return [];
@@ -196,21 +219,46 @@ const RRSSPanel = memo(function RRSSPanel() {
       if (seen.has(key)) return false;
       seen.add(key);
       return true;
-    }).slice(0, 20);
+    }).slice(0, 50);
   }, [data]);
 
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
     el.scrollTop = 0;
+
+    const onEnter = () => {
+      isPausedRef.current = true;
+      if (resumeTimerRef.current) clearTimeout(resumeTimerRef.current);
+    };
+    const onLeave = () => {
+      resumeTimerRef.current = setTimeout(() => {
+        isPausedRef.current = false;
+      }, 10_000);
+    };
+
+    el.addEventListener('mouseenter', onEnter);
+    el.addEventListener('mouseleave', onLeave);
+    el.addEventListener('touchstart', onEnter, { passive: true });
+    el.addEventListener('touchend', onLeave);
+
     const interval = setInterval(() => {
+      if (isPausedRef.current) return;
       if (el.scrollTop + el.clientHeight >= el.scrollHeight - 10) {
         el.scrollTop = 0;
       } else {
         el.scrollTop += 1;
       }
     }, 120);
-    return () => clearInterval(interval);
+
+    return () => {
+      clearInterval(interval);
+      el.removeEventListener('mouseenter', onEnter);
+      el.removeEventListener('mouseleave', onLeave);
+      el.removeEventListener('touchstart', onEnter);
+      el.removeEventListener('touchend', onLeave);
+      if (resumeTimerRef.current) clearTimeout(resumeTimerRef.current);
+    };
   }, [items]);
 
   if (!data) {
@@ -221,7 +269,7 @@ const RRSSPanel = memo(function RRSSPanel() {
   }
 
   return (
-    <div ref={scrollRef} style={{ display: 'flex', flexDirection: 'column', gap: 12, maxHeight: '100%', overflow: 'hidden' }}>
+    <div ref={scrollRef} style={{ display: 'flex', flexDirection: 'column', gap: 12, maxHeight: '100%', overflowY: 'auto' }}>
       {items.map((item) => {
         const platformKey = (item.source ?? '').toLowerCase();
         const avatarBg = PLATFORM_COLORS[platformKey] ?? '#7a6418';
@@ -271,15 +319,34 @@ const RRSSPanel = memo(function RRSSPanel() {
                   {item.source} · {relativeTime(item.time)}
                 </span>
               </div>
-              <div
-                style={{
-                  fontSize: 17,
-                  color: 'rgba(255,255,255,0.88)',
-                  lineHeight: 1.45,
-                }}
-              >
-                {item.text}
-              </div>
+              {item.url ? (
+                <a
+                  href={item.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    fontSize: 17,
+                    color: 'rgba(255,255,255,0.88)',
+                    lineHeight: 1.45,
+                    textDecoration: 'none',
+                    display: 'block',
+                  }}
+                  onMouseEnter={e => (e.currentTarget.style.color = '#ffc832')}
+                  onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.88)')}
+                >
+                  {item.text}
+                </a>
+              ) : (
+                <div
+                  style={{
+                    fontSize: 17,
+                    color: 'rgba(255,255,255,0.88)',
+                    lineHeight: 1.45,
+                  }}
+                >
+                  {item.text}
+                </div>
+              )}
             </div>
           </div>
         );

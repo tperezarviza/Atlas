@@ -71,7 +71,31 @@ export async function composeTicker(): Promise<void> {
     const hasTone = news.some(n => n.tone !== 0);
     let selected: NewsPoint[];
     if (hasTone) {
-      selected = [...news].sort((a, b) => a.tone - b.tone).slice(0, 8);
+      // Top 4 by most negative tone
+      const byTone = [...news].sort((a, b) => a.tone - b.tone);
+      const topNeg = byTone.slice(0, 4);
+      const topNegIds = new Set(topNeg.map(n => n.id));
+      // Up to 4 more by unique category (round-robin for diversity)
+      const byCategory = new Map<string, NewsPoint[]>();
+      for (const n of news) {
+        if (topNegIds.has(n.id)) continue;
+        const arr = byCategory.get(n.category) ?? [];
+        arr.push(n);
+        byCategory.set(n.category, arr);
+      }
+      const diverse: NewsPoint[] = [];
+      const catKeys = [...byCategory.keys()];
+      let round = 0;
+      while (diverse.length < 4 && round < 3) {
+        for (const cat of catKeys) {
+          const arr = byCategory.get(cat)!;
+          if (round < arr.length && diverse.length < 4) {
+            diverse.push(arr[round]);
+          }
+        }
+        round++;
+      }
+      selected = [...topNeg, ...diverse];
     } else {
       const byCategory = new Map<string, NewsPoint[]>();
       for (const n of news) {

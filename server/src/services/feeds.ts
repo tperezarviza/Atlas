@@ -193,6 +193,7 @@ async function fetchSingleFeed(source: FeedSource): Promise<FeedItem[]> {
         engagement: '',
         tags: source.tags,
         tier: source.tier,
+        url: item.link || undefined,
       });
       idx++;
       if (items.length >= 5) break;

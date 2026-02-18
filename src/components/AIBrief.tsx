@@ -64,7 +64,7 @@ export default function AIBrief({ focus, contextId }: AIBriefProps) {
         } else {
           el.scrollTop += 1;
         }
-      }, 200);
+      }, 100);
     }, 15000);
     return () => {
       clearTimeout(timeout);
