@@ -9,9 +9,9 @@ interface FlightMarkersProps {
 }
 
 const COUNTRY_COLORS: Record<string, string> = {
-  'United States': '#ffc832',
+  'United States': '#4a9eff',
   'Russia': '#ff3b3b',
-  'China': '#d4a72c',
+  'China': '#ff8c00',
 };
 const DEFAULT_COLOR = '#7a6418';
 

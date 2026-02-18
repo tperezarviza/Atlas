@@ -77,6 +77,7 @@ export interface NewsPoint {
   source: string;
   category: string;
   fetchedAt: string;
+  url?: string;
 }
 
 export interface FeedItem {
@@ -90,6 +91,7 @@ export interface FeedItem {
   text: string;
   engagement: string;
   tags: string[];
+  url?: string;
 }
 
 export interface MarketItem {
@@ -127,6 +129,7 @@ export interface NewsWireItem {
   time: string;
   headline: string;
   tone: number;
+  url?: string;
 }
 
 export interface CalendarEvent {

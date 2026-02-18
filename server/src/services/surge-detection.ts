@@ -58,7 +58,7 @@ function welfordStdDev(state: WelfordState): number {
 const PROXIMITY_KM = 150;
 const MIN_OBSERVATIONS = 8;
 const Z_WATCH = 2.0;
-const Z_ELEVATED = 3.0;
+const Z_ELEVATED = 3.5;
 const Z_CRITICAL = 4.0;
 const REDIS_KEY = 'state:surgeBaselines';
 

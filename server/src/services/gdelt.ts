@@ -75,6 +75,13 @@ function decodeEntities(text: string): string {
     .replace(/&#x27;/g, "'");
 }
 
+/** Extract the full URL from the first <a href="..."> in GDELT html. */
+function extractFullUrl(html: string | undefined): string | undefined {
+  if (!html) return undefined;
+  const match = html.match(/<a[^>]*href="(https?:\/\/[^"]+)"/);
+  return match?.[1] ?? undefined;
+}
+
 /** Extract domain from the first <a href="..."> in GDELT html. */
 function extractDomain(html: string | undefined): string | undefined {
   if (!html) return undefined;
@@ -134,6 +141,7 @@ async function fetchGdeltQuery(
       source: formatDomain(extractDomain(f.properties.html) ?? f.properties.domain),
       category,
       fetchedAt: now,
+      url: extractFullUrl(f.properties.html),
     });
   }
   return points;
@@ -288,6 +296,7 @@ function newsToWire(news: NewsPoint[], fetchedAt: number): NewsWireItem[] {
       time,
       headline: n.headline,
       tone: n.tone,
+      url: n.url,
     };
   });
 }

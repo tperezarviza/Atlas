@@ -1,12 +1,18 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { ANTHROPIC_API_KEY } from '../config.js';
 
+/** Detect non-English Latin-script languages (Italian, French, Spanish, Portuguese). */
+const NON_ENGLISH_INDICATORS = /\b(dell[aeo]|nell[aeo]|sull[aeo]|l'ambasciatore|governo|contro|anche|perch[eé]|après|aujourd'?hui|qu[ei]|dans|avec|pour|cette|serait|había|donde|tiene|sobre|está|también|según|pero|entre|todos|desde|como|más|años|governo|primo|ministro|presidente|durante|ancora|stato|essere|questa|quello|hanno|sono|tutto|sempre|giorno|molto|fatto|ogni|nuovo|altra|paese|mondo|dopo|prima|grande|perché|ancora|così|però|già|bene|mentre|senza|altra|trova|parte)\b/i;
+
 /** Check if text is primarily Latin-script (English/European). */
 export function isLatinText(text: string): boolean {
   const letters = text.replace(/[\s\d\p{P}\p{S}]/gu, '');
   if (letters.length === 0) return true;
   const latinChars = letters.replace(/[^\u0000-\u024F\u1E00-\u1EFF]/g, '');
-  return latinChars.length / letters.length > 0.7;
+  const isLatin = latinChars.length / letters.length > 0.7;
+  // If text is Latin-script but contains non-English indicators, mark as non-Latin so it gets translated
+  if (isLatin && NON_ENGLISH_INDICATORS.test(text)) return false;
+  return isLatin;
 }
 
 /** Translate a single batch of up to 50 texts via Claude Haiku. */

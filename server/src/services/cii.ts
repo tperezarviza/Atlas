@@ -44,7 +44,7 @@ const COUNTRY_BASELINES: { code: string; name: string; baseline: number; lat: nu
   { code: 'PK', name: 'Pakistan',       baseline: 50, lat: 30.4, lng: 69.3 },
   { code: 'UA', name: 'Ukraine',        baseline: 75, lat: 48.4, lng: 31.2 },
   { code: 'RU', name: 'Russia',         baseline: 45, lat: 55.8, lng: 37.6 },
-  { code: 'IR', name: 'Iran',           baseline: 55, lat: 32.4, lng: 53.7 },
+  { code: 'IR', name: 'Iran',           baseline: 65, lat: 32.4, lng: 53.7 },
   { code: 'KP', name: 'North Korea',    baseline: 60, lat: 40.3, lng: 127.5 },
   { code: 'CN', name: 'China',          baseline: 30, lat: 35.9, lng: 104.2 },
   { code: 'VE', name: 'Venezuela',      baseline: 55, lat: 6.4,  lng: -66.6 },
@@ -279,8 +279,8 @@ export async function computeCII(): Promise<void> {
       hostilityFactor * weights.hostility
     );
 
-    // Composite: baseline × 0.40 + eventScore × 0.60
-    const score = clamp(Math.round(baseline * 0.40 + eventScore * 0.60), 0, 100);
+    // Composite: baseline × 0.30 + eventScore × 0.70
+    const score = clamp(Math.round(baseline * 0.30 + eventScore * 0.70), 0, 100);
 
     // Load sparkline from Redis, append new score
     const redisKey = `${REDIS_KEY_PREFIX}${code}`;

@@ -241,21 +241,31 @@ function checkRssFeeds(): void {
   }
 }
 
+const surgeCooldowns = new Map<string, number>();
+const SURGE_COOLDOWN_MS = 2 * 60 * 60 * 1000; // 2 hours
+
 function checkSurges(): void {
   const surges = cache.get<SurgeAlert[]>('surge_alerts');
   if (!surges) return;
 
+  const now = Date.now();
   for (const s of surges) {
-    const priority: AlertPriority = s.level === 'critical' ? 'flash'
-      : s.level === 'elevated' ? 'urgent' : 'priority';
+    // Only alert for critical surges (z≥4.0)
+    if (s.level !== 'critical') continue;
+
+    // Cooldown: skip if we alerted this base within the last 2 hours
+    const lastAlert = surgeCooldowns.get(s.baseId);
+    if (lastAlert && now - lastAlert < SURGE_COOLDOWN_MS) continue;
+
     addAlert(
-      priority,
+      'flash',
       'surge',
       `Flight surge near ${s.baseName}: ${s.currentCount} aircraft (z=${s.zScore})`,
       `Level: ${s.level.toUpperCase()} • Baseline: ${s.baselineMean}±${s.baselineStdDev} • ${s.topCallsigns.join(', ')}`,
       'surge',
       [s.baseName, s.level.toUpperCase()],
     );
+    surgeCooldowns.set(s.baseId, now);
   }
 }
 
