@@ -96,6 +96,8 @@ function ciiLabel(s: number): string {
 const IntelWirePanel = memo(function IntelWirePanel({ contextId }: { contextId: string }) {
   const { data } = useApiData<NewsWireItem[]>(api.newswire, 900_000);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const isPausedRef = useRef(false);
+  const resumeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const items = useMemo(() => {
     if (!data) return [];
@@ -111,14 +113,35 @@ const IntelWirePanel = memo(function IntelWirePanel({ contextId }: { contextId: 
     const el = scrollRef.current;
     if (!el) return;
     el.scrollTop = 0;
+
+    const onEnter = () => {
+      isPausedRef.current = true;
+      if (resumeTimerRef.current) clearTimeout(resumeTimerRef.current);
+    };
+    const onLeave = () => {
+      resumeTimerRef.current = setTimeout(() => {
+        isPausedRef.current = false;
+      }, 10_000);
+    };
+
+    el.addEventListener('mouseenter', onEnter);
+    el.addEventListener('mouseleave', onLeave);
+
     const interval = setInterval(() => {
+      if (isPausedRef.current) return;
       if (el.scrollTop + el.clientHeight >= el.scrollHeight - 10) {
         el.scrollTop = 0;
       } else {
         el.scrollTop += 1;
       }
     }, 120);
-    return () => clearInterval(interval);
+
+    return () => {
+      clearInterval(interval);
+      el.removeEventListener('mouseenter', onEnter);
+      el.removeEventListener('mouseleave', onLeave);
+      if (resumeTimerRef.current) clearTimeout(resumeTimerRef.current);
+    };
   }, [items]);
 
   if (!data) {
@@ -129,7 +152,7 @@ const IntelWirePanel = memo(function IntelWirePanel({ contextId }: { contextId: 
   }
 
   return (
-    <div ref={scrollRef} style={{ display: 'flex', flexDirection: 'column', gap: 10, maxHeight: '100%', overflow: 'hidden' }}>
+    <div ref={scrollRef} style={{ display: 'flex', flexDirection: 'column', gap: 10, maxHeight: '100%', overflowY: 'auto' }}>
       {items.map((item) => (
         <div
           key={item.id}
@@ -221,7 +244,9 @@ const RRSSPanel = memo(function RRSSPanel() {
 
   const items = useMemo(() => {
     if (!data) return [];
-    const filtered = data.filter(item => !SPORTS_ENTERTAINMENT_RE.test(item.text));
+    const filtered = data.filter(item =>
+      !SPORTS_ENTERTAINMENT_RE.test(item.text) && !item.text.startsWith('RT @')
+    );
     const seen = new Set<string>();
     return filtered.filter(item => {
       if (seen.has(item.id)) return false;

@@ -1,28 +1,38 @@
 import { useMemo } from 'react';
 import { Marker, Tooltip } from 'react-leaflet';
 import L from 'leaflet';
-import type { MilitaryFlight } from '../../types';
+import type { MilitaryFlight, FlightCategory } from '../../types';
 
 interface FlightMarkersProps {
   data: MilitaryFlight[] | null;
   visible: boolean;
 }
 
+const CATEGORY_COLORS: Record<FlightCategory, string> = {
+  fighter:       '#ff3b3b',
+  bomber:        '#ff8c00',
+  surveillance:  '#a855f7',
+  command:       '#ffc832',
+  tanker:        '#00ff88',
+  transport:     '#4a9eff',
+  helicopter:    '#d4a72c',
+  unknown:       '#7a6418',
+};
+
 const COUNTRY_COLORS: Record<string, string> = {
   'United States': '#4a9eff',
   'Russia': '#ff3b3b',
   'China': '#ff8c00',
 };
-const DEFAULT_COLOR = '#7a6418';
 
 function bucketHeading(heading: number): number {
   return Math.round(heading / 45) * 45 % 360;
 }
 
 const iconCache = new Map<string, L.DivIcon>();
-function getFlightIcon(heading: number, country: string): L.DivIcon {
+function getFlightIcon(heading: number, category: FlightCategory, country: string): L.DivIcon {
   const bucket = bucketHeading(heading);
-  const color = COUNTRY_COLORS[country] ?? DEFAULT_COLOR;
+  const color = CATEGORY_COLORS[category] ?? COUNTRY_COLORS[country] ?? '#7a6418';
   const key = `${bucket}-${color}`;
   let icon = iconCache.get(key);
   if (!icon) {
@@ -44,7 +54,7 @@ export default function FlightMarkers({ data, visible }: FlightMarkersProps) {
       <Marker
         key={f.icao24}
         position={[f.lat, f.lng]}
-        icon={getFlightIcon(f.heading, f.origin_country)}
+        icon={getFlightIcon(f.heading, f.category, f.origin_country)}
         zIndexOffset={600}
       >
         <Tooltip direction="top" offset={[0, -6]} className="map-tooltip">
