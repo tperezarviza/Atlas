@@ -24,8 +24,8 @@ WITH daily AS (
   SELECT ActionGeo_CountryCode as country,
     COUNTIF(CAST(SQLDATE AS STRING) = FORMAT_DATE('%Y%m%d', DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY))) as yesterday,
     COUNT(*) / 7.0 as daily_avg
-  FROM \`bigquery-public-data.gdeltv2.events_partitioned\`
-  WHERE DATE(_PARTITIONTIME) >= DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY)
+  FROM \`gdelt-bq.gdeltv2.events\`
+  WHERE SQLDATE >= CAST(FORMAT_DATE('%Y%m%d', DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY)) AS INT64)
     AND GoldsteinScale < -5
     AND ActionGeo_CountryCode IS NOT NULL
     AND ActionGeo_CountryCode != ''
@@ -43,8 +43,8 @@ SELECT ActionGeo_CountryCode as country,
   EventRootCode as event_code,
   COUNT(*) as count,
   ROUND(AVG(AvgTone), 2) as avg_tone
-FROM \`bigquery-public-data.gdeltv2.events_partitioned\`
-WHERE DATE(_PARTITIONTIME) >= DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY)
+FROM \`gdelt-bq.gdeltv2.events\`
+WHERE SQLDATE >= CAST(FORMAT_DATE('%Y%m%d', DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY)) AS INT64)
   AND EventRootCode IN ('14','15','17','18','19','20')
   AND ActionGeo_CountryCode IS NOT NULL
 GROUP BY country, event_code
