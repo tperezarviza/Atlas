@@ -34,7 +34,7 @@ import { detectFocalPoints } from './focal-points.js';
 import { detectSurges } from './surge-detection.js';
 import { fetchXNews } from './x-news.js';
 import { cache } from '../cache.js';
-import { redisGet } from '../redis.js';
+import { redisGet, waitForRedis } from '../redis.js';
 
 async function safeRun(name: string, fn: () => Promise<void> | void) {
   try {
@@ -45,6 +45,12 @@ async function safeRun(name: string, fn: () => Promise<void> | void) {
 }
 
 async function warmupFromRedis(): Promise<void> {
+  console.log('[WARMUP] Waiting for Redis...');
+  const ok = await waitForRedis(5000);
+  if (!ok) {
+    console.warn('[WARMUP] Redis not available, skipping restore');
+    return;
+  }
   console.log('[WARMUP] Loading Redis backups...');
   const keysToRestore = [
     'brief', 'brief:mideast', 'brief:ukraine', 'brief:domestic', 'brief:intel',

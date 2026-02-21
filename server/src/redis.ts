@@ -37,6 +37,17 @@ export function isRedisConnected(): boolean {
   return connected;
 }
 
+export function waitForRedis(timeoutMs = 5000): Promise<boolean> {
+  if (connected) return Promise.resolve(true);
+  return new Promise((resolve) => {
+    const timer = setTimeout(() => resolve(false), timeoutMs);
+    const check = () => {
+      if (connected) { clearTimeout(timer); resolve(true); }
+    };
+    client?.once('connect', check);
+  });
+}
+
 export async function redisGet<T>(key: string): Promise<T | null> {
   if (!client || !connected) return null;
   try {
