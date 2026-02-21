@@ -1,7 +1,9 @@
-import { FETCH_TIMEOUT_API, TTL, GDELT_BASE } from '../config.js';
+import { TTL, GDELT_BASE } from '../config.js';
 import { cache } from '../cache.js';
 import { safeJson } from '../utils.js';
 import type { Chokepoint, ChokepointStatus } from '../types.js';
+
+const GDELT_TIMEOUT = 30_000; // GDELT via CF proxy needs ~20-25s
 
 const CHOKEPOINTS_BASE: Omit<Chokepoint, 'status' | 'statusReason' | 'nearbyVessels' | 'recentIncidents'>[] = [
   { id: 'cp-hormuz', name: 'Strait of Hormuz', lat: 26.56, lng: 56.25, region: 'Middle East', dailyVessels: 80, oilFlowMbpd: 21.0, globalTradePercent: 21 },
@@ -42,7 +44,7 @@ export async function fetchShippingData(): Promise<void> {
         const url = `${GDELT_BASE}/api/v2/doc/doc?query=${keywords}&mode=tonechart&format=json&timespan=7d`;
 
         const res = await fetch(url, {
-          signal: AbortSignal.timeout(FETCH_TIMEOUT_API),
+          signal: AbortSignal.timeout(GDELT_TIMEOUT),
           headers: { 'User-Agent': 'ATLAS/1.0' },
         });
 
@@ -67,7 +69,7 @@ export async function fetchShippingData(): Promise<void> {
 
           try {
             const hRes = await fetch(hUrl, {
-              signal: AbortSignal.timeout(FETCH_TIMEOUT_API),
+              signal: AbortSignal.timeout(GDELT_TIMEOUT),
               headers: { 'User-Agent': 'ATLAS/1.0' },
             });
             if (hRes.ok) {
