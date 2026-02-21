@@ -152,6 +152,13 @@ const UNFILTERED_HANDLES = new Set([
   'Kremlin', 'CSIS', 'ISW',
 ]);
 
+// ── Haiku filter decision cache (headline → keep/reject) ──
+const filterCache = new Map<string, boolean>();
+const FILTER_CACHE_MAX = 3000;
+function filterKey(text: string): string {
+  return text.substring(0, 80).toLowerCase().trim();
+}
+
 // Headline keywords that indicate irrelevant content for an intel dashboard
 // Note: no trailing \b — allows prefix matching (e.g. "olympi" matches "Olympics")
 const NOISE_PATTERNS = /\b(olympi|medal\b|athlet|quarterback|touchdown|nfl\b|nba\b|mlb\b|nhl\b|super bowl|world series|slam dunk|home run\b|batting|pitching|soccer goal|premier league|champions league|la liga|serie a\b|bundesliga|tennis\b|golf\b|swimming|gymnast|skating|curling|bobsled|ski jump|snowboard|relay race|marathon run|halfpipe|slalom|biathlon|figure skat|volleyball|rowing\b|fencing\b|wrestling match|boxing ring|ufc\b|mma\b|formula.?1|nascar|grand prix|copa america|world cup|euro 2\d|stanley cup|draft pick|free agent sign|transfer window|recipe|cookbook|cooking\b|baked?\b|chef\b|restaurant review|food recall|dining\b|nutrition tip|kitchen hack|fashion\b|runway\b|designer\b|couture|red carpet|beauty\b|makeup|skincare|hairstyle|fragrance|celebrity|kardashian|hollywood|box office|movie review|tv show|streaming\b|netflix|hulu\b|disney\+|emmy\b|oscar\b|grammy|golden globe|spirit award|billboard\b|album\b|concert\b|tour date|pop star|broadway|reality tv|bachelor\b|bachelorette|survivor\b|big brother|idol\b|talent show|housewives|dating show|wedding plan|baby shower|gender reveal|home renovation|hgtv|diy project|garden tip|pet care|dog breed|cat video|horoscope|zodiac|psychic|lottery|jackpot|casino\b|betting odds|fantasy sport|prop bet|crossword|puzzle\b|trivia\b|viral video|tiktok trend|influencer|yoga\b|pilates|workout|weight loss|diet plan|keto\b|paleo\b|vegan recipe|juice cleanse|hiker die|hiker found|summit.*(peak|mountain)|preacher.*kid|meth addict|kiosk.smash|airport.*rampage|cause.of.death|death.reveal|dies.at|beloved.*dies|gorilla|zoo\b|passes.away|found.dead|obituary|funeral|burial|legendary.actor|soap.opera|puppy|kitten|dog.breed|cat.video|baby.name|gender.reveal|wedding.plan|tattoo|boyfriend|girlfriend|breakup|cheating|plastic.surgery)/i;
@@ -247,26 +254,59 @@ export async function fetchFeeds(): Promise<void> {
     }
 
     if (toFilter.length > 0) {
-      const BATCH = 50;
-      const kept: FeedItem[] = [];
-      for (let i = 0; i < toFilter.length; i += BATCH) {
-        const batch = toFilter.slice(i, i + BATCH);
-        const numbered = batch.map((f, idx) => `${idx}: ${f.text}`).join('\n');
-        try {
-          const resp = await aiComplete(
-            'You are a geopolitical intelligence filter. For each numbered headline, respond with ONLY the numbers of headlines relevant to: geopolitics, international relations, military/defense, politics, economics/markets, trade, diplomacy, cyber/intelligence, terrorism, natural disasters, humanitarian crises, energy/commodities. Exclude: sports, entertainment, celebrity, lifestyle, weather forecasts, cooking, health/wellness tips, obituaries, human interest, local crime, gossip. Return ONLY a JSON array of numbers like [0,2,5].',
-            numbered,
-            { preferHaiku: true, maxTokens: 200 },
-          );
-          const indices = JSON.parse(resp.text.match(/\[[\d,\s]*\]/)?.[0] ?? '[]') as number[];
-          for (const idx of indices) {
-            if (batch[idx]) kept.push(batch[idx]);
-          }
-        } catch {
-          kept.push(...batch);
+      // Split into cached-decision items and truly-new items
+      const alreadyDecided: FeedItem[] = [];
+      const needsAI: FeedItem[] = [];
+      for (const item of toFilter) {
+        const key = filterKey(item.text);
+        const cached = filterCache.get(key);
+        if (cached !== undefined) {
+          if (cached) alreadyDecided.push(item);
+          // if cached === false, item was rejected → skip
+        } else {
+          needsAI.push(item);
         }
       }
-      console.log(`[FEEDS] Haiku filter: ${toFilter.length} → ${kept.length}`);
+
+      const kept: FeedItem[] = [...alreadyDecided];
+
+      if (needsAI.length > 0) {
+        const BATCH = 50;
+        for (let i = 0; i < needsAI.length; i += BATCH) {
+          const batch = needsAI.slice(i, i + BATCH);
+          const numbered = batch.map((f, idx) => `${idx}: ${f.text}`).join('\n');
+          try {
+            const resp = await aiComplete(
+              'You are a geopolitical intelligence filter. For each numbered headline, respond with ONLY the numbers of headlines relevant to: geopolitics, international relations, military/defense, politics, economics/markets, trade, diplomacy, cyber/intelligence, terrorism, natural disasters, humanitarian crises, energy/commodities. Exclude: sports, entertainment, celebrity, lifestyle, weather forecasts, cooking, health/wellness tips, obituaries, human interest, local crime, gossip. Return ONLY a JSON array of numbers like [0,2,5].',
+              numbered,
+              { preferHaiku: true, maxTokens: 200 },
+            );
+            const indices = new Set(
+              JSON.parse(resp.text.match(/\[[\d,\s]*\]/)?.[0] ?? '[]') as number[],
+            );
+            for (let j = 0; j < batch.length; j++) {
+              const key = filterKey(batch[j].text);
+              if (indices.has(j)) {
+                kept.push(batch[j]);
+                filterCache.set(key, true);
+              } else {
+                filterCache.set(key, false);
+              }
+            }
+          } catch {
+            // On error, keep all and don't cache (will retry next cycle)
+            kept.push(...batch);
+          }
+        }
+        // Evict oldest entries if cache is too large
+        if (filterCache.size > FILTER_CACHE_MAX) {
+          const excess = filterCache.size - FILTER_CACHE_MAX;
+          const keys = [...filterCache.keys()].slice(0, excess);
+          for (const k of keys) filterCache.delete(k);
+        }
+      }
+
+      console.log(`[FEEDS] Haiku filter: ${toFilter.length} total, ${needsAI.length} new → AI, ${alreadyDecided.length} cached → ${kept.length} kept`);
       allItems.length = 0;
       allItems.push(...passThrough, ...kept);
     }
