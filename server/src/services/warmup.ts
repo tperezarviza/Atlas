@@ -50,13 +50,17 @@ async function warmupFromRedis(): Promise<void> {
     'brief', 'brief:mideast', 'brief:ukraine', 'brief:domestic', 'brief:intel',
     'twitter', 'propaganda', 'hostility', 'focal_points',
     // BQ-derived caches — restored to avoid re-running expensive queries on redeploy
-    'google_trends',
+    'google_trends', 'bq_event_spikes', 'bq_military_cameo',
   ];
   let restored = 0;
   for (const key of keysToRestore) {
     const data = await redisGet(`cache:${key}`).catch(() => null);
     if (data !== null) {
-      cache.set(key, data, 120_000); // 2 min bridge TTL
+      // BQ caches run every 6-12h, so bridge TTL must survive until next cron
+      const bridgeTTL = key.startsWith('bq_') || key === 'google_trends' || key === 'hostility'
+        ? 13 * 3600_000   // 13h bridge for long-interval services
+        : 120_000;        // 2 min bridge for frequently-refreshed services
+      cache.set(key, data, bridgeTTL);
       restored++;
     }
   }
