@@ -1,4 +1,4 @@
-import { FETCH_TIMEOUT_API, TTL } from '../config.js';
+import { FETCH_TIMEOUT_API, TTL, GDELT_BASE } from '../config.js';
 import { cache } from '../cache.js';
 import { translateTexts } from './translate.js';
 import { withCircuitBreaker } from '../utils/circuit-breaker.js';
@@ -118,7 +118,7 @@ async function fetchGdeltQuery(
   timespan: string,
   maxpoints: number
 ): Promise<NewsPoint[]> {
-  const url = `https://api.gdeltproject.org/api/v2/geo/geo?query=${encodeURIComponent(query)}&format=GeoJSON&timespan=${timespan}&maxpoints=${maxpoints}`;
+  const url = `${GDELT_BASE}/api/v2/geo/geo?query=${encodeURIComponent(query)}&format=GeoJSON&timespan=${timespan}&maxpoints=${maxpoints}`;
 
   const res = await fetch(url, { signal: AbortSignal.timeout(30_000) });
   if (!res.ok) return [];

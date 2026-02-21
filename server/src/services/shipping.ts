@@ -1,4 +1,4 @@
-import { FETCH_TIMEOUT_API, TTL } from '../config.js';
+import { FETCH_TIMEOUT_API, TTL, GDELT_BASE } from '../config.js';
 import { cache } from '../cache.js';
 import { safeJson } from '../utils.js';
 import type { Chokepoint, ChokepointStatus } from '../types.js';
@@ -39,7 +39,7 @@ export async function fetchShippingData(): Promise<void> {
 
       try {
         const keywords = encodeURIComponent(`"${cp.name}" (attack OR disruption OR closure OR blockade OR missile)`);
-        const url = `https://api.gdeltproject.org/api/v2/doc/doc?query=${keywords}&mode=tonechart&format=json&timespan=7d`;
+        const url = `${GDELT_BASE}/api/v2/doc/doc?query=${keywords}&mode=tonechart&format=json&timespan=7d`;
 
         const res = await fetch(url, {
           signal: AbortSignal.timeout(FETCH_TIMEOUT_API),
@@ -63,7 +63,7 @@ export async function fetchShippingData(): Promise<void> {
 
           // Fetch recent headlines
           const headlineQuery = encodeURIComponent(`"${cp.name}" (incident OR attack OR disruption)`);
-          const hUrl = `https://api.gdeltproject.org/api/v2/doc/doc?query=${headlineQuery}&mode=artlist&maxrecords=3&format=json&timespan=7d`;
+          const hUrl = `${GDELT_BASE}/api/v2/doc/doc?query=${headlineQuery}&mode=artlist&maxrecords=3&format=json&timespan=7d`;
 
           try {
             const hRes = await fetch(hUrl, {

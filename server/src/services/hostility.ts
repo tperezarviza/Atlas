@@ -1,4 +1,4 @@
-import { TTL } from '../config.js';
+import { TTL, GDELT_BASE } from '../config.js';
 import { cache } from '../cache.js';
 import { translateTexts } from './translate.js';
 import { withCircuitBreaker } from '../utils/circuit-breaker.js';
@@ -50,7 +50,7 @@ export async function fetchHostilityIndex(): Promise<void> {
       try {
         const fetchToneData = async (): Promise<string> => {
           const query = encodeURIComponent(`${wrapIfNeeded(pair.countryA)} ${wrapIfNeeded(pair.countryB)}`);
-          const url = `https://api.gdeltproject.org/api/v2/doc/doc?query=${query}&mode=tonechart&format=json&timespan=7d`;
+          const url = `${GDELT_BASE}/api/v2/doc/doc?query=${query}&mode=tonechart&format=json&timespan=7d`;
 
           const res = await fetch(url, {
             signal: AbortSignal.timeout(GDELT_TIMEOUT),
@@ -63,7 +63,7 @@ export async function fetchHostilityIndex(): Promise<void> {
 
           if (!text.startsWith('{') && !text.startsWith('[')) {
             const fallbackQuery = encodeURIComponent(`${pair.countryA} ${pair.countryB}`);
-            const fallbackUrl = `https://api.gdeltproject.org/api/v2/doc/doc?query=${fallbackQuery}&mode=tonechart&format=json&timespan=7d`;
+            const fallbackUrl = `${GDELT_BASE}/api/v2/doc/doc?query=${fallbackQuery}&mode=tonechart&format=json&timespan=7d`;
             const fallbackRes = await fetch(fallbackUrl, {
               signal: AbortSignal.timeout(GDELT_TIMEOUT),
               headers: { 'User-Agent': 'ATLAS/1.0' },
@@ -113,7 +113,7 @@ export async function fetchHostilityIndex(): Promise<void> {
 
         // Get top headlines
         let headlineQuery = encodeURIComponent(`${wrapIfNeeded(pair.countryA)} ${wrapIfNeeded(pair.countryB)}`);
-        const headlineUrl = `https://api.gdeltproject.org/api/v2/doc/doc?query=${headlineQuery}&mode=artlist&maxrecords=5&format=json&timespan=7d`;
+        const headlineUrl = `${GDELT_BASE}/api/v2/doc/doc?query=${headlineQuery}&mode=artlist&maxrecords=5&format=json&timespan=7d`;
         let topHeadlines: string[] = [];
 
         try {
@@ -126,7 +126,7 @@ export async function fetchHostilityIndex(): Promise<void> {
             // Fallback for headlines too
             if (!hText.startsWith('{') && !hText.startsWith('[')) {
               const hFallbackQuery = encodeURIComponent(`${pair.countryA} ${pair.countryB}`);
-              const hFallbackUrl = `https://api.gdeltproject.org/api/v2/doc/doc?query=${hFallbackQuery}&mode=artlist&maxrecords=5&format=json&timespan=7d`;
+              const hFallbackUrl = `${GDELT_BASE}/api/v2/doc/doc?query=${hFallbackQuery}&mode=artlist&maxrecords=5&format=json&timespan=7d`;
               const hFallbackRes = await fetch(hFallbackUrl, {
                 signal: AbortSignal.timeout(GDELT_TIMEOUT),
                 headers: { 'User-Agent': 'ATLAS/1.0' },

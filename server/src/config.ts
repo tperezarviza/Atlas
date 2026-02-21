@@ -19,6 +19,10 @@ export const GROQ_API_KEY = process.env.GROQ_API_KEY ?? '';
 export const RAPIDAPI_KEY = process.env.RAPIDAPI_KEY ?? '';
 export const REDIS_URL = process.env.REDIS_URL ?? 'redis://localhost:6379';
 
+// Cloudflare Worker proxy for APIs that block datacenter IPs
+export const CF_PROXY_URL = process.env.CF_PROXY_URL ?? 'https://atlas-proxy.tomasperezarviza.workers.dev';
+export const GDELT_BASE = `${CF_PROXY_URL}/gdelt`;
+
 // All secret values for error sanitization
 const ALL_SECRETS: string[] = [
   ACLED_PASSWORD, EIA_API_KEY, FRED_API_KEY, ANTHROPIC_API_KEY,
