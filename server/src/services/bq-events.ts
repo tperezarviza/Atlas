@@ -3,7 +3,7 @@ import { cache } from '../cache.js';
 import { shouldRunBQ, markBQRun, canSpendBQ, trackQueryBytes } from './bq-cost-tracker.js';
 
 const SIX_HOURS = 6 * 60 * 60 * 1000;
-const MAX_BYTES = 10_000_000_000; // 10GB hard limit per query
+const MAX_BYTES = 25_000_000_000; // 25GB hard limit per query (gdelt-bq scans ~17-21GB)
 
 export interface EventSpike {
   country: string;
@@ -56,12 +56,12 @@ LIMIT 50
 export async function fetchEventSpikes(): Promise<void> {
   if (!isBigQueryAvailable()) return;
   if (!(await shouldRunBQ('event_spikes', SIX_HOURS))) return;
-  if (!(await canSpendBQ(5_000_000_000))) return;
+  if (!(await canSpendBQ(18_000_000_000))) return;
 
   console.log('[BQ-EVENTS] Fetching event spikes...');
   try {
     const rows = await bqQuery<EventSpike>(SPIKE_QUERY, undefined, MAX_BYTES);
-    trackQueryBytes(5_000_000_000);
+    trackQueryBytes(18_000_000_000);
     await markBQRun('event_spikes');
     await cache.setWithRedis('bq_event_spikes', rows, SIX_HOURS + 3600_000, 8 * 3600);
     console.log(`[BQ-EVENTS] ${rows.length} country spikes detected`);
@@ -73,12 +73,12 @@ export async function fetchEventSpikes(): Promise<void> {
 export async function fetchMilitaryCameo(): Promise<void> {
   if (!isBigQueryAvailable()) return;
   if (!(await shouldRunBQ('military_cameo', SIX_HOURS))) return;
-  if (!(await canSpendBQ(4_000_000_000))) return;
+  if (!(await canSpendBQ(21_000_000_000))) return;
 
   console.log('[BQ-EVENTS] Fetching military CAMEO events...');
   try {
     const rows = await bqQuery<MilitaryCameoEvent>(MILITARY_CAMEO_QUERY, undefined, MAX_BYTES);
-    trackQueryBytes(4_000_000_000);
+    trackQueryBytes(21_000_000_000);
     await markBQRun('military_cameo');
     await cache.setWithRedis('bq_military_cameo', rows, SIX_HOURS + 3600_000, 8 * 3600);
     console.log(`[BQ-EVENTS] ${rows.length} military event groups cached`);

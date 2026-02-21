@@ -1,11 +1,10 @@
 import { TTL, GDELT_BASE } from '../config.js';
 import { cache } from '../cache.js';
 import { translateTexts } from './translate.js';
-import { withCircuitBreaker } from '../utils/circuit-breaker.js';
 import type { HostilityPair, Severity } from '../types.js';
 
-const GDELT_TIMEOUT = 25_000;  // GDELT is slow — 25s timeout
-const PAIR_DELAY   = 1_500;    // 1.5s between pairs (retry backoff compensates)
+const GDELT_TIMEOUT = 30_000;  // GDELT via CF proxy needs ~20-25s
+const PAIR_DELAY   = 3_000;    // 3s between pairs to avoid GDELT 429 rate limit
 const MAX_RETRIES  = 3;
 const MIN_ARTICLES = 5;        // Skip pairs with < 5 articles
 
@@ -78,7 +77,7 @@ export async function fetchHostilityIndex(): Promise<void> {
         let text: string | null = null;
         for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
           try {
-            text = await withCircuitBreaker(`gdelt-hostility`, fetchToneData);
+            text = await fetchToneData();
             break;
           } catch (retryErr) {
             const backoff = 1000 * Math.pow(2, attempt); // 1s, 2s, 4s

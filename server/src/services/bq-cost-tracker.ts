@@ -1,7 +1,7 @@
 import { redisGet, redisSet } from '../redis.js';
 
 let sessionBytes = 0;
-const DAILY_BYTE_BUDGET = 80_000_000_000; // 80GB/day = ~$0.50/day max
+const DAILY_BYTE_BUDGET = 100_000_000_000; // 100GB/day = ~$0.625/day max
 
 export function trackQueryBytes(bytes: number): void {
   sessionBytes += bytes;
