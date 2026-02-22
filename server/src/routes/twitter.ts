@@ -7,16 +7,15 @@ const VALID_CATEGORIES = new Set<TweetCategory>(['crisis', 'military', 'geopolit
 
 export function registerTwitterRoutes(app: FastifyInstance) {
   app.get('/api/twitter', async (req, reply) => {
-    const result = respondWithMeta('twitter', req.query as Record<string, string>);
+    const tweets = respondWithMeta('twitter', req.query as Record<string, string>);
     const cat = (req.query as Record<string, string>).category;
     if (cat) {
       if (!VALID_CATEGORIES.has(cat as TweetCategory)) {
         return reply.code(400).send({ error: 'Invalid category', valid: [...VALID_CATEGORIES] });
       }
-      const filtered = (Array.isArray(result.data) ? result.data : []).filter((t: any) => t.category === cat);
-      return { data: filtered, meta: result.meta };
+      return (Array.isArray(tweets) ? tweets : []).filter((t: any) => t.category === cat);
     }
-    return result;
+    return tweets;
   });
 
   app.get('/api/twitter/trending', async (req) => {

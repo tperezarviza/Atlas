@@ -9,15 +9,14 @@ const VALID_REGIONS = new Set([
 
 export function registerFlightsRoutes(app: FastifyInstance) {
   app.get('/api/flights', async (req, reply) => {
-    const result = respondWithMeta('flights', req.query as Record<string, string>);
+    const allFlights = respondWithMeta('flights', req.query as Record<string, string>);
     const region = (req.query as Record<string, string>).region;
     if (region) {
       if (!VALID_REGIONS.has(region)) {
         return reply.code(400).send({ error: 'Invalid region', valid: [...VALID_REGIONS] });
       }
-      const filtered = (Array.isArray(result.data) ? result.data : []).filter((f: any) => f.region === region);
-      return { data: filtered, meta: result.meta };
+      return (Array.isArray(allFlights) ? allFlights : []).filter((f: any) => f.region === region);
     }
-    return result;
+    return allFlights;
   });
 }

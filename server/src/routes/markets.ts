@@ -6,18 +6,11 @@ import type { MarketSection, MacroItem } from '../types.js';
 
 export function registerMarketsRoutes(app: FastifyInstance) {
   app.get('/api/markets', async (req) => {
-    const mkts = cache.getWithStatus('markets');
-    const fxs = cache.getWithStatus('forex');
     return {
-      sections: mkts.data ?? [],
-      forex: fxs.data ?? [],
+      sections: cache.get<MarketSection[]>('markets') ?? [],
+      forex: cache.get<MarketSection[]>('forex') ?? [],
       sessions: getMarketSessions(),
       macro: cache.get<MacroItem[]>('macro') ?? [],
-      meta: {
-        cacheStatus: mkts.status,
-        ageMs: mkts.ageMs,
-        lastUpdate: cache.getSetAt('markets') ? new Date(cache.getSetAt('markets')!).toISOString() : null,
-      },
     };
   });
 }

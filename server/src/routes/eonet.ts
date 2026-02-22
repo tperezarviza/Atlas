@@ -10,15 +10,14 @@ const VALID_CATEGORIES = new Set([
 
 export function registerEonetRoutes(app: FastifyInstance) {
   app.get('/api/natural-events', async (req, reply) => {
-    const result = respondWithMeta('natural_events', req.query as Record<string, string>);
+    const events = respondWithMeta('natural_events', req.query as Record<string, string>);
     const category = (req.query as Record<string, string>).category;
     if (category) {
       if (!VALID_CATEGORIES.has(category)) {
         return reply.code(400).send({ error: 'Invalid category', valid: [...VALID_CATEGORIES] });
       }
-      const filtered = (Array.isArray(result.data) ? result.data : []).filter((e: any) => e.category === category);
-      return { data: filtered, meta: result.meta };
+      return (Array.isArray(events) ? events : []).filter((e: any) => e.category === category);
     }
-    return result;
+    return events;
   });
 }
