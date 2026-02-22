@@ -1,10 +1,11 @@
 import type { FastifyInstance } from 'fastify';
 import { cache } from '../cache.js';
+import { respondWithMeta } from '../utils/respond.js';
 import type { CountryProfile } from '../types.js';
 
 export function registerCountriesRoutes(app: FastifyInstance) {
-  app.get('/api/countries', async () => {
-    return cache.get<CountryProfile[]>('countries') ?? [];
+  app.get('/api/countries', async (req) => {
+    return respondWithMeta('countries', req.query as Record<string, string>);
   });
 
   app.get<{ Params: { code: string } }>('/api/countries/:code', async (req, reply) => {

@@ -7,7 +7,7 @@ interface CacheEntry<T> {
 }
 
 const CLEANUP_INTERVAL = 5 * 60 * 1000; // 5 minutes
-const STALE_MULTIPLIER = 2; // remove entries older than 2x TTL
+const STALE_MULTIPLIER = 3; // remove entries older than 3x TTL (aligned with getWithStatus)
 
 class TTLCache {
   private store = new Map<string, CacheEntry<unknown>>();

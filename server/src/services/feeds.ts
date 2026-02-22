@@ -71,9 +71,7 @@ const FEED_SOURCES: FeedSource[] = [
   { url: 'https://news.google.com/rss/search?q=when:24h+site:nato.int&ceid=US:en&hl=en-US&gl=US',
     flag: '🏳️', handle: 'NATO', role: 'NATO Official',
     sourceName: 'NATO', category: 'military', tags: ['NATO', 'Defense'], tier: 2 },
-  { url: 'https://news.un.org/feed/subscribe/en/news/all/rss.xml',
-    flag: '🇺🇳', handle: 'UN', role: 'United Nations',
-    sourceName: 'UN News', category: 'leader', tags: ['UN', 'Diplomacy'], tier: 2 },
+
   { url: 'https://www.iaea.org/feeds/topnews',
     flag: '⚛️', handle: 'IAEA', role: 'Nuclear Watchdog',
     sourceName: 'IAEA', category: 'leader', tags: ['Nuclear', 'IAEA'], tier: 2 },
@@ -91,13 +89,13 @@ const FEED_SOURCES: FeedSource[] = [
     sourceName: 'ISW', category: 'think_tank', tags: ['Think Tank', 'Military'], tier: 2 },
 
   // ═══ Tier 2 – Argentina ═══
-  { url: 'https://www.infobae.com/feeds/rss/', flag: '🇦🇷', handle: 'Infobae', role: 'Argentine News', sourceName: 'infobae', category: 'leader', tags: ['argentina', 'news'], tier: 2 },
+  { url: 'https://www.infobae.com/arc/outboundfeeds/rss/', flag: '🇦🇷', handle: 'Infobae', role: 'Argentine News', sourceName: 'infobae', category: 'leader', tags: ['argentina', 'news'], tier: 2 },
   { url: 'https://www.clarin.com/rss/lo-ultimo/', flag: '🇦🇷', handle: 'Clarín', role: 'Argentine News', sourceName: 'clarin', category: 'leader', tags: ['argentina', 'news'], tier: 2 },
-  { url: 'https://www.lanacion.com.ar/arcio/rss/', flag: '🇦🇷', handle: 'La Nación', role: 'Argentine News', sourceName: 'lanacion', category: 'leader', tags: ['argentina', 'news'], tier: 2 },
+  { url: 'https://news.google.com/rss/search?q=when:24h+site:lanacion.com.ar+politica+OR+economia+OR+gobierno&ceid=AR:es-419&hl=es-419&gl=AR', flag: '🇦🇷', handle: 'La Nación', role: 'Argentine News', sourceName: 'lanacion', category: 'leader', tags: ['argentina', 'news'], tier: 2 },
   { url: 'https://www.ambito.com/rss/pages/home.xml', flag: '🇦🇷', handle: 'Ámbito', role: 'Argentine Finance', sourceName: 'ambito', category: 'leader', tags: ['argentina', 'economy'], tier: 2 },
-  { url: 'https://www.cronista.com/files/rss/apertura.xml', flag: '🇦🇷', handle: 'El Cronista', role: 'Argentine Finance', sourceName: 'cronista', category: 'leader', tags: ['argentina', 'economy'], tier: 2 },
-  { url: 'https://tn.com.ar/feeds/rss', flag: '🇦🇷', handle: 'TN', role: 'Argentine News', sourceName: 'tn', category: 'leader', tags: ['argentina', 'news'], tier: 2 },
-  { url: 'https://www.pagina12.com.ar/rss/portada', flag: '🇦🇷', handle: 'Página/12', role: 'Argentine News', sourceName: 'pagina12', category: 'leader', tags: ['argentina', 'news'], tier: 2 },
+  { url: 'https://www.cronista.com/files/rss/economia-politica.xml', flag: '🇦🇷', handle: 'El Cronista', role: 'Argentine Finance', sourceName: 'cronista', category: 'leader', tags: ['argentina', 'economy'], tier: 2 },
+  { url: 'https://tn.com.ar/rss.xml', flag: '🇦🇷', handle: 'TN', role: 'Argentine News', sourceName: 'tn', category: 'leader', tags: ['argentina', 'news'], tier: 2 },
+  { url: 'https://news.google.com/rss/search?q=when:24h+site:pagina12.com.ar&ceid=AR:es-419&hl=es-419&gl=AR', flag: '🇦🇷', handle: 'Página/12', role: 'Argentine News', sourceName: 'pagina12', category: 'leader', tags: ['argentina', 'news'], tier: 2 },
 
   // ═══ TIER 3: International Quality ═══
   { url: 'https://rss.nytimes.com/services/xml/rss/nyt/World.xml',
@@ -148,7 +146,7 @@ const FEED_SOURCES: FeedSource[] = [
 
 // Sources that bypass relevance filtering (government, institutional, think tanks)
 const UNFILTERED_HANDLES = new Set([
-  'TruthSocial', 'WhiteHouse', 'Pentagon', 'StateDept', 'NATO', 'UN', 'IAEA',
+  'TruthSocial', 'WhiteHouse', 'Pentagon', 'StateDept', 'NATO', 'IAEA',
   'Kremlin', 'CSIS', 'ISW',
 ]);
 

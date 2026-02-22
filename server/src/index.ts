@@ -48,10 +48,12 @@ import { loadStaticLayers } from './services/static-layers.js';
 import { initRedis } from './redis.js';
 import { initBigQuery } from './services/bigquery.js';
 import { cache } from './cache.js';
+import { respondWithMeta } from './utils/respond.js';
+import { requireAdmin } from './utils/auth.js';
 import fastifyStatic from '@fastify/static';
 import path from 'path';
 
-const app = Fastify({ logger: true });
+const app = Fastify({ logger: true, trustProxy: true });
 
 const CORS_ORIGINS = process.env.CORS_ORIGINS
   ? process.env.CORS_ORIGINS.split(',').map((s) => s.trim())
@@ -140,10 +142,13 @@ registerLayerRoutes(app);
 registerWhyItMattersRoutes(app);
 
 // Google Trends route (BQ-powered)
-app.get('/api/google-trends', async () => cache.get('google_trends') ?? null);
+app.get('/api/google-trends', async (req) => respondWithMeta('google_trends', req.query as Record<string, string>));
 
 // Surge detection route
-app.get('/api/surge-alerts', async () => cache.get('surge_alerts') ?? []);
+app.get('/api/surge-alerts', async (req, reply) => {
+  if (!requireAdmin(req, reply)) return;
+  return cache.get('surge_alerts') ?? [];
+});
 
 // SPA fallback — serve index.html for non-API routes
 app.setNotFoundHandler((request, reply) => {
@@ -168,13 +173,38 @@ try {
   // Initialize BigQuery (if configured)
   initBigQuery();
 
-  // Warm up caches in background (don't block startup)
-  warmUpCache().catch((err) => {
+  // Warm up caches, then start cron jobs
+  try {
+    await warmUpCache();
+    console.log('[STARTUP] Warmup complete, starting cron jobs...');
+  } catch (err) {
     console.error('Cache warmup error:', sanitizeError(err));
-  });
+  }
 
   // Start cron jobs
   startCronJobs();
+
+
+// Graceful shutdown
+const shutdown = async (signal: string) => {
+  console.log(`[SHUTDOWN] Received ${signal}, shutting down gracefully...`);
+  try {
+    await app.close();
+  } catch {}
+  // Allow 5s for ongoing requests to drain
+  await new Promise(r => setTimeout(r, 5000));
+  console.log('[SHUTDOWN] Done');
+  process.exit(0);
+};
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT', () => shutdown('SIGINT'));
+process.on('uncaughtException', (err) => {
+  console.error('[FATAL] Uncaught exception:', err);
+  shutdown('uncaughtException');
+});
+process.on('unhandledRejection', (reason) => {
+  console.error('[FATAL] Unhandled rejection:', reason);
+});
 } catch (err) {
   app.log.error(err);
   process.exit(1);

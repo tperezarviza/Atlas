@@ -1,10 +1,11 @@
 import type { FastifyInstance } from 'fastify';
 import { cache } from '../cache.js';
+import { respondWithMeta } from '../utils/respond.js';
 import type { ArmedGroup } from '../types.js';
 
 export function registerArmedGroupsRoutes(app: FastifyInstance) {
-  app.get('/api/armed-groups', async () => {
-    return cache.get<ArmedGroup[]>('armed_groups') ?? [];
+  app.get('/api/armed-groups', async (req) => {
+    return respondWithMeta('armed_groups', req.query as Record<string, string>);
   });
 
   app.get<{ Params: { id: string } }>('/api/armed-groups/:id', async (req, reply) => {

@@ -1,5 +1,5 @@
 import type { FastifyInstance } from 'fastify';
-import { cache } from '../cache.js';
+import { respondWithMeta } from '../utils/respond.js';
 import type { NaturalEvent } from '../types.js';
 
 const VALID_CATEGORIES = new Set([
@@ -10,14 +10,15 @@ const VALID_CATEGORIES = new Set([
 
 export function registerEonetRoutes(app: FastifyInstance) {
   app.get('/api/natural-events', async (req, reply) => {
-    const events = cache.get<NaturalEvent[]>('natural_events') ?? [];
+    const result = respondWithMeta('natural_events', req.query as Record<string, string>);
     const category = (req.query as Record<string, string>).category;
     if (category) {
       if (!VALID_CATEGORIES.has(category)) {
         return reply.code(400).send({ error: 'Invalid category', valid: [...VALID_CATEGORIES] });
       }
-      return events.filter(e => e.category === category);
+      const filtered = (Array.isArray(result.data) ? result.data : []).filter((e: any) => e.category === category);
+      return { data: filtered, meta: result.meta };
     }
-    return events;
+    return result;
   });
 }

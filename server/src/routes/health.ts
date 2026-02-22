@@ -5,6 +5,7 @@ import { getCircuitStates } from '../utils/circuit-breaker.js';
 import { isBigQueryAvailable } from '../services/bigquery.js';
 import { getDailyBytes, bytesToCost } from '../services/bq-cost-tracker.js';
 import { getProviderStats } from '../utils/ai-client.js';
+import { ADMIN_API_KEY } from '../config.js';
 
 const CACHE_KEYS = [
   'conflicts', 'news', 'feed', 'markets', 'forex',
@@ -76,7 +77,7 @@ const SERVICE_META: Record<string, { name: string; category: string }> = {
 const startTime = Date.now();
 
 export function registerHealthRoutes(app: FastifyInstance) {
-  app.get('/api/health', async () => {
+  app.get('/api/health', async (req) => {
     const services: { key: string; name: string; category: string; status: 'ok' | 'stale' | 'empty'; ageSeconds: number | null; ageMinutes: number | null; lastUpdate: string | null }[] = [];
 
     for (const key of CACHE_KEYS) {
@@ -102,6 +103,16 @@ export function registerHealthRoutes(app: FastifyInstance) {
     const bqEnabled = isBigQueryAvailable();
     const bqDailyBytes = bqEnabled ? await getDailyBytes() : 0;
 
+    // Tiered: public gets summary, admin gets full details
+    const isAdmin = ADMIN_API_KEY && req.headers['x-api-key'] === ADMIN_API_KEY;
+    if (!isAdmin) {
+      return {
+        status: okCount > totalCount * 0.5 ? 'ok' : 'degraded',
+        servicesOk: okCount,
+        servicesTotal: totalCount,
+        uptime: Math.floor((Date.now() - startTime) / 1000),
+      };
+    }
     return {
       status: 'ok',
       uptime: Math.floor((Date.now() - startTime) / 1000),

@@ -53,7 +53,7 @@ async function warmupFromRedis(): Promise<void> {
   }
   console.log('[WARMUP] Loading Redis backups...');
   const keysToRestore = [
-    'brief', 'brief:mideast', 'brief:ukraine', 'brief:domestic', 'brief:intel',
+    'brief', 'brief:argentina', 'brief:emergency', 'brief:mideast', 'brief:ukraine', 'brief:domestic', 'brief:intel',
     'twitter', 'propaganda', 'hostility', 'focal_points',
     // BQ-derived caches — restored to avoid re-running expensive queries on redeploy
     'google_trends', 'bq_event_spikes', 'bq_military_cameo',

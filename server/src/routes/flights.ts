@@ -1,5 +1,5 @@
 import type { FastifyInstance } from 'fastify';
-import { cache } from '../cache.js';
+import { respondWithMeta } from '../utils/respond.js';
 import type { MilitaryFlight } from '../types.js';
 
 const VALID_REGIONS = new Set([
@@ -9,14 +9,15 @@ const VALID_REGIONS = new Set([
 
 export function registerFlightsRoutes(app: FastifyInstance) {
   app.get('/api/flights', async (req, reply) => {
-    const allFlights = cache.get<MilitaryFlight[]>('flights') ?? [];
+    const result = respondWithMeta('flights', req.query as Record<string, string>);
     const region = (req.query as Record<string, string>).region;
     if (region) {
       if (!VALID_REGIONS.has(region)) {
         return reply.code(400).send({ error: 'Invalid region', valid: [...VALID_REGIONS] });
       }
-      return allFlights.filter(f => f.region === region);
+      const filtered = (Array.isArray(result.data) ? result.data : []).filter((f: any) => f.region === region);
+      return { data: filtered, meta: result.meta };
     }
-    return allFlights;
+    return result;
   });
 }

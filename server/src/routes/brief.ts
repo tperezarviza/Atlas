@@ -1,4 +1,5 @@
 import type { FastifyInstance } from 'fastify';
+import { requireAdmin } from '../utils/auth.js';
 import { cache } from '../cache.js';
 import { fetchBrief } from '../services/ai-brief.js';
 import { TTL, sanitizeError } from '../config.js';
@@ -22,6 +23,7 @@ export function registerBriefRoutes(app: FastifyInstance) {
   });
 
   app.post('/api/brief/regenerate', async (req, reply) => {
+    if (!requireAdmin(req, reply)) return;
     const focus = parseFocus((req.query as { focus?: string }).focus);
     const now = Date.now();
     const elapsed = now - lastRegenAt;

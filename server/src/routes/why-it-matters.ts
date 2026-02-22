@@ -32,8 +32,9 @@ export function registerWhyItMattersRoutes(app: FastifyInstance) {
   app.get('/api/why-it-matters', async (request, reply) => {
     const { headline, category, lat, lng } = request.query as Record<string, string | undefined>;
 
-    if (!headline || headline.length < 5) {
-      return reply.status(400).send({ error: 'headline parameter required (min 5 chars)' });
+    const safeHeadline = (headline ?? '').slice(0, 200);
+    if (!safeHeadline || safeHeadline.length < 5) {
+      return reply.status(400).send({ error: 'headline parameter required (5-200 chars)' });
     }
 
     // Rate limit
@@ -43,7 +44,7 @@ export function registerWhyItMattersRoutes(app: FastifyInstance) {
     }
 
     // Redis cache (6h)
-    const hash = crypto.createHash('md5').update(headline).digest('hex').slice(0, 12);
+    const hash = crypto.createHash('md5').update(safeHeadline).digest('hex').slice(0, 12);
     const cacheKey = `wim:${hash}`;
 
     const cached = await redisGet<{ context: string; provider: string }>(cacheKey);
@@ -57,7 +58,7 @@ export function registerWhyItMattersRoutes(app: FastifyInstance) {
 
     const response = await aiComplete(
       SYSTEM_PROMPT,
-      `Headline: "${headline}"\n${categoryHint}\n${locationHint}\n\nWhy does this matter?`,
+      `Analyze this headline: <user_headline>${safeHeadline}</user_headline>\n${categoryHint}\n${locationHint}\n\nWhy does this matter?`,
       { preferHaiku: true, maxTokens: 200 },
     );
 

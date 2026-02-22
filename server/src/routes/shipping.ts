@@ -1,9 +1,9 @@
 import type { FastifyInstance } from 'fastify';
-import { cache } from '../cache.js';
+import { respondWithMeta } from '../utils/respond.js';
 import type { Chokepoint } from '../types.js';
 
 export function registerShippingRoutes(app: FastifyInstance) {
-  app.get('/api/shipping', async () => {
-    return cache.get<Chokepoint[]>('shipping') ?? [];
+  app.get('/api/shipping', async (req) => {
+    return respondWithMeta('shipping', req.query as Record<string, string>);
   });
 }

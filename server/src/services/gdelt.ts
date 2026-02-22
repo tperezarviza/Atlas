@@ -355,6 +355,13 @@ export async function fetchGdeltNews(): Promise<void> {
         return true;
       });
 
+      // Cap news points to prevent memory bloat
+      const MAX_NEWS_POINTS = 5000;
+      if (pruned.length > MAX_NEWS_POINTS) {
+        pruned.sort((a, b) => new Date(b.fetchedAt).getTime() - new Date(a.fetchedAt).getTime());
+        pruned.length = MAX_NEWS_POINTS;
+      }
+
       const fetchedAtMs = Date.now();
       cache.set('news', pruned, TTL.NEWS);
       console.log(`[GDELT] Total: ${filtered.length} new + ${kept.length} kept = ${pruned.length} after prune`);

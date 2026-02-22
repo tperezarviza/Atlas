@@ -1,6 +1,9 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { ANTHROPIC_API_KEY } from '../config.js';
 
+// Singleton Anthropic client — prevent CLOSE_WAIT socket leak
+const anthropicClient = ANTHROPIC_API_KEY ? new Anthropic({ apiKey: ANTHROPIC_API_KEY }) : null;
+
 /** Detect non-English Latin-script languages (Italian, French, Spanish, Portuguese). */
 const NON_ENGLISH_INDICATORS = /\b(dell[aeo]|nell[aeo]|sull[aeo]|l'ambasciatore|governo|contro|anche|perch[eé]|après|aujourd'?hui|qu[ei]|dans|avec|pour|cette|serait|había|donde|tiene|sobre|está|también|según|pero|entre|todos|desde|como|más|años|governo|primo|ministro|presidente|durante|ancora|stato|essere|questa|quello|hanno|sono|tutto|sempre|giorno|molto|fatto|ogni|nuovo|altra|paese|mondo|dopo|prima|grande|perché|ancora|così|però|già|bene|mentre|senza|altra|trova|parte)\b/i;
 
@@ -59,7 +62,7 @@ export async function translateTexts(
   texts: string[],
   label = 'TRANSLATE',
 ): Promise<string[]> {
-  if (!ANTHROPIC_API_KEY || texts.length === 0) return texts;
+  if (!anthropicClient || texts.length === 0) return texts;
 
   const toTranslate: { idx: number; text: string }[] = [];
   for (let i = 0; i < texts.length; i++) {
@@ -75,7 +78,7 @@ export async function translateTexts(
   );
 
   try {
-    const client = new Anthropic({ apiKey: ANTHROPIC_API_KEY });
+    const client = anthropicClient!;
     const result = [...texts];
     let totalTranslated = 0;
 

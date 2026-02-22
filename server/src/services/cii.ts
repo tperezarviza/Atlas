@@ -28,39 +28,39 @@ interface SparklineEntry {
 
 // 33 monitored countries with static baselines (0-100)
 const COUNTRY_BASELINES: { code: string; name: string; baseline: number; lat: number; lng: number }[] = [
-  { code: 'AF', name: 'Afghanistan',    baseline: 85, lat: 33.9, lng: 67.7 },
-  { code: 'IQ', name: 'Iraq',           baseline: 72, lat: 33.2, lng: 43.7 },
-  { code: 'SY', name: 'Syria',          baseline: 82, lat: 35.0, lng: 38.0 },
-  { code: 'YE', name: 'Yemen',          baseline: 78, lat: 15.6, lng: 48.5 },
-  { code: 'SO', name: 'Somalia',        baseline: 80, lat: 5.2,  lng: 46.2 },
-  { code: 'LY', name: 'Libya',          baseline: 70, lat: 26.3, lng: 17.2 },
-  { code: 'SD', name: 'Sudan',          baseline: 75, lat: 12.9, lng: 30.2 },
-  { code: 'SS', name: 'South Sudan',    baseline: 77, lat: 6.9,  lng: 31.3 },
-  { code: 'CD', name: 'DR Congo',       baseline: 68, lat: -4.0, lng: 21.8 },
-  { code: 'NG', name: 'Nigeria',        baseline: 55, lat: 9.1,  lng: 7.5 },
-  { code: 'ML', name: 'Mali',           baseline: 62, lat: 17.6, lng: -4.0 },
-  { code: 'BF', name: 'Burkina Faso',   baseline: 65, lat: 12.4, lng: -1.6 },
-  { code: 'MM', name: 'Myanmar',        baseline: 70, lat: 19.8, lng: 96.2 },
-  { code: 'PK', name: 'Pakistan',       baseline: 50, lat: 30.4, lng: 69.3 },
-  { code: 'UA', name: 'Ukraine',        baseline: 75, lat: 48.4, lng: 31.2 },
-  { code: 'RU', name: 'Russia',         baseline: 45, lat: 55.8, lng: 37.6 },
-  { code: 'IR', name: 'Iran',           baseline: 65, lat: 32.4, lng: 53.7 },
-  { code: 'KP', name: 'North Korea',    baseline: 60, lat: 40.3, lng: 127.5 },
-  { code: 'CN', name: 'China',          baseline: 30, lat: 35.9, lng: 104.2 },
-  { code: 'VE', name: 'Venezuela',      baseline: 55, lat: 6.4,  lng: -66.6 },
-  { code: 'HT', name: 'Haiti',          baseline: 65, lat: 19.1, lng: -72.3 },
-  { code: 'ET', name: 'Ethiopia',       baseline: 60, lat: 9.1,  lng: 40.5 },
-  { code: 'MZ', name: 'Mozambique',     baseline: 50, lat: -18.7, lng: 35.5 },
-  { code: 'CF', name: 'Central African Rep.', baseline: 68, lat: 6.6, lng: 20.9 },
-  { code: 'LB', name: 'Lebanon',        baseline: 58, lat: 33.9, lng: 35.5 },
-  { code: 'IL', name: 'Israel',         baseline: 45, lat: 31.0, lng: 34.9 },
-  { code: 'PS', name: 'Palestine',      baseline: 72, lat: 31.9, lng: 35.2 },
-  { code: 'NE', name: 'Niger',          baseline: 55, lat: 17.6, lng: 8.1 },
-  { code: 'TD', name: 'Chad',           baseline: 52, lat: 15.5, lng: 18.7 },
-  { code: 'CM', name: 'Cameroon',       baseline: 45, lat: 7.4,  lng: 12.4 },
-  { code: 'CO', name: 'Colombia',       baseline: 42, lat: 4.6,  lng: -74.1 },
-  { code: 'MX', name: 'Mexico',         baseline: 40, lat: 23.6, lng: -102.6 },
-  { code: 'TW', name: 'Taiwan',         baseline: 25, lat: 23.7, lng: 121.0 },
+  { code: 'PS', name: 'Palestine',      baseline: 82, lat: 31.9, lng: 35.2 },  // Gaza war ongoing
+  { code: 'AF', name: 'Afghanistan',    baseline: 80, lat: 33.9, lng: 67.7 },  // Taliban, post-US
+  { code: 'UA', name: 'Ukraine',        baseline: 80, lat: 48.4, lng: 31.2 },  // Active war with Russia
+  { code: 'SY', name: 'Syria',          baseline: 78, lat: 35.0, lng: 38.0 },  // Civil war ongoing
+  { code: 'SD', name: 'Sudan',          baseline: 78, lat: 12.9, lng: 30.2 },  // RSF war since 2023
+  { code: 'YE', name: 'Yemen',          baseline: 75, lat: 15.6, lng: 48.5 },  // Houthis, fragile ceasefire
+  { code: 'SO', name: 'Somalia',        baseline: 75, lat: 5.2,  lng: 46.2 },  // Al-Shabaab active
+  { code: 'IR', name: 'Iran',           baseline: 75, lat: 32.4, lng: 53.7 },  // Nuclear program, proxy wars
+  { code: 'SS', name: 'South Sudan',    baseline: 72, lat: 6.9,  lng: 31.3 },  // Ethnic violence
+  { code: 'MM', name: 'Myanmar',        baseline: 72, lat: 19.8, lng: 96.2 },  // Civil war post-coup
+  { code: 'IL', name: 'Israel',         baseline: 70, lat: 31.0, lng: 34.9 },  // Gaza war, regional tension
+  { code: 'BF', name: 'Burkina Faso',   baseline: 70, lat: 12.4, lng: -1.6 },  // JNIM/ISGS very active
+  { code: 'CD', name: 'DR Congo',       baseline: 65, lat: -4.0, lng: 21.8 },  // M23, ADF active
+  { code: 'LB', name: 'Lebanon',        baseline: 65, lat: 33.9, lng: 35.5 },  // Post-Hezbollah conflict
+  { code: 'LY', name: 'Libya',          baseline: 60, lat: 26.3, lng: 17.2 },  // Two governments
+  { code: 'ML', name: 'Mali',           baseline: 62, lat: 17.6, lng: -4.0 },  // JNIM, Wagner/Africa Corps
+  { code: 'HT', name: 'Haiti',          baseline: 62, lat: 19.1, lng: -72.3 },  // Gangs, failed state
+  { code: 'RU', name: 'Russia',         baseline: 60, lat: 55.8, lng: 37.6 },  // War in Ukraine, sanctions
+  { code: 'CF', name: 'Central African Rep.', baseline: 60, lat: 6.6, lng: 20.9 },  // Low-intensity conflict
+  { code: 'NG', name: 'Nigeria',        baseline: 58, lat: 9.1,  lng: 7.5 },  // Boko Haram, bandits NW
+  { code: 'NE', name: 'Niger',          baseline: 55, lat: 17.6, lng: 8.1 },  // Post-coup, ISGS
+  { code: 'ET', name: 'Ethiopia',       baseline: 55, lat: 9.1,  lng: 40.5 },  // Post-Tigray tensions
+  { code: 'IQ', name: 'Iraq',           baseline: 55, lat: 33.2, lng: 43.7 },  // Relatively stable, Shia militias
+  { code: 'KP', name: 'North Korea',    baseline: 55, lat: 40.3, lng: 127.5 },  // Provocations, no active war
+  { code: 'PK', name: 'Pakistan',       baseline: 52, lat: 30.4, lng: 69.3 },  // TTP, political instability
+  { code: 'TD', name: 'Chad',           baseline: 48, lat: 15.5, lng: 18.7 },  // Stable for region
+  { code: 'MZ', name: 'Mozambique',     baseline: 45, lat: -18.7, lng: 35.5 },  // Cabo Delgado minor
+  { code: 'MX', name: 'Mexico',         baseline: 45, lat: 23.6, lng: -102.6 },  // Narco violence
+  { code: 'CM', name: 'Cameroon',       baseline: 42, lat: 7.4,  lng: 12.4 },  // Anglophone crisis low
+  { code: 'TW', name: 'Taiwan',         baseline: 40, lat: 23.7, lng: 121.0 },  // China tension elevated
+  { code: 'VE', name: 'Venezuela',      baseline: 40, lat: 6.4,  lng: -66.6 },  // Political crisis, low violence
+  { code: 'CN', name: 'China',          baseline: 35, lat: 35.9, lng: 104.2 },  // Geopolitical tension, no conflict
+  { code: 'CO', name: 'Colombia',       baseline: 35, lat: 4.6,  lng: -74.1 },  // Peace process, FARC dissidents
 ];
 
 // Country name → code lookup for matching cached data
@@ -87,19 +87,33 @@ function resolveCountryCode(name: string): string | null {
   const lower = name.toLowerCase().trim();
   if (NAME_TO_CODE[lower]) return NAME_TO_CODE[lower];
   if (ALIASES[lower]) return ALIASES[lower];
-  // Try partial matching
+  // Word-boundary matching to avoid Niger/Nigeria confusion
   for (const [key, code] of Object.entries(NAME_TO_CODE)) {
-    if (lower.includes(key) || key.includes(lower)) return code;
+    const regex = new RegExp('\\b' + key.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\$&') + '\\b', 'i');
+    if (regex.test(lower)) return code;
   }
   for (const [key, code] of Object.entries(ALIASES)) {
-    if (lower.includes(key) || key.includes(lower)) return code;
+    const regex = new RegExp('\\b' + key.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\$&') + '\\b', 'i');
+    if (regex.test(lower)) return code;
   }
   return null;
 }
 
 // Geo-distance check (rough, for matching events to countries)
+// Country-specific radii (degrees) adjusted by geographic size
+const COUNTRY_RADIUS: Record<string, number> = {
+  IL: 1.5, PS: 1.0, LB: 1.5,  // Small Middle East
+  SY: 2.5, IQ: 3.0, AF: 3.5, KP: 2.0, TW: 1.5,  // Medium
+  RU: 8.0, CN: 8.0, CD: 5.0, SD: 4.0, ET: 4.0,   // Large
+};
+const DEFAULT_RADIUS = 3.0;
+
 function isNear(lat1: number, lng1: number, lat2: number, lng2: number, radiusDeg: number): boolean {
   return Math.abs(lat1 - lat2) < radiusDeg && Math.abs(lng1 - lng2) < radiusDeg;
+}
+
+function getCountryRadius(code: string): number {
+  return COUNTRY_RADIUS[code] ?? DEFAULT_RADIUS;
 }
 
 function clamp(val: number, min: number, max: number): number {
@@ -110,7 +124,7 @@ function computeNewsFactor(news: NewsPoint[], countryCode: string): number {
   const info = CODE_TO_INFO[countryCode];
   if (!info || !news.length) return 0;
 
-  const nearby = news.filter(n => isNear(n.lat, n.lng, info.lat, info.lng, 5));
+  const nearby = news.filter(n => isNear(n.lat, n.lng, info.lat, info.lng, getCountryRadius(countryCode)));
   if (!nearby.length) return 0;
 
   const avgTone = nearby.reduce((sum, n) => sum + n.tone, 0) / nearby.length;
@@ -127,7 +141,7 @@ function computeConflictFactor(conflicts: Conflict[], countryCode: string): numb
   const info = CODE_TO_INFO[countryCode];
   if (!info || !conflicts.length) return 0;
 
-  const nearby = conflicts.filter(c => isNear(c.lat, c.lng, info.lat, info.lng, 5));
+  const nearby = conflicts.filter(c => isNear(c.lat, c.lng, info.lat, info.lng, getCountryRadius(countryCode)));
   if (!nearby.length) return 0;
 
   const severityWeights: Record<string, number> = { critical: 25, high: 15, medium: 8, low: 3 };
@@ -156,7 +170,7 @@ function computeFlightFactor(flights: MilitaryFlight[], countryCode: string): nu
   const info = CODE_TO_INFO[countryCode];
   if (!info || !flights.length) return 0;
 
-  const nearby = flights.filter(f => isNear(f.lat, f.lng, info.lat, info.lng, 5));
+  const nearby = flights.filter(f => isNear(f.lat, f.lng, info.lat, info.lng, getCountryRadius(countryCode)));
   if (!nearby.length) return 0;
 
   const catWeights: Record<string, number> = {
@@ -279,8 +293,8 @@ export async function computeCII(): Promise<void> {
       hostilityFactor * weights.hostility
     );
 
-    // Composite: baseline × 0.30 + eventScore × 0.70
-    const score = clamp(Math.round(baseline * 0.30 + eventScore * 0.70), 0, 100);
+    // Composite: baseline × 0.25 + eventScore × 0.75 (favor dynamic data)
+    const score = clamp(Math.round(baseline * 0.25 + eventScore * 0.75), 0, 100);
 
     // Load sparkline from Redis, append new score
     const redisKey = `${REDIS_KEY_PREFIX}${code}`;

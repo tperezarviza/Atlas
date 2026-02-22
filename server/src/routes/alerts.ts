@@ -1,4 +1,5 @@
 import type { FastifyInstance } from 'fastify';
+import { requireAdmin } from '../utils/auth.js';
 import { getAlerts, markAlertRead, injectTestAlert } from '../services/alerts.js';
 import type { AlertPriority, AlertSource } from '../types.js';
 
@@ -51,13 +52,7 @@ export function registerAlertsRoutes(app: FastifyInstance) {
   });
 
   app.post<{ Querystring: { scenario?: string } }>('/api/test-alert', async (request, reply) => {
-    // Restrict to localhost/Docker internal network only
-    const ip = request.ip;
-    const isLocal = ip === '127.0.0.1' || ip === '::1' || ip === '::ffff:127.0.0.1' || ip?.startsWith('172.') || ip?.startsWith('10.');
-    if (!isLocal) {
-      reply.status(403).send({ error: 'Forbidden — test endpoint restricted to internal access' });
-      return;
-    }
+    if (!requireAdmin(request, reply)) return;
     const scenario = request.query.scenario ?? 'military';
     const tpl = TEST_SCENARIOS[scenario] ?? TEST_SCENARIOS.military;
     const alert = injectTestAlert(tpl.priority, tpl.source, tpl.title, tpl.detail);

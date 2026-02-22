@@ -18,6 +18,7 @@ export const GCP_PROJECT_ID = process.env.GCP_PROJECT_ID ?? '';
 export const GROQ_API_KEY = process.env.GROQ_API_KEY ?? '';
 export const RAPIDAPI_KEY = process.env.RAPIDAPI_KEY ?? '';
 export const REDIS_URL = process.env.REDIS_URL ?? 'redis://localhost:6379';
+export const ADMIN_API_KEY = process.env.ADMIN_API_KEY ?? '';
 
 // Cloudflare Worker proxy for APIs that block datacenter IPs
 export const CF_PROXY_URL = process.env.CF_PROXY_URL ?? 'https://atlas-proxy.tomasperezarviza.workers.dev';
@@ -27,7 +28,8 @@ export const GDELT_BASE = `${CF_PROXY_URL}/gdelt`;
 const ALL_SECRETS: string[] = [
   ACLED_PASSWORD, EIA_API_KEY, FRED_API_KEY, ANTHROPIC_API_KEY,
   CONGRESS_API_KEY, OPENSKY_CLIENT_SECRET, X_BEARER_TOKEN, ALIENVAULT_API_KEY, CLOUDFLARE_API_TOKEN,
-  GROQ_API_KEY, RAPIDAPI_KEY,
+  GROQ_API_KEY, RAPIDAPI_KEY, process.env.ADMIN_API_KEY ?? "",
+  FIRMS_API_KEY, OPENSKY_CLIENT_ID, ACLED_EMAIL,
 ].filter(Boolean);
 
 /** Redact any secret values from an error message. */
@@ -77,7 +79,7 @@ export const TTL = {
   ALERTS:     30_000,                   // 30 s
   STATIC:     7 * 24 * 60 * 60 * 1000, // 7 d
   CII:           30 * 60 * 1000,        // 30 min
-  FOCAL_POINTS:  15 * 60 * 1000,        // 15 min
+  FOCAL_POINTS:  60 * 60 * 1000,        // 1 h (matches cron interval)
   ANOMALY:       15 * 60 * 1000,        // 15 min
   POLYMARKET:     5 * 60 * 1000,        // 5 min
   CLOUDFLARE:    15 * 60 * 1000,        // 15 min

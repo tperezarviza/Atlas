@@ -1,10 +1,11 @@
 import type { FastifyInstance } from 'fastify';
 import { cache } from '../cache.js';
+import { respondWithMeta } from '../utils/respond.js';
 import type { PropagandaEntry } from '../types.js';
 
 export function registerPropagandaRoutes(app: FastifyInstance) {
-  app.get('/api/propaganda', async () => {
-    return cache.get<PropagandaEntry[]>('propaganda') ?? [];
+  app.get('/api/propaganda', async (req) => {
+    return respondWithMeta('propaganda', req.query as Record<string, string>);
   });
 
   app.get<{ Params: { country: string } }>('/api/propaganda/:country', async (req, reply) => {

@@ -178,7 +178,7 @@ export async function fetchGoogleTrends(): Promise<void> {
 
     // Classify high-score terms that didn't match keywords via Haiku
     const unclassified = allSignals
-      .filter(s => !s.isGeopolitical && s.maxScore > 500 && s.countryCount >= 2)
+      .filter(s => !s.isGeopolitical && s.maxScore >= 80 && s.countryCount >= 2)
       .slice(0, 20);
 
     if (unclassified.length > 0) {
@@ -234,10 +234,10 @@ export async function fetchGoogleTrends(): Promise<void> {
     await cache.setWithRedis('google_trends', result, 12 * 60 * 60 * 1000, 24 * 3600); // 12h mem, 24h Redis
 
     // Store daily snapshot for historical comparison
-    const today = new Date().toISOString().slice(0, 10);
+    const today = new Date().toISOString().slice(0, 30);
     await redisSet(`trends:snapshot:${today}`, {
-      geoTerms: geoTerms.slice(0, 10),
-      multiCountry: multiCountry.slice(0, 10),
+      geoTerms: geoTerms.slice(0, 30),
+      multiCountry: multiCountry.slice(0, 30),
     }, 30 * 24 * 3600); // 30 day TTL
 
     const criticalCount = geoTerms.filter(t => t.signal === 'critical' || t.signal === 'strong').length;

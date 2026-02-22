@@ -41,12 +41,21 @@ import { detectSurges } from './services/surge-detection.js';
 import { fetchEventSpikes, fetchMilitaryCameo } from './services/bq-events.js';
 import { fetchXNews } from './services/x-news.js';
 
+const running = new Set<string>();
+
 function safeRun(name: string, fn: () => Promise<void> | void) {
   return async () => {
+    if (running.has(name)) {
+      console.log(`[CRON] ${name} skipped (still running)`);
+      return;
+    }
+    running.add(name);
     try {
       await fn();
     } catch (err) {
       console.error(`[CRON] ${name} failed:`, sanitizeError(err));
+    } finally {
+      running.delete(name);
     }
   };
 }
@@ -144,8 +153,8 @@ export function startCronJobs() {
   cron.schedule('7 * * * *', safeRun('focal-points', detectFocalPoints));
 
 
-  // 0 */6 * * * -> Google Trends (BQ, 4x/day — data updates daily)
-  cron.schedule('0 */6 * * *', safeRun('google-trends', fetchGoogleTrends));
+  // 30 6 * * * -> Google Trends (BQ, 1x/day at 6:30 UTC — BQ data updates daily)
+  cron.schedule('30 6 * * *', safeRun('google-trends', fetchGoogleTrends));
 
   // 15 */6 * * * -> BQ event spike + military CAMEO analysis
   cron.schedule('15 */6 * * *', safeRun('bq-events', async () => {

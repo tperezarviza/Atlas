@@ -1,10 +1,11 @@
 import type { FastifyInstance } from 'fastify';
 import { cache } from '../cache.js';
+import { respondWithMeta } from '../utils/respond.js';
 import type { HostilityPair } from '../types.js';
 
 export function registerHostilityRoutes(app: FastifyInstance) {
-  app.get('/api/hostility', async () => {
-    return cache.get<HostilityPair[]>('hostility') ?? [];
+  app.get('/api/hostility', async (req) => {
+    return respondWithMeta('hostility', req.query as Record<string, string>);
   });
 
   app.get<{ Params: { pair: string } }>('/api/hostility/:pair', async (req, reply) => {
