@@ -1,6 +1,14 @@
 import { cache } from '../cache.js';
 import { redisGet, redisSet } from '../redis.js';
 import type { MilitaryFlight } from '../types.js';
+// Minimal GeoJSON types for this module
+declare namespace GeoJSON {
+  interface Point { type: 'Point'; coordinates: [number, number]; }
+  interface Feature { type: 'Feature'; geometry: Point | any; properties: Record<string, any>; }
+  interface FeatureCollection { type: 'FeatureCollection'; features: Feature[]; }
+}
+
+
 
 // ── Types ──
 

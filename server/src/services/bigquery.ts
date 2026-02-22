@@ -1,3 +1,4 @@
+// @ts-ignore — BigQuery types not installed on build host
 import { BigQuery } from '@google-cloud/bigquery';
 import { GCP_PROJECT_ID } from '../config.js';
 
