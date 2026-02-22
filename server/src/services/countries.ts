@@ -82,7 +82,7 @@ export async function fetchCountries(): Promise<void> {
       armedGroupCount: armedGroupsByCountry.get(profile.code) ?? 0,
     }));
 
-    cache.set('countries', enriched, TTL.COUNTRIES);
+    await cache.setWithRedis('countries', enriched, TTL.COUNTRIES, 7200);
     console.log(`[COUNTRIES] ${enriched.length} country profiles cached`);
   } catch (err) {
     console.error('[COUNTRIES] Enrichment failed:', err);

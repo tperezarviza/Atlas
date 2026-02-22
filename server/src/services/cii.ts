@@ -329,7 +329,7 @@ export async function computeCII(): Promise<void> {
   // Sort by score descending (most unstable first)
   results.sort((a, b) => b.score - a.score);
 
-  cache.set('cii', results, TTL.CII);
+  await cache.setWithRedis('cii', results, TTL.CII, 7200);
   const top5 = results.slice(0, 5).map(r => `${r.code}=${r.score}`).join(' ');
   console.log(`[CII] ${results.length} countries scored | top5: ${top5} | sources: news=${news.length} conflicts=${conflicts.length} ooni=${incidents.length} flights=${flights.length} hostility=${hostility.length}`);
 }

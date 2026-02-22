@@ -181,7 +181,7 @@ export async function fetchUkraineFront(): Promise<void> {
         data.territory_summary = translated;
       }
 
-      cache.set('ukraine_front', data, TTL.UKRAINE_FRONT);
+      await cache.setWithRedis('ukraine_front', data, TTL.UKRAINE_FRONT, 7200);
       console.log(`[UKRAINE] Cached front data (source: ${data.source})`);
     } else {
       console.warn('[UKRAINE] No source available, using mock');

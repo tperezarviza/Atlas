@@ -43,5 +43,5 @@ export function respondWithMeta(cacheKey: string, query?: Record<string, string 
   if (envelope) {
     return { data: items ?? null, meta };
   }
-  return items ?? null;
+  return items ?? [];
 }

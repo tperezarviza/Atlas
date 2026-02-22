@@ -98,7 +98,7 @@ export async function fetchShippingData(): Promise<void> {
       await delay(1500);
     }
 
-    cache.set('shipping', chokepoints, TTL.SHIPPING);
+    await cache.setWithRedis('shipping', chokepoints, TTL.SHIPPING, 7200);
     console.log(`[SHIPPING] ${chokepoints.length} chokepoints cached`);
   } catch (err) {
     console.error('[SHIPPING] Fetch failed:', err);

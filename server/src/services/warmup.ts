@@ -55,6 +55,9 @@ async function warmupFromRedis(): Promise<void> {
   const keysToRestore = [
     'brief', 'brief:argentina', 'brief:emergency', 'brief:mideast', 'brief:ukraine', 'brief:domestic', 'brief:intel',
     'twitter', 'propaganda', 'hostility', 'focal_points',
+    // Slow-cron data — restore to avoid gaps after redeploy
+    'countries', 'shipping', 'cii', 'ukraine_front', 'armed_groups',
+    'ofac_sanctions', 'ooni', 'terrorism_history',
     // BQ-derived caches — restored to avoid re-running expensive queries on redeploy
     'google_trends', 'bq_event_spikes', 'bq_military_cameo',
   ];
