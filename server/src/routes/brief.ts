@@ -22,7 +22,7 @@ export function registerBriefRoutes(app: FastifyInstance) {
     return cache.get<BriefResponse>(cacheKey) ?? null;
   });
 
-  app.post('/api/brief/regenerate', async (req, reply) => {
+  app.post('/api/brief/regenerate', { config: { rateLimit: { max: 8, timeWindow: '1 hour' } } }, async (req, reply) => {
     if (!requireAdmin(req, reply)) return;
     const focus = parseFocus((req.query as { focus?: string }).focus);
     const now = Date.now();

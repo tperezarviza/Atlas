@@ -1,4 +1,5 @@
 import { isBigQueryAvailable, bqQuery } from './bigquery.js';
+import { canSpendBQ, recordBQUsage } from './bigquery.js';
 import { cache } from '../cache.js';
 import { redisSet } from '../redis.js';
 import { aiComplete } from '../utils/ai-client.js';
@@ -113,6 +114,12 @@ function isGeopoliticalTerm(term: string): boolean {
 }
 
 export async function fetchGoogleTrends(): Promise<void> {
+  // BQ cost guard: ~5GB per trends query
+  if (!canSpendBQ(5)) {
+    console.log('[TRENDS] Skipping — daily BQ budget exhausted');
+    return;
+  }
+
   if (!isBigQueryAvailable()) {
     console.log('[TRENDS] BigQuery not available, skipping');
     return;

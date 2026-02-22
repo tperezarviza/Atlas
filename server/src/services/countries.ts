@@ -51,7 +51,9 @@ export async function fetchCountries(): Promise<void> {
         const countryLower = profile.name.toLowerCase();
         let totalEvents = 0;
         for (const [actorLower, count] of actorEntries) {
-          if (actorLower.includes(countryLower)) {
+          // Word-boundary match to prevent Niger matching Nigeria etc.
+          const countryRegex = new RegExp(`\\b${countryLower.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`);
+          if (countryRegex.test(actorLower)) {
             totalEvents += count;
           }
         }
