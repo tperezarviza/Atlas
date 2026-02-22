@@ -37,6 +37,8 @@ export interface Earthquake {
 }
 
 export async function fetchEarthquakes(): Promise<void> {
+  if (cache.isFresh('earthquakes')) return;
+
   console.log('[USGS] Fetching earthquake data...');
   try {
     // Significant earthquakes in the last 30 days (M4.5+)

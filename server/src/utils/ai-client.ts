@@ -2,7 +2,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { ANTHROPIC_API_KEY } from '../config.js';
 
 // Singleton Anthropic client — reuse across all calls to prevent CLOSE_WAIT socket leak
-const anthropicClient = ANTHROPIC_API_KEY ? new Anthropic({ apiKey: ANTHROPIC_API_KEY }) : null;
+const anthropicClient = ANTHROPIC_API_KEY ? new Anthropic({ apiKey: ANTHROPIC_API_KEY, timeout: 30000 }) : null;
 const GROQ_API_KEY = process.env.GROQ_API_KEY ?? '';
 
 export type AIProvider = 'claude-sonnet' | 'claude-haiku' | 'groq-llama' | 'static-fallback';

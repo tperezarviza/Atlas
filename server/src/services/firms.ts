@@ -4,11 +4,24 @@ import { withCircuitBreaker } from '../utils/circuit-breaker.js';
 
 const FIRMS_API_KEY = process.env.FIRMS_API_KEY ?? '';
 
+
+function normalizeConfidence(conf: string): number {
+  switch (conf?.toLowerCase?.()) {
+    case 'h': case 'high': return 95;
+    case 'n': case 'nominal': return 70;
+    case 'l': case 'low': return 30;
+    default: {
+      const num = Number(conf);
+      return isNaN(num) ? 50 : num;
+    }
+  }
+}
+
 export interface FireHotspot {
   latitude: number;
   longitude: number;
   brightness: number;       // Kelvin — higher = more intense
-  confidence: string;       // 'low' | 'nominal' | 'high'
+  confidence: number;       // 0-100 normalized
   frp: number;              // Fire Radiative Power (MW)
   acq_date: string;
   acq_time: string;
@@ -53,7 +66,7 @@ async function fetchRegion(name: string, bbox: [number, number, number, number])
       latitude: parseFloat(cols[latIdx]),
       longitude: parseFloat(cols[lonIdx]),
       brightness: parseFloat(cols[brightIdx]) || 0,
-      confidence: cols[confIdx] ?? 'nominal',
+      confidence: normalizeConfidence(cols[confIdx] ?? 'nominal'),
       frp: parseFloat(cols[frpIdx]) || 0,
       acq_date: cols[dateIdx] ?? '',
       acq_time: cols[timeIdx] ?? '',

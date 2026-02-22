@@ -6,7 +6,7 @@ import { cache } from '../cache.js';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const DATA_DIR = join(__dirname, '..', 'data');
 
-const LAYER_TTL = 24 * 60 * 60 * 1000; // 24h — static data barely changes
+const LAYER_TTL = 7 * 24 * 60 * 60 * 1000; // 24h — static data barely changes
 
 interface GeoJSONCollection {
   type: string;

@@ -2,7 +2,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { ANTHROPIC_API_KEY } from '../config.js';
 
 // Singleton Anthropic client — prevent CLOSE_WAIT socket leak
-const anthropicClient = ANTHROPIC_API_KEY ? new Anthropic({ apiKey: ANTHROPIC_API_KEY }) : null;
+const anthropicClient = ANTHROPIC_API_KEY ? new Anthropic({ apiKey: ANTHROPIC_API_KEY, timeout: 30000 }) : null;
 
 /** Detect non-English Latin-script languages (Italian, French, Spanish, Portuguese). */
 const NON_ENGLISH_INDICATORS = /\b(dell[aeo]|nell[aeo]|sull[aeo]|l'ambasciatore|governo|contro|anche|perch[eé]|après|aujourd'?hui|qu[ei]|dans|avec|pour|cette|serait|había|donde|tiene|sobre|está|también|según|pero|entre|todos|desde|como|más|años|governo|primo|ministro|presidente|durante|ancora|stato|essere|questa|quello|hanno|sono|tutto|sempre|giorno|molto|fatto|ogni|nuovo|altra|paese|mondo|dopo|prima|grande|perché|ancora|così|però|già|bene|mentre|senza|altra|trova|parte)\b/i;

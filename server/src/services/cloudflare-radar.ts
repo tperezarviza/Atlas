@@ -15,6 +15,8 @@ export interface CloudflareOutage {
 }
 
 export async function fetchCloudflareOutages(): Promise<void> {
+  if (cache.isFresh('cloudflare_outages')) return;
+
   if (!CLOUDFLARE_API_TOKEN) {
     console.warn('[CLOUDFLARE] No CLOUDFLARE_API_TOKEN set, skipping outage fetch');
     return;

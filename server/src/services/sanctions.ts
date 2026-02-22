@@ -11,6 +11,8 @@ export interface OFACSanction {
 }
 
 export async function fetchSanctions(): Promise<void> {
+  if (cache.isFresh('ofac_sanctions')) return;
+
   console.log('[OFAC] Fetching sanctions data...');
   try {
     // OFAC retired their RSS feed Jan 2025. Scrape HTML page instead.

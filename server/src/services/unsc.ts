@@ -3,6 +3,8 @@ import { TTL } from '../config.js';
 import type { CalendarEvent, CalendarUrgency } from '../types.js';
 
 export async function fetchUNSC(): Promise<void> {
+  if (cache.isFresh('unsc_calendar')) return;
+
   console.log('[UNSC] Fetching Security Council calendar...');
   try {
     const res = await fetch(

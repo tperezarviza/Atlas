@@ -74,6 +74,8 @@ function selectDiverseFeeds(feed: FeedItem[], max: number): FeedItem[] {
 }
 
 export async function composeTicker(): Promise<void> {
+  if (cache.isFresh('ticker')) return;
+
   console.log('[TICKER] Compositing ticker from caches...');
 
   const items: TickerItem[] = [];

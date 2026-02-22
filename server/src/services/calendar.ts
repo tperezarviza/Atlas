@@ -48,6 +48,8 @@ function formatEventDate(dateStr: string): string {
 }
 
 export async function fetchCalendar(): Promise<void> {
+  if (cache.isFresh('calendar')) return;
+
   console.log('[CALENDAR] Fetching calendar events...');
 
   try {
