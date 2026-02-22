@@ -93,14 +93,8 @@ app.addHook('onSend', async (request, reply) => {
   }
 });
 
-// Security response headers
+// Security: CSP header (other security headers handled by Caddy reverse proxy)
 app.addHook('onSend', async (_request, reply) => {
-  reply.header('X-Content-Type-Options', 'nosniff');
-  reply.header('X-Frame-Options', 'DENY');
-  reply.header('X-XSS-Protection', '1; mode=block');
-  reply.header('Referrer-Policy', 'strict-origin-when-cross-origin');
-  reply.header('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
-  reply.header('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
   reply.header('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://*.tile.openstreetmap.org https://tile.openstreetmap.org https://unpkg.com; connect-src 'self' https://atlas.slowhorses.net; frame-ancestors 'none'");
 });
 
