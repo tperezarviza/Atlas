@@ -17,7 +17,10 @@ export const CLOUDFLARE_API_TOKEN = process.env.CLOUDFLARE_API_TOKEN ?? '';
 export const GCP_PROJECT_ID = process.env.GCP_PROJECT_ID ?? '';
 export const GROQ_API_KEY = process.env.GROQ_API_KEY ?? '';
 export const RAPIDAPI_KEY = process.env.RAPIDAPI_KEY ?? '';
-export const REDIS_URL = process.env.REDIS_URL ?? 'redis://localhost:6379';
+const REDIS_PASSWORD = process.env.REDIS_PASSWORD ?? '';
+export const REDIS_URL = REDIS_PASSWORD
+  ? `redis://:${REDIS_PASSWORD}@redis:6379`
+  : (process.env.REDIS_URL ?? 'redis://redis:6379');
 export const ADMIN_API_KEY = process.env.ADMIN_API_KEY ?? '';
 
 // Cloudflare Worker proxy for APIs that block datacenter IPs

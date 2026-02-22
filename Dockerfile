@@ -20,4 +20,8 @@ RUN npm run build
 WORKDIR /app/server
 EXPOSE 3000
 ENV NODE_OPTIONS="--max-old-space-size=1536"
+RUN chown -R node:node /app
+
+USER node
+
 CMD ["npx", "tsx", "src/index.ts"]

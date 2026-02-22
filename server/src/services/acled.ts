@@ -199,10 +199,11 @@ export async function fetchConflicts(): Promise<void> {
 
     // Aggregate by country
     const byCountry = new Map<string, CountryAgg>();
-    const now = Date.now();
+    // Use max date from dataset (not Date.now()) — ACLED data lags by days
+    const latestDataDate = Math.max(...events.map(e => new Date(e.event_date).getTime()));
     const sevenDaysMs = 7 * 24 * 60 * 60 * 1000;
-    const sevenDaysAgo = now - sevenDaysMs;
-    const fourteenDaysAgo = now - 2 * sevenDaysMs;
+    const sevenDaysAgo = latestDataDate - sevenDaysMs;
+    const fourteenDaysAgo = latestDataDate - 2 * sevenDaysMs;
 
     for (const event of events) {
       const eventTime = new Date(event.event_date).getTime();

@@ -1,6 +1,5 @@
 import type { FastifyInstance } from 'fastify';
 import { cache } from '../cache.js';
-import { respondWithMeta } from '../utils/respond.js';
 import { getMarketSessions } from '../services/sessions.js';
 import type { MarketSection, MacroItem } from '../types.js';
 

@@ -1,6 +1,31 @@
 import { BigQuery } from '@google-cloud/bigquery';
 import { GCP_PROJECT_ID } from '../config.js';
 
+// ---- BQ Cost Guards ----
+const BQ_DAILY_BUDGET_GB = 50; // Max GB scanned per day
+let bqDailyUsageGB = 0;
+let bqDayKey = new Date().toISOString().split('T')[0];
+
+export function canSpendBQ(estimatedGB: number = 1): boolean {
+  const today = new Date().toISOString().split('T')[0];
+  if (today !== bqDayKey) {
+    bqDayKey = today;
+    bqDailyUsageGB = 0;
+  }
+  return (bqDailyUsageGB + estimatedGB) <= BQ_DAILY_BUDGET_GB;
+}
+
+export function recordBQUsage(gb: number): void {
+  const today = new Date().toISOString().split('T')[0];
+  if (today !== bqDayKey) {
+    bqDayKey = today;
+    bqDailyUsageGB = 0;
+  }
+  bqDailyUsageGB += gb;
+  console.log(`[BQ] Daily usage: ${bqDailyUsageGB.toFixed(2)}GB / ${BQ_DAILY_BUDGET_GB}GB`);
+}
+
+
 let client: BigQuery | null = null;
 
 export function initBigQuery(): void {

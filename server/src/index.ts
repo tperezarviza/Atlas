@@ -1,5 +1,6 @@
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
+import rateLimit from '@fastify/rate-limit';
 import { PORT, sanitizeError } from './config.js';
 import { registerHealthRoutes } from './routes/health.js';
 import { registerConflictsRoutes } from './routes/conflicts.js';
@@ -60,6 +61,24 @@ const CORS_ORIGINS = process.env.CORS_ORIGINS
   : ['http://localhost:5173', 'http://localhost:4173'];
 
 await app.register(cors, { origin: CORS_ORIGINS });
+
+// Rate limiting — protect against abuse while allowing normal frontend polling
+await app.register(rateLimit, {
+  global: true,
+  max: 120,           // 120 req/min default (frontend polls ~14 endpoints every 3-5 min)
+  timeWindow: '1 minute',
+  allowList: (req: any) => {
+    // No limit for internal Docker network requests
+    const ip = req.ip;
+    return ip?.startsWith('172.') || ip?.startsWith('10.') || ip === '127.0.0.1' || ip === '::1';
+  },
+  errorResponseBuilder: (_req: any, context: any) => ({
+    error: 'Rate limit exceeded',
+    retryAfter: Math.ceil(context.ttl / 1000),
+  }),
+  addHeadersOnExceeding: { 'x-ratelimit-limit': true, 'x-ratelimit-remaining': true },
+  addHeaders: { 'x-ratelimit-limit': true, 'x-ratelimit-remaining': true, 'retry-after': true },
+});
 
 // HTTP Cache-Control headers for API responses
 app.addHook('onSend', async (request, reply) => {

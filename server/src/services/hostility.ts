@@ -1,3 +1,4 @@
+import { redisSet } from '../redis.js';
 import { TTL, GDELT_BASE } from '../config.js';
 import { cache } from '../cache.js';
 import { translateTexts } from './translate.js';
@@ -35,6 +36,20 @@ function classifyTone(tone: number): Severity {
 
 function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+
+// Store daily hostility snapshot for trend analysis
+async function storeHostilitySnapshot(data: any[]): Promise<void> {
+  try {
+    const today = new Date().toISOString().split('T')[0];
+    const key = `hostility:history:${today}`;
+    const summary = data.map((d: any) => ({ country: d.country, avgTone: d.avgTone, articles: d.articles }));
+    await redisSet(key, summary, 30 * 86400); // Keep 30 days
+    console.log('[Hostility] Stored daily snapshot');
+  } catch (e) {
+    console.warn('[Hostility] Failed to store snapshot:', e);
+  }
 }
 
 export async function fetchHostilityIndex(): Promise<void> {

@@ -1,6 +1,5 @@
 import type { FastifyInstance } from 'fastify';
 import { cache } from '../cache.js';
-import { respondWithMeta } from '../utils/respond.js';
 import type { NewsWireItem, FeedItem, NewsBullet } from '../types.js';
 
 const TIER_BULLET: Record<number, NewsBullet> = { 1: 'high', 2: 'medium', 3: 'accent', 4: 'accent' };
