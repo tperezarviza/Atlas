@@ -308,15 +308,26 @@ export async function fetchGdeltNews(): Promise<void> {
   console.log(`[GDELT] Fetching news from ${GDELT_QUERIES.length} static + ${dynamicQueries.length} dynamic queries...`);
 
   try {
-    const results = await Promise.allSettled(
-      allQueries.map((q) =>
-        withCircuitBreaker(
-          'gdelt',
-          () => fetchGdeltQuery(q.query, q.category, q.timespan, q.maxpoints),
-          () => cache.get<NewsPoint[]>('news') ?? [],
+    // Fetch in batches of 5 to avoid overloading CF proxy
+    const BATCH_SIZE = 5;
+    const results: PromiseSettledResult<NewsPoint[]>[] = [];
+    for (let i = 0; i < allQueries.length; i += BATCH_SIZE) {
+      const batch = allQueries.slice(i, i + BATCH_SIZE);
+      const batchResults = await Promise.allSettled(
+        batch.map((q) =>
+          withCircuitBreaker(
+            `gdelt:${q.category}`,
+            () => fetchGdeltQuery(q.query, q.category, q.timespan, q.maxpoints),
+            () => [] as NewsPoint[],
+          )
         )
-      )
-    );
+      );
+      results.push(...batchResults);
+      // Small delay between batches to avoid rate limiting
+      if (i + BATCH_SIZE < allQueries.length) {
+        await new Promise(r => setTimeout(r, 1000));
+      }
+    }
 
     const allPoints: NewsPoint[] = [];
     results.forEach((r, i) => {

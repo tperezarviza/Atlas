@@ -23,7 +23,7 @@ export function registerBriefRoutes(app: FastifyInstance) {
   });
 
   app.post('/api/brief/regenerate', { config: { rateLimit: { max: 8, timeWindow: '1 hour' } } }, async (req, reply) => {
-    if (!requireAdmin(req, reply)) return;
+    if (!requireAdmin(req, reply)) return reply;
     const focus = parseFocus((req.query as { focus?: string }).focus);
     const now = Date.now();
     const elapsed = now - lastRegenAt;

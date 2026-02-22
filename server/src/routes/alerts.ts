@@ -52,7 +52,7 @@ export function registerAlertsRoutes(app: FastifyInstance) {
   });
 
   app.post<{ Querystring: { scenario?: string } }>('/api/test-alert', async (request, reply) => {
-    if (!requireAdmin(request, reply)) return;
+    if (!requireAdmin(request, reply)) return reply;
     const scenario = request.query.scenario ?? 'military';
     const tpl = TEST_SCENARIOS[scenario] ?? TEST_SCENARIOS.military;
     const alert = injectTestAlert(tpl.priority, tpl.source, tpl.title, tpl.detail);

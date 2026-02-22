@@ -159,7 +159,7 @@ app.get('/api/google-trends', async (req) => respondWithMeta('google_trends', re
 
 // Surge detection route
 app.get('/api/surge-alerts', async (req, reply) => {
-  if (!requireAdmin(req, reply)) return;
+  if (!requireAdmin(req, reply)) return reply;
   return cache.get('surge_alerts') ?? [];
 });
 

@@ -7,7 +7,7 @@ interface CircuitState {
 
 const circuits = new Map<string, CircuitState>();
 
-const FAILURE_THRESHOLD = 3;
+const FAILURE_THRESHOLD = 5;
 const COOLDOWN_MS = 5 * 60_000; // 5 min cooldown when open
 
 export async function withCircuitBreaker<T>(
