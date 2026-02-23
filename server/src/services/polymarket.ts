@@ -22,13 +22,17 @@ const GEO_KW = /iran|china|russia|ukraine|taiwan|nato|nuclear|north korea|missil
 const US_KW = /trump|biden|harris|congress|senate|us election|us president|american|united states|\bgop\b|democrat|republican|border wall|immigration.*us|\bdoj\b|\bfbi\b|\bcia\b|pentagon|white house|\bdoge\b|\brfk\b|jd vance|desantis/i;
 const ECON_KW = /fed rate|federal reserve|interest rate|inflation|gdp|recession|bitcoin|btc|ethereum|crypto|s&p 500|nasdaq|dow jones|tariff|trade war|debt ceiling/i;
 const CONFLICT_KW = /\bwar\b|invasion|\battack\b|\bstrike\b|ceasefire|peace deal|troops deploy|military operation|casualties|bombing/i;
-const SPORTS_KW = /counter.strike|esports|e-sports|\bbo[1-5]\b|league of legends|\blol\b|dota|valorant|overwatch|\bnfl\b|\bnba\b|\bmlb\b|\bnhl\b|super bowl|world series|premier league|champions league|la liga|serie a\b|bundesliga|\bufc\b|\bmma\b|formula.?1|nascar|grand prix|copa america|\bfifa\b|world cup|\bolympi|medal|most gold|\bgolf\b|\btennis\b|wimbledon|us open|french open|australian open|\bpga\b|\batp\b|\bwta\b|boxing match|college football|march madness|\bncaa\b|stanley cup|playoff game|draft pick|batting average|rushing yard|touchdown|quarterback|home run/i;
+const SPORTS_KW = /counter.strike|esports|e-sports|\bbo[1-5]\b|league of legends|\blol\b|dota|valorant|overwatch|\bnfl\b|\bnba\b|\bmlb\b|\bnhl\b|super bowl|world series|premier league|champions league|la liga|serie a\b|bundesliga|\bufc\b|\bmma\b|formula.?1|\bF1\b|nascar|grand prix|copa america|\bfifa\b|world cup|\bolympi|medal|most gold|\bgolf\b|\btennis\b|wimbledon|us open|french open|australian open|\bpga\b|\batp\b|\bwta\b|boxing match|college football|march madness|\bncaa\b|stanley cup|playoff game|draft pick|batting average|rushing yard|touchdown|quarterback|home run|\bvs\.?\s|lakers|celtics|warriors|cavaliers|nuggets|bucks|thunder|knicks|76ers|heat|nets|bulls|clippers|mavericks|rockets|pistons|spurs|suns|hawks|pacers|hornets|grizzlies|pelicans|timberwolves|kings|blazers|magic|wizards|raptors|jazz|chiefs|eagles|niners|49ers|cowboys|steelers|packers|ravens|bengals|bills|dolphins|lions|bears|vikings|commanders|saints|chargers|broncos|raiders|seahawks|texans|colts|jaguars|titans|falcons|panthers|cardinals|rams|giants|jets|patriots|browns|yankees|dodgers|red sox|cubs|braves|astros|mets|phillies|padres|brewers|orioles|twins|guardians|rangers|mariners|royals|rays|tigers|angels|reds|pirates|rockies|marlins|nationals|diamondbacks|white sox|athletics|blue jays|bruins|canadiens|maple leafs|blackhawks|penguins|flyers|oilers|avalanche|hurricanes|lightning|panthers|wild|predators|islanders|flames|canucks|senators|kraken|devils|ducks|coyotes|blue jackets|lewis hamilton|verstappen|leclerc|norris|hamilton.*champion|driver.*champion|\bmoto.?gp\b|cycling|marathon|triathlon/i;
 const ENTERTAINMENT_KW = /\bwho will win.*award|best picture|best actor|best actress|\boscar\b|\bemmy\b|\bgrammy\b|\bgolden globe\b|box office|opening weekend|album.*chart|billboard|streaming record|netflix|stranger things|reality.?tv|bachelor|bachelorette|survivor|big brother|american idol|talent show|housewives|celebrity|kardashian|jenner|influencer|episode released|new season/i;
 
 const TRIVIAL_KW = /\btweet|post \d+.*tweet|follower|\bsubscriber|how many.*post|temperature.*record|weather.*record|rain.*inches|\bsnow.*inch/i;
 
-function classify(title: string): string {
+// Slug-based sports prefix detection
+const SPORTS_SLUG_RE = /^(nba|nfl|nhl|mlb|ufc|mma|f1|epl|lal|ser|bun|copa|ncaa|pga|atp|wta)-/i;
+
+function classify(title: string, slug?: string): string {
   if (SPORTS_KW.test(title)) return 'sports';
+  if (slug && SPORTS_SLUG_RE.test(slug)) return 'sports';
   if (ENTERTAINMENT_KW.test(title)) return 'entertainment';
   if (TRIVIAL_KW.test(title)) return 'trivial';
   if (CONFLICT_KW.test(title)) return 'conflict';
@@ -83,7 +87,7 @@ export async function fetchPolymarket(): Promise<void> {
           active: !!m.active,
           closed: !!m.closed,
           endDate: m.endDateIso ?? null,
-          category: classify(m.question ?? m.title ?? ''),
+          category: classify(m.question ?? m.title ?? '', m.slug ?? ''),
         };
       })
       .filter(e => {
