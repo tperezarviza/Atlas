@@ -1,4 +1,5 @@
-import { useState, useMemo, memo } from 'react';
+import { useMemo, memo } from 'react';
+import { useAudioState } from './AudioToggle';
 import { useClock } from '../hooks/useClock';
 import { useApiData } from '../hooks/useApiData';
 import { api } from '../services/api';
@@ -21,7 +22,7 @@ export default memo(function TopBar({ contextId }: TopBarProps) {
   const fetchTopbar = useMemo(() => () => api.topbar(contextId), [contextId]);
   const { data, error } = useApiData<TopBarData>(fetchTopbar, REFRESH_MS);
   const { data: healthData } = useApiData<HealthResponse>(api.health, HEALTH_REFRESH_MS);
-  const [audioEnabled, setAudioEnabled] = useState(false);
+  const [audioEnabled, toggleAudio] = useAudioState();
 
   const kpis = data?.kpis ?? [];
   const threatLevel = data?.threatLevel ?? 'ELEVATED';
@@ -207,7 +208,7 @@ export default memo(function TopBar({ contextId }: TopBarProps) {
 
         {/* Audio toggle */}
         <button
-          onClick={() => setAudioEnabled(prev => !prev)}
+          onClick={toggleAudio}
           title={audioEnabled ? 'Mute alerts' : 'Enable alert audio'}
           style={{
             width: 36,
