@@ -32,10 +32,30 @@ export function useAudioState(): [boolean, () => void] {
   return [enabled, toggle];
 }
 
+// Shared AudioContext — created once, resumed on user gesture
+let _audioCtx: AudioContext | null = null;
+function getAudioCtx(): AudioContext | null {
+  try {
+    if (!_audioCtx) _audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    if (_audioCtx.state === 'suspended') _audioCtx.resume();
+    return _audioCtx;
+  } catch { return null; }
+}
+
+// Resume AudioContext on ANY user interaction (required by browsers)
+if (typeof document !== 'undefined') {
+  const resumeAudio = () => {
+    if (_audioCtx && _audioCtx.state === 'suspended') _audioCtx.resume();
+  };
+  document.addEventListener('click', resumeAudio, { once: false });
+  document.addEventListener('keydown', resumeAudio, { once: false });
+}
+
 export function playAlertSound(type: 'critical' | 'trump') {
   if (!globalAudioEnabled) return;
+  const ctx = getAudioCtx();
+  if (!ctx) return;
   try {
-    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
     const gain = ctx.createGain();
     gain.connect(ctx.destination);
     gain.gain.value = 0.4;
@@ -70,8 +90,6 @@ export function playAlertSound(type: 'critical' | 'trump') {
         }
       });
     }
-    // Auto-close context after sounds finish
-    setTimeout(() => ctx.close().catch(() => {}), 2000);
   } catch {
     // Web Audio not available
   }
