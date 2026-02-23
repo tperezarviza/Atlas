@@ -26,7 +26,27 @@ export function useAudioState(): [boolean, () => void] {
   }, []);
 
   const toggle = useCallback(() => {
-    setGlobalAudio(!globalAudioEnabled);
+    const newState = !globalAudioEnabled;
+    setGlobalAudio(newState);
+    if (newState) {
+      // User gesture: perfect time to create/resume AudioContext
+      const ctx = getAudioCtx();
+      if (ctx && ctx.state === 'suspended') ctx.resume();
+      // Play a short confirmation beep so user knows audio works
+      if (ctx) {
+        try {
+          const osc = ctx.createOscillator();
+          const env = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.value = 520;
+          env.gain.setValueAtTime(0.2, ctx.currentTime);
+          env.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
+          osc.connect(env).connect(ctx.destination);
+          osc.start(ctx.currentTime);
+          osc.stop(ctx.currentTime + 0.2);
+        } catch {}
+      }
+    }
   }, []);
 
   return [enabled, toggle];
