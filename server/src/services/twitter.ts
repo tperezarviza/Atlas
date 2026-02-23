@@ -155,7 +155,7 @@ const TIER_A = ALL_TIERED_QUERIES.filter(q => q.tier === 'A');
 const TIER_B = ALL_TIERED_QUERIES.filter(q => q.tier === 'B');
 const TIER_C = ALL_TIERED_QUERIES.filter(q => q.tier === 'C');
 
-// Rate-limit tracking: 10,000 tweets/month read cap
+// Rate-limit tracking: 1M tweets/month read cap (X Pro plan)
 let monthlyTweetsRead = 0;
 let currentMonth = new Date().getMonth();
 let cycleCount = 0;
@@ -166,7 +166,7 @@ let tierCIndex = 0;
 export function setMonthlyTweetsRead(count: number): void { monthlyTweetsRead = count; }
 export function setQueryIndex(idx: number): void { cycleCount = idx; }
 
-const MONTHLY_CAP = 10_000;
+const MONTHLY_CAP = 1_000_000;
 const CAP_WARNING_PCT = 0.95;
 
 function resetMonthlyCounter(): void {
@@ -291,7 +291,7 @@ export async function fetchTwitterTiered(): Promise<void> {
     try {
       const newTweets = await withCircuitBreaker(
         'twitter',
-        () => searchTweets(q, 15),
+        () => searchTweets(q, 25),
         () => [] as TwitterIntelItem[],
       );
       const existing = cache.get<TwitterIntelItem[]>('twitter') || [];
