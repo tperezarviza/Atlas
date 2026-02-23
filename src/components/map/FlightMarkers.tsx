@@ -128,7 +128,7 @@ const COUNTRY_COLORS: Record<string, string> = {
   EG: '#cc9933',   // Gold
   KR: '#6699ff',   // Periwinkle
   BR: '#33cc33',   // Lime green
-  AR: '#66bbff',   // Light blue
+  AR: '#00ccaa',   // Argentine teal
   PK: '#44aa44',   // Forest green
   NO: '#558bff',   // Nordic blue
   PL: '#dd5577',   // Polish red
