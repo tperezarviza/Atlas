@@ -35,12 +35,45 @@ export function useAudioState(): [boolean, () => void] {
 export function playAlertSound(type: 'critical' | 'trump') {
   if (!globalAudioEnabled) return;
   try {
-    const src = type === 'trump' ? '/sounds/alert-trump.mp3' : '/sounds/alert-critical.mp3';
-    const audio = new Audio(src);
-    audio.volume = 0.6;
-    audio.play().catch(() => {});
+    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const gain = ctx.createGain();
+    gain.connect(ctx.destination);
+    gain.gain.value = 0.4;
+
+    if (type === 'trump') {
+      // 3 ascending tones — "breaking news" feel
+      [440, 554, 659].forEach((freq, i) => {
+        const osc = ctx.createOscillator();
+        const env = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.value = freq;
+        env.gain.setValueAtTime(0.5, ctx.currentTime + i * 0.15);
+        env.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + i * 0.15 + 0.3);
+        osc.connect(env).connect(gain);
+        osc.start(ctx.currentTime + i * 0.15);
+        osc.stop(ctx.currentTime + i * 0.15 + 0.35);
+      });
+    } else {
+      // 2 urgent alarm tones — critical alert feel
+      [880, 660].forEach((freq, i) => {
+        for (let r = 0; r < 2; r++) {
+          const osc = ctx.createOscillator();
+          const env = ctx.createGain();
+          osc.type = 'square';
+          osc.frequency.value = freq;
+          const t = ctx.currentTime + (i * 2 + r) * 0.2;
+          env.gain.setValueAtTime(0.3, t);
+          env.gain.exponentialRampToValueAtTime(0.01, t + 0.18);
+          osc.connect(env).connect(gain);
+          osc.start(t);
+          osc.stop(t + 0.2);
+        }
+      });
+    }
+    // Auto-close context after sounds finish
+    setTimeout(() => ctx.close().catch(() => {}), 2000);
   } catch {
-    // Audio playback not available
+    // Web Audio not available
   }
 }
 

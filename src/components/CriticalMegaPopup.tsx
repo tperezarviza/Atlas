@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
+import { playAlertSound } from './AudioToggle'
 import type { Alert } from '../types'
 
 const DISMISS_MS = 30_000
@@ -68,6 +69,7 @@ export default function CriticalMegaPopup({ alerts, onDismiss }: Props) {
     setActiveAlert(alert)
     setMounted(true)
     setScreenFlash(true)
+    playAlertSound('critical')
     flashTimerRef.current = setTimeout(() => setScreenFlash(false), 600)
     requestAnimationFrame(() => {
       requestAnimationFrame(() => setVisible(true))

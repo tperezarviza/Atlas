@@ -34,6 +34,12 @@ const TEST_SCENARIOS: Record<string, { priority: AlertPriority; source: AlertSou
     title: 'IDF confirms large-scale strike on Hezbollah command center in Beirut',
     detail: '@IDF (RSS) • Israel Defense Forces',
   },
+  trump: {
+    priority: 'flash',
+    source: 'twitter',
+    title: 'BREAKING: Trump announces reimposition of maximum pressure sanctions on Iran',
+    detail: '@realDonaldTrump • Truth Social',
+  },
 };
 
 export function registerAlertsRoutes(app: FastifyInstance) {

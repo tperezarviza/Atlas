@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
+import { playAlertSound } from './AudioToggle'
 import type { Alert } from '../types'
 
 const DISMISS_MS = 20_000
@@ -68,6 +69,7 @@ export default function Tier1AlertCard({ alerts, onDismiss }: Props) {
     shownIdsRef.current.add(alert.id)
     setActiveAlert(alert)
     setMounted(true)
+    playAlertSound('critical')
     requestAnimationFrame(() => {
       requestAnimationFrame(() => setVisible(true))
     })

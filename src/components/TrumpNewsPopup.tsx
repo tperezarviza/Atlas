@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
+import { playAlertSound } from './AudioToggle'
 import { api } from '../services/api'
 import type { TwitterIntelItem, FeedItem } from '../types'
 
@@ -71,6 +72,7 @@ export default function TrumpNewsPopup() {
     clearTimers()
     setPost(p)
     setCurrentPage(0)
+    playAlertSound('trump')
 
     // Trigger screen flash
     setScreenFlash(true)
