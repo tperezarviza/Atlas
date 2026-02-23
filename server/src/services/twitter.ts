@@ -80,12 +80,49 @@ const ACCOUNT_GROUPS: AccountGroup[] = [
   {
     label: 'Argentina',
     accounts: ['JMilei', 'VickyVillarruel', 'PatoBullrich', 'LuisCaputoAR',
-               'CFKArgentina', 'SergioMassa', 'JuanGrabworking', 'Abordo'],
+               'CFKArgentina', 'SergioMassa', 'JuanGrabois'],
     category: 'geopolitical' as TweetCategory,
     priority: 'priority' as TweetPriority,
     tier: 'B' as const,
   },
 
+  {
+    label: 'Russia & Ukraine',
+    accounts: [
+      'ZelenskyyUa',   // Ukraine President
+      'DefenceU',      // Ukraine MOD
+      'KyivIndependent', // Kyiv Independent (top Ukraine English news)
+      'MedssFedss',    // Medvedev (former RU President)
+      'maboronov',     // Russia MOD correspondent
+    ],
+    category: 'crisis', priority: 'priority', tier: 'B',
+  },
+  {
+    label: 'China & Indo-Pacific',
+    accounts: [
+      'SpokespersonCHN', // China MFA Spokesperson
+      'MFA_China',       // China MFA Official
+      'PDChina',         // People's Daily English
+      'AmbCina',         // Chinese Ambassador
+    ],
+    category: 'geopolitical', priority: 'priority', tier: 'B',
+  },
+  {
+    label: 'OSINT',
+    accounts: [
+      'sentdefender',    // Conflict news aggregator
+      'NEXTA_tv',        // Belarus/Eastern Europe OSINT
+      'Tendar',          // Geopolitical OSINT
+      'NavyLookout',     // Naval/maritime OSINT
+      'OSINTtechnical',  // Technical military OSINT
+      'GeoConfirmed',    // Geolocation verification
+      'Osint613',        // Israel/ME OSINT
+      'visegrad24',      // Central/Eastern Europe
+      'MenchOsint',      // Military OSINT
+      'TheIntelFrog',    // Intelligence OSINT
+    ],
+    category: 'osint', priority: 'priority', tier: 'B',
+  },
   // ── TIER C: Routine — every 4th cycle ──
   {
     label: 'US Congress',
