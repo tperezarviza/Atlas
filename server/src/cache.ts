@@ -45,7 +45,7 @@ class TTLCache {
       const redis = await redisGet<T>(`cache:${key}`);
       if (redis !== null && redis !== undefined) {
         console.log(`[CACHE] Restored ${key} from Redis backup`);
-        this.set(key, redis, 120_000); // 2 min bridge TTL
+        this.set(key, redis, 900_000); // 15 min bridge (warmup takes ~11 min)
         return redis;
       }
     } catch { /* Redis unavailable, continue without */ }

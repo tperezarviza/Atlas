@@ -75,7 +75,7 @@ export const TTL = {
   EXECUTIVE_ORDERS:12 * 60 * 60 * 1000, // 12 h
   FLIGHTS:         6 * 60 * 1000,       // 6 min (cron every 5 min)
   UKRAINE_FRONT:   60 * 60 * 1000,      // 1 h
-  TWITTER:         5 * 60 * 1000,       // 5 min
+  TWITTER:        15 * 60 * 1000,       // 15 min (cron every 5 min, but must survive warmup gap)
   CYBER_THREATS:   60 * 60 * 1000,      // 1 h
   EONET:          30 * 60 * 1000,       // 30 min
   ECON_CALENDAR:   4 * 60 * 60 * 1000,  // 4 h

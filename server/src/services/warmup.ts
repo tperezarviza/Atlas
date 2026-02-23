@@ -68,7 +68,7 @@ async function warmupFromRedis(): Promise<void> {
       // BQ caches run every 6-12h, so bridge TTL must survive until next cron
       const bridgeTTL = key.startsWith('bq_') || key === 'google_trends' || key === 'hostility'
         ? 13 * 3600_000   // 13h bridge for long-interval services
-        : 120_000;        // 2 min bridge for frequently-refreshed services
+        : 900_000;        // 15 min bridge — must survive warmup (~11 min) + first cron
       cache.set(key, data, bridgeTTL);
       restored++;
     }
