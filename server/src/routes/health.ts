@@ -110,6 +110,7 @@ export function registerHealthRoutes(app: FastifyInstance) {
         status: okCount > totalCount * 0.5 ? 'ok' : 'degraded',
         servicesOk: okCount,
         servicesTotal: totalCount,
+        summary: { ok: okCount, total: totalCount },
         uptime: Math.floor((Date.now() - startTime) / 1000),
       };
     }

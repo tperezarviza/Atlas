@@ -4,8 +4,11 @@ import { ANTHROPIC_API_KEY } from '../config.js';
 // Singleton Anthropic client — prevent CLOSE_WAIT socket leak
 const anthropicClient = ANTHROPIC_API_KEY ? new Anthropic({ apiKey: ANTHROPIC_API_KEY, timeout: 30000 }) : null;
 
-/** Detect non-English Latin-script languages (Italian, French, Spanish, Portuguese). */
-const NON_ENGLISH_INDICATORS = /\b(dell[aeo]|nell[aeo]|sull[aeo]|l'ambasciatore|governo|contro|anche|perch[eé]|après|aujourd'?hui|qu[ei]|dans|avec|pour|cette|serait|había|donde|tiene|sobre|está|también|según|pero|entre|todos|desde|como|más|años|governo|primo|ministro|presidente|durante|ancora|stato|essere|questa|quello|hanno|sono|tutto|sempre|giorno|molto|fatto|ogni|nuovo|altra|paese|mondo|dopo|prima|grande|perché|ancora|così|però|già|bene|mentre|senza|altra|trova|parte)\b/i;
+/** Detect non-English Latin-script languages by common words + diacritical characters. */
+const NON_ENGLISH_INDICATORS = /\b(dell[aeo]|nell[aeo]|sull[aeo]|l'ambasciatore|governo|contro|anche|perch[eé]|après|aujourd'?hui|qu[ei]|dans|avec|pour|cette|serait|había|donde|tiene|sobre|está|también|según|pero|entre|todos|desde|como|más|años|governo|primo|ministro|presidente|durante|ancora|stato|essere|questa|quello|hanno|sono|tutto|sempre|giorno|molto|fatto|ogni|nuovo|altra|paese|mondo|dopo|prima|grande|perché|ancora|così|però|già|bene|mentre|senza|altra|trova|parte|bir|ile|için|olan|değil|oldu|üzerinde|karşı|sonra|kadar|olarak|ancak|gibi|daha|çok|büyük|savaş|ülke|przez|który|został|między|tylko|jednak|przed|teraz|także|bardzo|będzie|polski|wojsk|został|nach|über|gegen|nicht|haben|einen|diese|werden|bereits|unter|durch|seinem|keine|seine|seine|según|desde|hasta|porque|además|aunque|también|después|antes|todavía|mientras|donde|haber|dette|eller|være|efter|under|havde|flere|denne|mange|andre|disse|zoals|heeft|worden|onder|sinds|opnieuw|omdat|volgens|terwijl)\b/i;
+
+/** Detect non-English by presence of accented/special Latin chars uncommon in English. */
+const NON_ASCII_LATIN = /[öüçşğıłśźżñãõâêîôûäëïæøåðþ]/i;
 
 /** Check if text is primarily Latin-script (English/European). */
 export function isLatinText(text: string): boolean {
@@ -14,7 +17,7 @@ export function isLatinText(text: string): boolean {
   const latinChars = letters.replace(/[^\u0000-\u024F\u1E00-\u1EFF]/g, '');
   const isLatin = latinChars.length / letters.length > 0.7;
   // If text is Latin-script but contains non-English indicators, mark as non-Latin so it gets translated
-  if (isLatin && NON_ENGLISH_INDICATORS.test(text)) return false;
+  if (isLatin && (NON_ENGLISH_INDICATORS.test(text) || NON_ASCII_LATIN.test(text))) return false;
   return isLatin;
 }
 

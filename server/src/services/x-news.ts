@@ -1,4 +1,5 @@
 import { X_BEARER_TOKEN, TTL } from '../config.js';
+import { translateTexts } from './translate.js';
 import { cache } from '../cache.js';
 import type { NewsWireItem, NewsBullet } from '../types.js';
 
@@ -87,6 +88,13 @@ export async function fetchXNews(): Promise<void> {
         url: undefined,
       };
     });
+
+    // Translate non-English headlines
+    const headlines = wireItems.map(w => w.headline);
+    const translated = await translateTexts(headlines, 'X-NEWS');
+    for (let i = 0; i < wireItems.length; i++) {
+      wireItems[i].headline = translated[i];
+    }
 
     cache.set('x_news', wireItems, TTL.NEWS);
     console.log(`[X-NEWS] ${wireItems.length} articles cached`);

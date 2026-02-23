@@ -122,7 +122,7 @@ function buildTieredQueries(): TieredQuery[] {
 
       if (currentLen + addLen > MAX_QUERY_LEN && current.length > 0) {
         queries.push({
-          query: current.join(' OR '),
+          query: current.join(' OR ') + ' -is:reply',
           category: group.category,
           priority: group.priority,
           label: group.label,
@@ -138,7 +138,7 @@ function buildTieredQueries(): TieredQuery[] {
 
     if (current.length > 0) {
       queries.push({
-        query: current.join(' OR '),
+        query: current.join(' OR ') + ' -is:reply',
         category: group.category,
         priority: group.priority,
         label: group.label,
@@ -246,7 +246,7 @@ async function searchTweets(q: { query: string; category: TweetCategory; priorit
     })
     .filter((t: TwitterIntelItem) => {
       // Filter retweets for trump category
-      if (q.category === 'trump' && t.text.startsWith('RT @')) return false;
+      if (q.category === 'trump' && t.text.startsWith('RT @') && !(/^RT @(WhiteHouse|VP|POTUS45)/.test(t.text))) return false;
       // Filter Milei retweets (he RTs excessively)
       if (t.author.username.toLowerCase() === 'jmilei' && t.text.startsWith('RT @')) return false;
       // Filter image-only / link-only tweets with no real text
