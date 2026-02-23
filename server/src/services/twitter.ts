@@ -167,7 +167,7 @@ export function setMonthlyTweetsRead(count: number): void { monthlyTweetsRead = 
 export function setQueryIndex(idx: number): void { cycleCount = idx; }
 
 const MONTHLY_CAP = 10_000;
-const CAP_WARNING_PCT = 0.9;
+const CAP_WARNING_PCT = 0.95;
 
 function resetMonthlyCounter(): void {
   const now = new Date().getMonth();
@@ -291,7 +291,7 @@ export async function fetchTwitterTiered(): Promise<void> {
     try {
       const newTweets = await withCircuitBreaker(
         'twitter',
-        () => searchTweets(q, 25),
+        () => searchTweets(q, 15),
         () => [] as TwitterIntelItem[],
       );
       const existing = cache.get<TwitterIntelItem[]>('twitter') || [];

@@ -293,8 +293,8 @@ export async function computeCII(): Promise<void> {
       hostilityFactor * weights.hostility
     );
 
-    // Composite: baseline × 0.40 + eventScore × 0.60 (balanced — baseline prevents collapse when data sparse)
-    const score = clamp(Math.round(baseline * 0.40 + eventScore * 0.60), 0, 100);
+    // Composite: baseline × 0.60 + eventScore × 0.40 (baseline-heavy — sparse event data shouldn't drag war zones below 50)
+    const score = clamp(Math.round(baseline * 0.60 + eventScore * 0.40), 0, 100);
 
     // Load sparkline from Redis, append new score
     const redisKey = `${REDIS_KEY_PREFIX}${code}`;
